@@ -45,7 +45,9 @@ Users must never feel lost. Multiple redundant "you are here" cues on every page
 
 ## License
 
-MIT — see `LICENSE` (to be added).
+Code is **MIT** — see [`LICENSE`](LICENSE). Fork it, learn from it, build on it.
+
+**Brand assets are NOT MIT.** The "CraftCode" name, the hammer-and-ruler logo, and product names (Sprite Optimizer, ManualSprite, etc.) are trademarks of the project owner. Documentation screenshots showing plugin UI are © CraftCode. If you fork the site structure, replace brand and screenshots with your own.
 
 ## Author
 

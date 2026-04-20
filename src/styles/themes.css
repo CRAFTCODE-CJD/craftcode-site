@@ -1,0 +1,95 @@
+/* ══════════════════════════════════════════════════════
+   CRAFTCODE — Arcade theme (single source of truth)
+   ══════════════════════════════════════════════════════
+   We deliberately ship ONE theme. CRT boot screen vibe:
+   pixel type, dark bg, magenta/yellow accent pair.
+   Per-section overrides below (sprite/iso/vn) only swap
+   the --accent so product sections feel distinct without
+   changing the whole visual language.                     */
+
+:root {
+  --bg:         #0A0A0C;
+  --surface:    #111114;
+  --ink:        #F5F5F1;
+  --muted:      #A8A8A3;
+  --faint:      #5A5A55;
+  --border:     #2A2A2E;
+  --grid:       #1A1A1D;
+  --accent:     #EC4899;
+  --accent-2:   #FACC15;
+  --link:       #FDE047;
+  --code-bg:    #050507;
+  --highlight:  #4C1D95;
+  --radius:     6px;
+
+  /* Surface tones companions pick up via CSS vars (no JS needed) */
+  --companion-shadow: rgba(0, 0, 0, 0.35);
+}
+
+/* Per-section accent overrides — applied via data-section on a page wrapper.
+   Sprite family stays on the default magenta; iso and vn shift the accent. */
+[data-section="sprite"] { --accent: #EC4899; }
+[data-section="iso"]    { --accent: #10B981; }
+[data-section="vn"]     { --accent: #DC2626; }
+[data-section="input"]  { --accent: #38BDF8; }  /* MouseInterceptor */
+
+/* Override Starlight's built-in colour system to match our tokens */
+:root {
+  --sl-color-bg: var(--bg);
+  --sl-color-bg-nav: var(--surface);
+  --sl-color-bg-sidebar: var(--surface);
+  --sl-color-text: var(--ink);
+  --sl-color-text-accent: var(--accent);
+  --sl-color-accent: var(--accent);
+  --sl-color-accent-high: var(--accent-2);
+  --sl-color-accent-low: color-mix(in oklab, var(--accent) 30%, transparent);
+  --sl-color-hairline: var(--border);
+  --sl-color-hairline-light: var(--border);
+  --sl-font: 'Inter', system-ui, -apple-system, sans-serif;
+  --sl-font-system-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+/* ─── Arcade typography ───────────────────────────────── */
+h1 {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 34px;
+  line-height: 1.45;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  color: var(--ink);
+  text-shadow:
+    3px 3px 0 var(--accent-2),
+    6px 6px 0 var(--accent);
+  margin: 18px 0 24px;
+  padding-top: 6px;
+}
+h2 {
+  font-family: 'VT323', monospace;
+  font-size: 32px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--accent-2);
+}
+h3 {
+  font-family: 'VT323', monospace;
+  font-size: 24px;
+  color: var(--ink);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+/* ─── CRT scanlines overlay (very subtle) ─────────────── */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 2px,
+    rgba(255, 255, 255, 0.018) 2px,
+    rgba(255, 255, 255, 0.018) 3px
+  );
+  pointer-events: none;
+  z-index: 4;
+}

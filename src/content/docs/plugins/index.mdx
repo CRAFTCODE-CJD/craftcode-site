@@ -1,0 +1,31 @@
+---
+title: Плагины
+description: Все плагины CRAFTCODE для Unreal Engine — документация, гайды, справка.
+template: splash
+tableOfContents: false
+hero:
+  title: ' '
+  tagline: ' '
+head:
+  - tag: style
+    content: |
+      .hero { display: none !important; }
+      .sl-markdown-content { max-width: 1100px; margin-inline: auto; }
+---
+
+import PluginShowcase from '~/components/PluginShowcase.astro';
+import FeatureStrip from '~/components/FeatureStrip.astro';
+import CatalogHead from '~/components/CatalogHead.astro';
+import CatalogFaq from '~/components/CatalogFaq.astro';
+
+<CatalogHead
+  kicker="// CRAFTCODE · plugins"
+  title="Плагины"
+  lead="Три инструмента для Unreal Engine. Каждый решает одну задачу и не лезет в соседние. Ставишь по одному — работают независимо."
+/>
+
+<FeatureStrip />
+
+<PluginShowcase />
+
+<CatalogFaq lang="ru" />

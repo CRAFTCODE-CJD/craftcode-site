@@ -1,0 +1,117 @@
+---
+/**
+ * "Which one do I need?" FAQ block used on plugin catalogue pages.
+ * Keeps the decision-help out of the main card grid and in prose form.
+ */
+interface Props {
+  lang?: 'ru' | 'en';
+}
+const { lang = 'ru' } = Astro.props;
+
+const copy = {
+  ru: {
+    head: '// какой мне нужен',
+    rows: [
+      {
+        question: 'Работаешь со спрайтами и хочешь уменьшить draw calls',
+        linkText: 'Sprite Optimizer',
+        href: '/plugins/sprite-optimizer/',
+      },
+      {
+        question: 'Нужна точная геометрия спрайта или конвертация в Static / SkeletalMesh',
+        linkText: 'ManualSprite',
+        href: '/plugins/manualsprite/',
+      },
+      {
+        question: 'Хочешь перехватывать клики мыши глобально, независимо от UI-фокуса',
+        linkText: 'MouseInterceptor',
+        href: '/plugins/mouseinterceptor/',
+      },
+    ],
+    note: 'Все три ставятся одинаково: копируешь папку в <code>Plugins/</code> проекта, перезапускаешь Unreal.',
+  },
+  en: {
+    head: '// which one do I need',
+    rows: [
+      {
+        question: 'Working with sprites and want fewer draw calls',
+        linkText: 'Sprite Optimizer',
+        href: '/plugins/sprite-optimizer/',
+      },
+      {
+        question: 'Need precise sprite geometry or conversion to Static / SkeletalMesh',
+        linkText: 'ManualSprite',
+        href: '/plugins/manualsprite/',
+      },
+      {
+        question: 'Want to intercept mouse events globally, regardless of UI focus',
+        linkText: 'MouseInterceptor',
+        href: '/plugins/mouseinterceptor/',
+      },
+    ],
+    note: 'All three install the same way: drop the folder into <code>Plugins/</code> of your project, restart Unreal.',
+  },
+};
+
+const t = copy[lang];
+---
+
+<aside class="catalog-faq">
+  <h3>{t.head}</h3>
+  <dl>
+    {t.rows.map((r) => (
+      <>
+        <dt>{r.question}</dt>
+        <dd>→ <a href={r.href}><strong>{r.linkText}</strong></a></dd>
+      </>
+    ))}
+  </dl>
+  <p class="catalog-note" set:html={t.note}></p>
+</aside>
+
+<style>
+  .catalog-faq {
+    margin: 56px 0 16px;
+    padding: 28px 30px;
+    border: 1px dashed var(--border);
+    border-radius: 6px;
+    background: color-mix(in oklab, var(--surface) 80%, transparent);
+  }
+  .catalog-faq h3 {
+    font-family: 'JetBrains Mono', monospace !important;
+    font-size: 13px !important;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent-2) !important;
+    text-shadow: none !important;
+    margin: 0 0 18px !important;
+  }
+  .catalog-faq dl { margin: 0; display: grid; gap: 16px; }
+  .catalog-faq dt {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--ink);
+    line-height: 1.55;
+  }
+  .catalog-faq dd {
+    margin: 4px 0 0;
+    font-size: 14px;
+    color: var(--muted);
+  }
+  .catalog-faq dd a { color: var(--accent); text-decoration: none; }
+  .catalog-faq dd a:hover { text-decoration: underline; }
+  .catalog-note {
+    margin: 22px 0 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--faint);
+    line-height: 1.65;
+  }
+  .catalog-note :global(code) {
+    padding: 1px 6px;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    font-size: 11px;
+  }
+</style>

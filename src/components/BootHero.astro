@@ -1,0 +1,213 @@
+---
+/**
+ * Arcade-themed boot-screen hero. CRT typewriter intro followed by the
+ * big CRAFTCODE wordmark. Runs once per session (sessionStorage gate) so
+ * repeat visitors don't sit through the animation every refresh.
+ */
+---
+
+<section class="boot-hero" aria-label="CraftCode intro">
+  <div class="boot-crt">
+    <pre class="boot-log" id="boot-log"></pre>
+    <div class="boot-title">
+      <h1 class="boot-wordmark">CRAFTCODE</h1>
+      <p class="boot-tagline">// мастерская двух роботов :: чертежи, инструменты, игры</p>
+    </div>
+    <div class="boot-cta">
+      <a href="/plugins/" class="boot-btn primary">
+        <span class="boot-btn-arrow">▸</span> Open Workshop
+      </a>
+      <a href="https://github.com/CRAFTCODE-CJD" class="boot-btn" target="_blank" rel="noopener">
+        ↗ GitHub
+      </a>
+    </div>
+  </div>
+
+  <div class="boot-scanlines" aria-hidden="true"></div>
+</section>
+
+<script is:inline>
+  (() => {
+    const log = document.getElementById('boot-log');
+    if (!log) return;
+    const lines = [
+      '> BOOT SEQUENCE ................... [OK]',
+      '> LOADING /craft/...............  [OK]',
+      '> LOADING /code/................  [OK]',
+      '> LINK SPRITE_SHEETS ...........  [OK]',
+      '> MOUNT DIALOGUE_ENGINE ........  [OK]',
+      '> ACCENT.PIGMENT == MAGENTA ....  [OK]',
+      '> ROBOTS.READY ................. true',
+      '',
+    ];
+    const seen = sessionStorage.getItem('cc-boot-seen') === '1';
+    if (seen) {
+      log.textContent = lines.join('\n');
+      document.querySelector('.boot-hero')?.classList.add('boot-fast');
+      return;
+    }
+    sessionStorage.setItem('cc-boot-seen', '1');
+
+    let i = 0, j = 0;
+    const tick = () => {
+      if (i >= lines.length) {
+        document.querySelector('.boot-hero')?.classList.add('boot-done');
+        return;
+      }
+      const full = lines[i];
+      if (j <= full.length) {
+        log.textContent = lines.slice(0, i).join('\n') + (i ? '\n' : '') + full.slice(0, j);
+        j++;
+        // Faster for ".........." stretches, slower for letters
+        const ch = full[j] || '';
+        setTimeout(tick, ch === '.' ? 10 : 18);
+      } else {
+        i++; j = 0;
+        setTimeout(tick, 120);
+      }
+    };
+    setTimeout(tick, 200);
+  })();
+</script>
+
+<style>
+  .boot-hero {
+    position: relative;
+    min-height: 72vh;
+    padding: 48px 32px 56px;
+    display: grid;
+    place-items: start center;
+    overflow: hidden;
+    border-radius: 4px;
+    background:
+      radial-gradient(ellipse at top, color-mix(in oklab, var(--accent) 14%, transparent), transparent 55%),
+      repeating-linear-gradient(90deg, transparent 0 31px, color-mix(in oklab, var(--accent-2) 4%, transparent) 31px 32px),
+      var(--surface);
+    border: 1px solid var(--border);
+  }
+
+  .boot-crt {
+    width: 100%;
+    max-width: 780px;
+    display: grid;
+    gap: 28px;
+  }
+
+  .boot-log {
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--accent-2);
+    margin: 0;
+    min-height: 160px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    text-shadow: 0 0 6px color-mix(in oklab, var(--accent-2) 60%, transparent);
+    opacity: 0.92;
+  }
+  .boot-log::after {
+    content: '▮';
+    color: var(--accent);
+    animation: boot-blink 0.9s steps(2) infinite;
+  }
+  .boot-hero.boot-fast .boot-log::after,
+  .boot-hero.boot-done .boot-log::after { animation-duration: 1.8s; }
+
+  @keyframes boot-blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+  }
+
+  .boot-title {
+    display: grid;
+    gap: 8px;
+    text-align: center;
+    animation: boot-fadein 0.8s ease-out 0.3s both;
+  }
+  .boot-hero.boot-fast .boot-title { animation-delay: 0s; }
+
+  @keyframes boot-fadein {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .boot-wordmark {
+    font-family: 'Press Start 2P', monospace;
+    font-size: clamp(36px, 7.5vw, 76px);
+    line-height: 1.05;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+    color: var(--ink);
+    text-shadow:
+      4px 4px 0 var(--accent-2),
+      8px 8px 0 var(--accent);
+    margin: 0;
+    padding-top: 6px;
+  }
+
+  .boot-tagline {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    margin: 0;
+  }
+
+  .boot-cta {
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+    animation: boot-fadein 0.8s ease-out 0.6s both;
+  }
+  .boot-hero.boot-fast .boot-cta { animation-delay: 0s; }
+
+  .boot-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 22px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: var(--ink);
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    transition: transform 0.15s, border-color 0.2s, box-shadow 0.2s, color 0.2s;
+  }
+  .boot-btn:hover {
+    transform: translateY(-1px);
+    border-color: var(--accent);
+    color: var(--accent);
+    box-shadow: 0 6px 20px -10px var(--accent);
+  }
+  .boot-btn.primary {
+    background: var(--accent);
+    color: var(--bg);
+    border-color: var(--accent);
+  }
+  .boot-btn.primary:hover {
+    color: var(--bg);
+    background: color-mix(in oklab, var(--accent) 85%, white);
+    box-shadow: 0 6px 24px -6px var(--accent);
+  }
+  .boot-btn-arrow { color: currentColor; }
+
+  .boot-scanlines {
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 2px,
+      rgba(255, 255, 255, 0.02) 2px,
+      rgba(255, 255, 255, 0.02) 3px
+    );
+    pointer-events: none;
+  }
+</style>

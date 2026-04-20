@@ -1,0 +1,32 @@
+---
+/**
+ * Companions — site-wide CRAFT + CODE sprites with dialogue engine, physics,
+ * pointer-drag throwing, accent-change reactions, and FX overlays (dust,
+ * sparkles, shock ring, screen shake).
+ *
+ * Mounted once in the root layout so both characters appear on every page.
+ * All state is driven by src/scripts/companions.js — the scene-based
+ * dialogue engine with rapport memory and partner reactions.
+ *
+ * The companions themselves need sprite sheets at /sprites/craft.png and
+ * /sprites/code.png — 960×48 strips of 20 frames @ 48px each.
+ */
+---
+
+<div class="fx-layer" aria-hidden="true"></div>
+<div class="companions" aria-live="polite" aria-atomic="false">
+  <div class="companion" data-who="craft" role="button" tabindex="0"
+       aria-label="CRAFT — press Enter to talk.">
+    <div class="sprite"></div>
+    <div class="companion-bubble" id="bubble-craft"></div>
+  </div>
+  <div class="companion" data-who="code" role="button" tabindex="0"
+       aria-label="CODE — press Enter to talk.">
+    <div class="sprite"></div>
+    <div class="companion-bubble" id="bubble-code"></div>
+  </div>
+</div>
+
+<script>
+  import './../scripts/companions.js';
+</script>

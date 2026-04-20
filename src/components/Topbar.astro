@@ -1,0 +1,144 @@
+---
+/**
+ * Custom Starlight Header override.
+ * Replaces Starlight's default header with our branded topbar:
+ *  - logo icon + CRAFTCODE wordmark (Press Start 2P on arcade theme)
+ *  - primary nav (Plugins / Games / Blog / About)
+ *  - search trigger (delegated to Starlight's built-in search)
+ *
+ * We intentionally have NO theme toggle — we ship one theme (Arcade).
+ */
+import LogoWide from './LogoWide.astro';
+import Companions from './Companions.astro';
+import LanguageSelect from '@astrojs/starlight/components/LanguageSelect.astro';
+
+// Detect active locale by URL path, not by Astro.currentLocale.
+// Astro.currentLocale returns the `lang` value ('ru' for root), which doesn't
+// tell us whether we're on a prefixed or root-locale page. Path tells us.
+const pathname = Astro.url.pathname;
+const isEn = pathname.startsWith('/en/') || pathname === '/en';
+const prefix = isEn ? '/en' : '';
+const navLinks = [
+  { href: `${prefix}/plugins/`,  label: isEn ? 'Plugins' : 'Плагины' },
+  { href: `${prefix}/games/`,    label: isEn ? 'Games'   : 'Игры' },
+  { href: `${prefix}/about/`,    label: isEn ? 'About'   : 'О нас' },
+  { href: 'https://github.com/CRAFTCODE-CJD', label: 'GitHub', external: true },
+];
+---
+
+<Companions />
+
+<header class="cc-top">
+  <div class="cc-top-row">
+    <a href={prefix + '/'} class="cc-brand" aria-label="CraftCode — home">
+      <LogoWide height={28} />
+    </a>
+    <nav class="cc-top-nav" aria-label="Primary">
+      {navLinks.map(l => (
+        l.external
+          ? <a href={l.href} target="_blank" rel="noopener">{l.label}</a>
+          : <a href={l.href}>{l.label}</a>
+      ))}
+    </nav>
+    <div class="cc-spacer"></div>
+    <div class="cc-lang"><LanguageSelect {...Astro.props} /></div>
+    <slot name="search" />
+  </div>
+</header>
+
+<style>
+  .cc-top {
+    position: sticky;
+    top: 0;
+    z-index: 100;            /* unambiguously above companions (z:5) & bubbles */
+    background: var(--surface);
+    border-bottom: 1px solid var(--accent);
+    box-shadow: 0 4px 16px -4px var(--accent);
+    /* New stacking context so children (language select dropdown, nav) stack
+       on top of absolutely-positioned page content regardless of source. */
+    isolation: isolate;
+  }
+  .cc-top-row {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 12px 24px;
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+  .cc-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--ink);
+    text-decoration: none;
+    transition: transform 0.12s ease-out;
+  }
+  .cc-brand:hover {
+    transform: translateY(-1px);
+  }
+  .cc-brand :global(.cc-logo-wide) {
+    color: var(--ink);
+    transition: color 0.15s;
+  }
+  .cc-brand:hover :global(.cc-logo-wide) {
+    color: var(--accent);
+  }
+  .cc-top-nav {
+    display: flex;
+    gap: 4px;
+  }
+  .cc-top-nav a {
+    padding: 6px 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-decoration: none;
+    border-radius: var(--radius);
+    transition: color 0.15s, background 0.15s;
+  }
+  .cc-top-nav a:hover,
+  .cc-top-nav a[aria-current='page'] {
+    color: var(--accent);
+    background: color-mix(in oklab, var(--accent) 12%, transparent);
+  }
+  .cc-spacer { flex: 1; }
+
+  .cc-lang {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+  }
+  .cc-lang :global(starlight-lang-select select) {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    /* 28px left makes room for Starlight's absolute-positioned globe icon
+       that sits before the select inside the <label> wrapper. */
+    padding: 4px 26px 4px 30px;
+    font: inherit;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    border-radius: var(--radius);
+    cursor: pointer;
+  }
+  .cc-lang :global(starlight-lang-select select:hover) {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+  /* Tint Starlight's globe icon and dropdown caret to match our palette. */
+  .cc-lang :global(starlight-lang-select .label-icon),
+  .cc-lang :global(starlight-lang-select .caret) {
+    color: var(--muted);
+  }
+  .cc-lang :global(starlight-lang-select:hover .label-icon),
+  .cc-lang :global(starlight-lang-select:hover .caret) {
+    color: var(--accent);
+  }
+
+  @media (max-width: 760px) {
+    .cc-top-nav { display: none; }
+  }
+</style>

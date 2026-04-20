@@ -1,0 +1,269 @@
+/* ══════════════════════════════════════════════════════
+   Companions (CRAFT + CODE) — sprites, states, FX, bubble
+   ══════════════════════════════════════════════════════
+   Sprite sheet: 20 frames × 48px display (32px source × 1.5).
+   Frame map (48px offsets, negative bg-position-x):
+     0 idle_a(0)       1 idle_b(-48)     2 blink(-96)
+     3 walk_a(-144)    4 walk_b(-192)
+     5 climb_a(-240)   6 climb_b(-288)          — used for "falling"
+     7 talk_a(-336)    8 talk_b(-384)
+     9 surprise(-432) 10 sleep(-480)
+    11 wave_a(-528)   12 wave_b(-576)
+    13 typing_a(-624) 14 typing_b(-672)
+    15 excited(-720)
+    16 idea_a(-768)   17 idea_b(-816)           — thinking sequence
+    18 think_a(-864)  19 think_b(-912)           — squat + laptop    */
+
+/* Anchored to the BOTTOM of the document (not the viewport). Users only see
+   the companions when scrolled near the page bottom — they "live" there,
+   like a footer, rather than following the reader. Height gives them some
+   vertical room for throws without escaping onto the docs content area. */
+.companions {
+  position: absolute;
+  left: 0; right: 0;
+  bottom: 0;
+  height: 480px;
+  z-index: 5;                    /* well below topbar (z:100) and bubbles */
+  pointer-events: none;
+  overflow: visible;
+  /* Isolate shake-transforms from page layout so translate(±2px) can't
+     briefly push content past body bounds and flicker the scrollbar. */
+  contain: layout paint;
+  will-change: transform;
+}
+.fx-layer { z-index: 4; }        /* FX render below topbar and above page content */
+
+.companion {
+  position: absolute;
+  width: 48px; height: 48px;
+  display: grid;
+  place-items: end center;      /* feet align to hitbox bottom */
+  cursor: grab;
+  pointer-events: auto;
+  user-select: none;
+  filter: drop-shadow(0 3px 6px var(--companion-shadow, rgba(0, 0, 0, 0.35)));
+  transition: filter 0.3s;
+  border-radius: 50%;
+}
+.companion[data-facing='left'] .sprite { transform: scaleX(-1); }
+
+.companion .sprite {
+  position: relative;
+  width: 48px; height: 48px;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  background-repeat: no-repeat;
+  background-size: 960px 48px;
+  background-position-x: 0;
+  animation: sprite-breath 0.7s infinite step-end;
+}
+.companion[data-who='craft'] .sprite { background-image: url('/sprites/craft.png'); }
+.companion[data-who='code']  .sprite { background-image: url('/sprites/code.png'); }
+
+@keyframes sprite-breath {
+  0%, 44%    { background-position-x: 0; }
+  45%, 49%   { background-position-x: -96px; }
+  50%, 100%  { background-position-x: -48px; }
+}
+.companion.walking .sprite { animation: sprite-walk 0.28s infinite step-end; }
+@keyframes sprite-walk {
+  0%, 49%   { background-position-x: -144px; }
+  50%, 100% { background-position-x: -192px; }
+}
+.companion.falling .sprite { animation: sprite-fall 0.12s infinite step-end; }
+@keyframes sprite-fall {
+  0%, 49%   { background-position-x: -240px; }
+  50%, 100% { background-position-x: -288px; }
+}
+.companion.talking .sprite { animation: sprite-talk 0.22s infinite step-end; }
+@keyframes sprite-talk {
+  0%, 49%   { background-position-x: -336px; }
+  50%, 100% { background-position-x: -384px; }
+}
+.companion.surprised .sprite { animation: none !important; background-position-x: -432px !important; }
+.companion.sleeping  .sprite { animation: none !important; background-position-x: -480px !important; }
+.companion.excited   .sprite { animation: none !important; background-position-x: -720px !important; }
+
+.companion.waving .sprite { animation: sprite-wave 0.30s infinite step-end; }
+@keyframes sprite-wave {
+  0%, 49%   { background-position-x: -528px; }
+  50%, 100% { background-position-x: -576px; }
+}
+.companion.typing .sprite { animation: sprite-typing 0.28s infinite step-end; }
+@keyframes sprite-typing {
+  0%, 49%   { background-position-x: -624px; }
+  50%, 100% { background-position-x: -672px; }
+}
+.companion.idea .sprite { animation: sprite-idea 0.9s steps(1) 1 forwards; }
+@keyframes sprite-idea {
+  0%, 49%   { background-position-x: -768px; }
+  50%, 100% { background-position-x: -816px; }
+}
+.companion.thinking .sprite { animation: sprite-thinking 0.26s infinite step-end; }
+@keyframes sprite-thinking {
+  0%, 49%   { background-position-x: -864px; }
+  50%, 100% { background-position-x: -912px; }
+}
+
+/* Soft hover glow */
+.companion::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in oklab, var(--accent) 20%, transparent) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.2s;
+  z-index: -1;
+}
+.companion:hover::before { opacity: 1; }
+
+/* Wrapper-level animations */
+.companion.walking { animation: companion-hop 0.56s steps(2) infinite; }
+@keyframes companion-hop {
+  0%, 49%   { transform: translateY(0); }
+  50%, 100% { transform: translateY(-2px); }
+}
+.companion.excited { animation: companion-excited 0.18s steps(2) infinite; }
+@keyframes companion-excited {
+  0%, 49%   { transform: translateY(0) scale(1.02, 0.98); }
+  50%, 100% { transform: translateY(-3px) scale(0.98, 1.04); }
+}
+.companion.dragging {
+  animation: none;
+  cursor: grabbing !important;
+  filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.35)) !important;
+}
+.companion.dragging .sprite { animation: sprite-fall 0.16s infinite step-end !important; }
+
+/* ── FX overlays (dust, sparkle, shock, camera shake) ── */
+.fx-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 24;
+  overflow: hidden;
+}
+.fx-dust {
+  position: absolute;
+  width: 30px; height: 10px;
+  background: radial-gradient(ellipse, rgba(180, 158, 132, 0.55) 0%, rgba(180, 158, 132, 0.25) 50%, transparent 75%);
+  border-radius: 50%;
+  transform-origin: 50% 100%;
+  animation: fx-dust 0.7s ease-out forwards;
+}
+.fx-dust.big { width: 46px; height: 14px; animation-duration: 1s; }
+@keyframes fx-dust {
+  0%   { transform: scale(0.3, 0.5); opacity: 0; }
+  15%  { opacity: 0.9; }
+  100% { transform: scale(2.2, 1) translateY(-2px); opacity: 0; }
+}
+.fx-sparkle {
+  position: absolute;
+  width: 10px; height: 10px;
+  font-size: 12px;
+  line-height: 1;
+  color: #ffd966;
+  text-shadow: 0 0 6px rgba(255, 217, 102, 0.7);
+  animation: fx-sparkle 0.7s ease-out forwards;
+  transform: translate(-50%, -50%);
+  will-change: transform, opacity;
+}
+@keyframes fx-sparkle {
+  0%   { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+  30%  { transform: translate(calc(-50% + var(--dx, 0px) * 0.4), calc(-50% + var(--dy, 0px) * 0.4)) scale(1.2); opacity: 1; }
+  100% { transform: translate(calc(-50% + var(--dx, 0px)), calc(-50% + var(--dy, 0px))) scale(0.3); opacity: 0; }
+}
+.fx-shock {
+  position: absolute;
+  width: 40px; height: 40px;
+  border: 2px solid rgba(255, 220, 180, 0.6);
+  border-radius: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  animation: fx-shock 0.45s ease-out forwards;
+}
+@keyframes fx-shock {
+  0%   { transform: translate(-50%, -50%) scale(0); opacity: 0.9; }
+  100% { transform: translate(-50%, -50%) scale(1.6); opacity: 0; }
+}
+/* Shake is scoped to the .companions container so the rest of the page
+   (nav, article, sidebar) doesn't jitter when a character crashes.
+   Kept HORIZONTAL-only — vertical translate would push the container
+   1 px past `bottom: 0` and flicker the page's vertical scrollbar. */
+@keyframes companions-shake {
+  0%, 100% { transform: translateX(0); }
+  20%      { transform: translateX(-2px); }
+  40%      { transform: translateX(2px); }
+  60%      { transform: translateX(-1px); }
+  80%      { transform: translateX(1px); }
+}
+.companions.fx-shake { animation: companions-shake 0.3s ease-in-out; }
+
+/* ── Speech bubble ──
+   --bubble-x is set by companions.js after the bubble becomes visible
+   so the bubble can shift sideways to stay on screen. The tail (::after)
+   negates the shift to keep pointing at the companion. */
+.companion-bubble {
+  --bubble-x: 0px;
+  position: absolute;
+  bottom: 56px; left: 50%;
+  transform: translate(calc(-50% + var(--bubble-x)), 6px);
+  /* Arcade-styled bubble (we ship only arcade theme) */
+  background: var(--bg);
+  border: 1px solid var(--accent);
+  border-radius: 0;
+  padding: 8px 14px;
+  font-family: 'VT323', monospace;
+  font-size: 16px;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+  white-space: nowrap;
+  max-width: min(280px, calc(100vw - 24px));
+  box-shadow: 0 10px 24px rgba(10, 8, 5, 0.14);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s, transform 0.2s;
+  line-height: 1.5;
+}
+.companion-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -6px; left: 50%;
+  /* Stay anchored to the companion even when the bubble itself has shifted. */
+  transform: translateX(calc(-50% - var(--bubble-x))) rotate(45deg);
+  width: 10px; height: 10px;
+  background: var(--bg);
+  border-right: 1px solid var(--accent);
+  border-bottom: 1px solid var(--accent);
+}
+.companion-bubble.visible {
+  opacity: 1;
+  transform: translate(calc(-50% + var(--bubble-x)), 0);
+}
+.companion-bubble .who {
+  display: inline;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--accent-2);
+  font-weight: 700;
+  margin-right: 6px;
+}
+
+/* Muted state */
+.companions-muted .companion {
+  filter: grayscale(1) opacity(0.4);
+  animation-play-state: paused;
+}
+.companions-muted .companion-bubble { display: none !important; }
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .companion { animation: none !important; }
+  .companion-bubble { transition: opacity 0.1s !important; }
+}
+
+/* Mobile */
+@media (max-width: 760px) {
+  .companion-bubble { font-size: 14px; max-width: 220px; white-space: normal; }
+}

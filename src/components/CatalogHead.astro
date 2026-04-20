@@ -1,0 +1,47 @@
+---
+/**
+ * Arcade-styled page header used on catalogue-type pages (plugins, games).
+ * Matches the hero vibe of the home page without the full CRT boot sequence.
+ */
+interface Props {
+  kicker?: string;   // small uppercase eyebrow text
+  title: string;
+  lead?: string;
+}
+const { kicker, title, lead } = Astro.props;
+---
+
+<header class="catalog-head">
+  {kicker && <div class="catalog-kicker">{kicker}</div>}
+  <h1 class="catalog-title">{title}</h1>
+  {lead && <p class="catalog-lead">{lead}</p>}
+</header>
+
+<style>
+  .catalog-head { margin: 24px 0 36px; }
+  .catalog-kicker {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent-2);
+    margin-bottom: 10px;
+  }
+  .catalog-title {
+    font-family: 'Press Start 2P', monospace !important;
+    font-size: clamp(30px, 5.5vw, 52px) !important;
+    text-transform: uppercase;
+    color: var(--ink) !important;
+    text-shadow: 3px 3px 0 var(--accent-2), 6px 6px 0 var(--accent) !important;
+    margin: 0 !important;
+    line-height: 1.1 !important;
+  }
+  .catalog-lead {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.7;
+    max-width: 680px;
+    margin: 24px 0 0;
+  }
+</style>

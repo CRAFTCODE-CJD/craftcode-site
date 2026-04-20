@@ -1,0 +1,61 @@
+---
+title: Mouse Interceptor
+description: Глобальный перехват событий мыши для Unreal Engine — без тиков, с Blueprint-делегатами.
+sidebar:
+  label: Обзор
+  order: 1
+head:
+  - tag: style
+    content: |
+      .content-panel > .sl-markdown-content > h1:first-child { display: none; }
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+import PluginHero from '~/components/PluginHero.astro';
+
+<PluginHero
+  kicker="// plugin · input · runtime"
+  title="Mouse Interceptor"
+  version="Runtime"
+  tagline="Лёгкий UE-плагин: глобальный перехват кликов мыши независимо от активного интерфейса. Работает без тика, Blueprint-делегаты в несколько нодов."
+  image="https://raw.githubusercontent.com/CRAFTCODE-CJD/MouseInterceptor/main/Images/Image_01.png"
+  accent="#38BDF8"
+  ctas={[
+    { label: 'GitHub', href: 'https://github.com/CRAFTCODE-CJD/MouseInterceptor', variant: 'primary', external: true },
+    { label: 'Как использовать →', href: '/plugins/mouseinterceptor/getting-started/' },
+  ]}
+/>
+
+## Ключевые возможности
+
+<CardGrid>
+  <Card title="Глобальный перехват" icon="setting">
+    Захватывает все события мыши — независимо от того, что сейчас активно на экране.
+  </Card>
+  <Card title="Blueprint-делегаты" icon="puzzle">
+    `OnMousePressed` и `OnMouseReleased` — подключи в Event Graph за секунду.
+  </Card>
+  <Card title="Двойной клик" icon="approve-check">
+    Настраиваемый порог двойного клика через `SetDoubleClickThreshold`. Отключается высоким значением.
+  </Card>
+  <Card title="Без тиков" icon="rocket">
+    Работает без Tick — минимальная нагрузка на CPU.
+  </Card>
+</CardGrid>
+
+---
+
+## Поддерживаемые платформы
+
+| Платформа | Разработка | Сборка |
+|-----------|-----------|--------|
+| Windows 64-bit | ✅ | ✅ |
+| Mac OS | ✅ | ✅ |
+| Linux | ✅ | ✅ |
+
+---
+
+## Что дальше
+
+- [Как использовать](/plugins/mouseinterceptor/getting-started/) — добавить компонент, подписаться на делегаты
+- [Справка](/plugins/mouseinterceptor/reference/) — API, FAQ

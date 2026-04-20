@@ -1,1320 +1,3 @@
-<!doctype html>
-<html lang="en" data-theme="arcade">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atlas Editor Workflow — Sprite Optimizer :: CraftCode</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
-<style>
-/* ═══════════════════════════════════════════════════
-   CRAFTCODE "TOOLSMITH" — design preview
-   Blueprint + C++ aesthetic, restrained
-   ═══════════════════════════════════════════════════ */
-
-:root {
-  --bg:         #FAF7F0;
-  --surface:    #FFFFFF;
-  --ink:        #1C1A17;
-  --muted:      #5C554C;
-  --faint:      #8B8578;
-  --border:     #E5DFD0;
-  --grid:       #E5DFD0;
-  --accent:     #B45309;
-  --link:       #1E40AF;
-  --code-bg:    #F3EFE3;
-  --highlight:  #FEF3C7;
-  --radius:     6px;
-}
-[data-theme="dark"] {
-  --bg:         #0F1419;
-  --surface:    #151A20;
-  --ink:        #E8E2D4;
-  --muted:      #8B8578;
-  --faint:      #5C5A52;
-  --border:     #1F252B;
-  --grid:       #1A2028;
-  --accent:     #D97706;
-  --link:       #60A5FA;
-  --code-bg:    #0B0F13;
-  --highlight:  #422006;
-}
-/* ━━ THEME: BLUEPRINT (architect's pale blue paper) ━━ */
-[data-theme="blueprint"] {
-  --bg:         #E6EEF8;
-  --surface:    #F2F6FB;
-  --ink:        #0B1B33;
-  --muted:      #475569;
-  --faint:      #94A3B8;
-  --border:     #B6C7DA;
-  --grid:       #BACBDD;
-  --accent:     #EA580C;
-  --link:       #1D4ED8;
-  --code-bg:    #DBE6F2;
-  --highlight:  #FED7AA;
-}
-/* ━━ THEME: SWISS (pure editorial monochrome) ━━ */
-[data-theme="swiss"] {
-  --bg:         #FFFFFF;
-  --surface:    #FAFAFA;
-  --ink:        #0A0A0A;
-  --muted:      #525252;
-  --faint:      #A3A3A3;
-  --border:     #E5E5E5;
-  --grid:       #F0F0F0;
-  --accent:     #DC2626;
-  --link:       #0A0A0A;
-  --code-bg:    #F5F5F5;
-  --highlight:  #FEF3C7;
-}
-/* ━━ THEME: TERMINAL (CRT green on near-black) ━━ */
-[data-theme="terminal"] {
-  --bg:         #0A0F0A;
-  --surface:    #0F161012;
-  --ink:        #D4F4C7;
-  --muted:      #7FA67A;
-  --faint:      #4A6A48;
-  --border:     #1C2A1C;
-  --grid:       #172317;
-  --accent:     #34D399;
-  --link:       #6EE7B7;
-  --code-bg:    #070C08;
-  --highlight:  #064E3B;
-}
-/* ━━ THEME: FORGE (warm dark workshop) ━━ */
-[data-theme="forge"] {
-  --bg:         #1A1410;
-  --surface:    #231C16;
-  --ink:        #EAE0C9;
-  --muted:      #A89679;
-  --faint:      #6B5D48;
-  --border:     #2A2118;
-  --grid:       #241B14;
-  --accent:     #F97316;
-  --link:       #FCD34D;
-  --code-bg:    #120D09;
-  --highlight:  #7C2D12;
-}
-/* ━━ THEME: CARBON (neutral gray-black, electric blue) ━━ */
-[data-theme="carbon"] {
-  --bg:         #18181B;
-  --surface:    #27272A;
-  --ink:        #FAFAFA;
-  --muted:      #A1A1AA;
-  --faint:      #52525B;
-  --border:     #27272A;
-  --grid:       #232327;
-  --accent:     #38BDF8;
-  --link:       #7DD3FC;
-  --code-bg:    #0F0F12;
-  --highlight:  #0C4A6E;
-}
-/* ━━ THEME: ARCADE (CRT boot screen — pixel + magenta + yellow) ━━ */
-[data-theme="arcade"] {
-  --bg:         #0A0A0C;
-  --surface:    #111114;
-  --ink:        #F5F5F1;
-  --muted:      #A8A8A3;
-  --faint:      #5A5A55;
-  --border:     #2A2A2E;
-  --grid:       #1A1A1D;
-  --accent:     #EC4899;
-  --accent-2:   #FACC15;
-  --link:       #FDE047;
-  --code-bg:    #050507;
-  --highlight:  #4C1D95;
-}
-/* arcade-specific typography & decorations */
-[data-theme="arcade"] h1 {
-  font-family: 'Press Start 2P', monospace;
-  font-size: 34px;
-  line-height: 1.45;
-  letter-spacing: 0;
-  text-transform: uppercase;
-  color: var(--ink);
-  text-shadow:
-    3px 3px 0 var(--accent-2),
-    6px 6px 0 var(--accent);
-  margin: 18px 0 24px;
-  padding-top: 6px;
-}
-[data-theme="arcade"] h2 {
-  font-family: 'VT323', monospace;
-  font-size: 32px;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  color: var(--accent-2);
-}
-[data-theme="arcade"] .brand .wordmark {
-  font-family: 'Press Start 2P', monospace;
-  font-size: 13px;
-  letter-spacing: 0;
-  color: var(--ink);
-}
-[data-theme="arcade"] nav.top-nav a {
-  font-family: 'JetBrains Mono', monospace;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: 12px;
-  font-weight: 600;
-}
-[data-theme="arcade"] .subnav {
-  border-bottom: 3px solid var(--accent);
-  box-shadow: 0 4px 16px -4px var(--accent);
-}
-[data-theme="arcade"] header.top {
-  border-bottom: 1px solid var(--accent);
-}
-[data-theme="arcade"] .sidebar-header .title {
-  font-family: 'Press Start 2P', monospace;
-  font-size: 11px;
-  line-height: 1.6;
-  text-transform: uppercase;
-  color: var(--accent-2);
-}
-[data-theme="arcade"] .version-badge {
-  font-family: 'Press Start 2P', monospace;
-  font-size: 8px;
-  padding: 3px 6px;
-  border-color: var(--accent-2);
-  color: var(--accent-2);
-}
-/* CRT scanlines overlay (very subtle) */
-[data-theme="arcade"] body::after {
-  content: '';
-  position: fixed; inset: 0;
-  background: repeating-linear-gradient(
-    to bottom,
-    transparent 0, transparent 2px,
-    rgba(255,255,255,0.018) 2px, rgba(255,255,255,0.018) 3px
-  );
-  pointer-events: none;
-  z-index: 4;
-}
-/* per-product accent overrides */
-[data-section="sprite"] { --accent: #EC4899; }
-[data-section="iso"]    { --accent: #10B981; }
-[data-section="vn"]     { --accent: #DC2626; }
-
-* { box-sizing: border-box; }
-html, body { margin: 0; padding: 0; }
-body {
-  background: var(--bg);
-  color: var(--ink);
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  font-size: 16px;
-  line-height: 1.65;
-  min-height: 100vh;
-  -webkit-font-smoothing: antialiased;
-  background-image:
-    linear-gradient(to right, var(--grid) 1px, transparent 1px),
-    linear-gradient(to bottom, var(--grid) 1px, transparent 1px);
-  background-size: 32px 32px;
-  background-attachment: fixed;
-  background-position: 0 0;
-}
-body::before {
-  content: '';
-  position: fixed; inset: 0;
-  background: var(--bg);
-  opacity: 0.82;
-  pointer-events: none; z-index: 0;
-}
-header, main, aside { position: relative; z-index: 1; }
-
-h1, h2, h3, h4 {
-  font-family: 'Fraunces', Georgia, serif;
-  font-weight: 600;
-  letter-spacing: -0.015em;
-  color: var(--ink);
-}
-.mono, code, kbd, pre { font-family: 'JetBrains Mono', ui-monospace, monospace; }
-
-/* ─── TOPBAR ─────────────────────────────────────── */
-header.top {
-  position: sticky; top: 0; z-index: 20;
-  background: color-mix(in oklab, var(--bg) 88%, transparent);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid var(--border);
-}
-.top-row {
-  max-width: 1280px; margin: 0 auto;
-  display: flex; align-items: center; gap: 28px;
-  padding: 14px 28px;
-}
-.brand {
-  display: flex; align-items: center; gap: 12px;
-  text-decoration: none; color: var(--ink);
-}
-.brand .logo-icon {
-  width: 32px; height: 32px;
-  transition: transform 0.12s ease-out;
-}
-.brand:hover .logo-icon {
-  animation: tick 0.36s cubic-bezier(0.25, 1.6, 0.5, 1);
-}
-@keyframes tick {
-  0%   { transform: rotate(0) scale(1); }
-  25%  { transform: rotate(-12deg) scale(1.06); }
-  55%  { transform: rotate(4deg) scale(1.02); }
-  100% { transform: rotate(0) scale(1); }
-}
-.brand .wordmark {
-  font-family: 'Fraunces', serif;
-  font-weight: 700; font-size: 18px;
-  letter-spacing: 0.06em;
-}
-
-nav.top-nav { display: flex; gap: 24px; margin-left: 8px; }
-nav.top-nav a {
-  color: var(--ink); text-decoration: none;
-  font-size: 14px; font-weight: 500;
-  opacity: 0.72;
-  padding: 4px 2px;
-  border-bottom: 2px solid transparent;
-  transition: opacity 0.15s, border-color 0.15s;
-}
-nav.top-nav a:hover { opacity: 1; }
-nav.top-nav a[aria-current] {
-  opacity: 1;
-  border-bottom-color: var(--accent);
-  color: var(--accent);
-}
-
-.top-row .spacer { flex: 1; }
-
-.search-btn {
-  display: flex; align-items: center; gap: 10px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 7px 12px 7px 14px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 13px; color: var(--muted);
-  cursor: pointer; min-width: 220px;
-  transition: border-color 0.15s;
-}
-.search-btn:hover { border-color: var(--accent); color: var(--accent); }
-.search-btn .spacer { flex: 1; }
-.search-btn kbd {
-  background: var(--bg); border: 1px solid var(--border);
-  border-radius: 3px; padding: 1px 6px; font-size: 11px;
-  font-family: inherit;
-}
-
-.theme-toggle {
-  background: none; border: 1px solid var(--border);
-  border-radius: var(--radius); width: 34px; height: 34px;
-  cursor: pointer; color: var(--ink);
-  display: grid; place-items: center;
-  transition: border-color 0.15s, color 0.15s;
-}
-.theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
-.theme-toggle .icon-sun { display: block; }
-.theme-toggle .icon-moon { display: none; }
-:is([data-theme="dark"], [data-theme="terminal"], [data-theme="forge"], [data-theme="carbon"], [data-theme="arcade"]) .theme-toggle .icon-sun { display: none; }
-:is([data-theme="dark"], [data-theme="terminal"], [data-theme="forge"], [data-theme="carbon"], [data-theme="arcade"]) .theme-toggle .icon-moon { display: block; }
-
-/* ─── SUB-NAV (context strip) ─────────────────────── */
-.subnav {
-  border-bottom: 1px solid var(--border);
-  background: color-mix(in oklab, var(--surface) 50%, var(--bg));
-}
-.subnav-row {
-  max-width: 1280px; margin: 0 auto;
-  padding: 10px 28px;
-  display: flex; align-items: center; gap: 14px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 13px; color: var(--muted);
-}
-.subnav-row .back {
-  color: var(--muted); text-decoration: none;
-  display: inline-flex; align-items: center; gap: 4px;
-  padding: 2px 6px; border-radius: 4px;
-  transition: color 0.15s, background 0.15s;
-}
-.subnav-row .back:hover {
-  color: var(--accent);
-  background: color-mix(in oklab, var(--accent) 10%, transparent);
-}
-.subnav-row .current {
-  color: var(--ink); font-weight: 500;
-  display: inline-flex; align-items: center; gap: 8px;
-}
-.subnav-row .version-badge {
-  font-size: 11px; color: var(--accent);
-  border: 1px solid var(--accent);
-  padding: 1px 6px; border-radius: 3px;
-  font-weight: 600;
-}
-
-/* ─── SHELL ──────────────────────────────────────── */
-.shell {
-  max-width: 1280px; margin: 0 auto;
-  display: grid; grid-template-columns: 260px 1fr 220px;
-  gap: 48px;
-  padding: 32px 28px 96px;
-}
-
-/* ─── SIDEBAR ────────────────────────────────────── */
-aside.sidebar {
-  font-size: 14px;
-  position: sticky; top: 110px; align-self: start;
-  max-height: calc(100vh - 130px); overflow-y: auto;
-}
-.sidebar-header {
-  padding-bottom: 14px; margin-bottom: 12px;
-  border-bottom: 1px solid var(--border);
-}
-.sidebar-header .label {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 11px; color: var(--faint);
-  text-transform: uppercase; letter-spacing: 0.12em;
-}
-.sidebar-header .title {
-  font-family: 'Fraunces', serif;
-  font-size: 18px; font-weight: 600;
-  margin-top: 4px;
-  display: flex; align-items: center; gap: 8px;
-}
-.sidebar .group-label {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
-  color: var(--faint);
-  text-transform: uppercase; letter-spacing: 0.1em;
-  margin: 18px 0 6px; padding-left: 10px;
-}
-.sidebar ul { list-style: none; padding: 0; margin: 0; }
-.sidebar li a {
-  display: flex; align-items: center; gap: 8px;
-  padding: 6px 10px;
-  color: var(--ink); opacity: 0.72;
-  text-decoration: none;
-  border-left: 2px solid transparent;
-  font-size: 14px;
-  transition: opacity 0.15s, color 0.15s, background 0.15s;
-}
-.sidebar li a:hover {
-  opacity: 1;
-  background: color-mix(in oklab, var(--accent) 6%, transparent);
-}
-.sidebar li a.active {
-  opacity: 1; color: var(--accent); font-weight: 500;
-  border-left-color: var(--accent);
-  background: color-mix(in oklab, var(--accent) 8%, transparent);
-}
-.sidebar li a.active::after {
-  content: '◂'; margin-left: auto;
-  color: var(--accent); font-size: 10px;
-}
-
-/* ─── ARTICLE ────────────────────────────────────── */
-article { max-width: 740px; min-width: 0; }
-
-.breadcrumbs {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 13px; color: var(--muted);
-  margin-bottom: 18px; overflow-x: auto; white-space: nowrap;
-  padding-bottom: 4px;
-}
-.breadcrumbs a { color: var(--muted); text-decoration: none; }
-.breadcrumbs a:hover { color: var(--accent); }
-.breadcrumbs .sep { color: var(--faint); margin: 0 8px; user-select: none; }
-.breadcrumbs .current { color: var(--ink); font-weight: 500; }
-
-h1 { font-size: 42px; line-height: 1.08; margin: 10px 0 14px; }
-h2 { font-size: 26px; line-height: 1.25; margin: 40px 0 14px; }
-h3 { font-size: 20px; line-height: 1.3; margin: 28px 0 10px; }
-
-.metadata {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 13px; color: var(--muted);
-  line-height: 1.8;
-  white-space: pre; margin: 8px 0 8px;
-}
-
-.ruled {
-  display: flex; align-items: center; gap: 4px;
-  margin: 18px 0 28px;
-  color: var(--border);
-}
-.ruled::before, .ruled::after {
-  content: ''; flex: 1; height: 1px;
-  background: var(--border);
-}
-.ruled .ticks {
-  display: flex; gap: 6px;
-}
-.ruled .ticks::before, .ruled .ticks::after {
-  content: ''; width: 1px; height: 8px;
-  background: var(--muted);
-  display: block;
-}
-
-p { margin: 14px 0; color: var(--ink); }
-strong { font-weight: 600; }
-
-article a:not(.bare) {
-  color: var(--link); text-decoration: none;
-  position: relative;
-  transition: color 0.15s;
-}
-article a:not(.bare)::before {
-  content: ''; display: inline-block;
-  width: 7px; height: 7px; border-radius: 50%;
-  background: var(--link);
-  margin-right: 6px; vertical-align: 2px;
-  opacity: 0; transform: scale(0.4);
-  transition: opacity 0.2s, transform 0.2s, background 0.2s;
-}
-article a:not(.bare):hover { color: var(--accent); }
-article a:not(.bare):hover::before {
-  opacity: 1; transform: scale(1);
-  background: var(--accent);
-  box-shadow: 0 0 0 2px color-mix(in oklab, var(--accent) 25%, transparent);
-}
-
-/* HERO FIGURE with dimension line */
-figure.hero {
-  position: relative;
-  margin: 40px 0 36px;
-  padding-top: 32px;
-}
-figure.hero .dim-label {
-  position: absolute; left: 50%; top: 6px;
-  transform: translateX(-50%);
-  background: var(--bg);
-  padding: 0 12px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
-  color: var(--muted);
-  z-index: 2;
-}
-figure.hero .dim-line {
-  position: absolute;
-  left: 2px; right: 2px; top: 14px;
-  height: 1px; background: var(--border);
-}
-figure.hero .dim-line::before,
-figure.hero .dim-line::after {
-  content: ''; position: absolute; top: -4px;
-  width: 1px; height: 9px;
-  background: var(--muted);
-}
-figure.hero .dim-line::before { left: 0; }
-figure.hero .dim-line::after  { right: 0; }
-figure.hero img {
-  display: block; width: 100%; height: auto;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface);
-}
-figure.hero figcaption {
-  margin-top: 10px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 12px; color: var(--muted);
-  text-align: center;
-}
-figure.hero figcaption .fig {
-  color: var(--accent); font-weight: 600;
-}
-
-/* CODE BLOCK */
-pre.code {
-  background: var(--code-bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 18px 22px; margin: 20px 0;
-  overflow-x: auto; position: relative;
-  font-size: 14px; line-height: 1.7;
-}
-pre.code code { background: none; padding: 0; }
-.copy-btn {
-  position: absolute; top: 10px; right: 10px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 4px; padding: 4px 10px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 11px; color: var(--muted);
-  cursor: pointer;
-  transition: color 0.15s, border-color 0.15s;
-  opacity: 0;
-}
-pre.code:hover .copy-btn { opacity: 1; }
-.copy-btn:hover { color: var(--accent); border-color: var(--accent); }
-
-/* Inline code */
-p code, li code {
-  background: var(--code-bg);
-  border: 1px solid var(--border);
-  border-radius: 3px;
-  padding: 1px 6px;
-  font-size: 0.88em;
-  color: var(--link);
-}
-
-/* UE / C++ syntax tokens */
-.tok-key { color: #B91C1C; font-weight: 500; }
-.tok-cls { color: #1E40AF; }
-.tok-str { color: #166534; }
-.tok-com { color: #6B7280; font-style: italic; }
-.tok-num { color: #A16207; }
-.tok-mac { color: #7C3AED; }
-:is([data-theme="dark"], [data-theme="terminal"], [data-theme="forge"], [data-theme="carbon"], [data-theme="arcade"]) .tok-key { color: #F87171; }
-:is([data-theme="dark"], [data-theme="terminal"], [data-theme="forge"], [data-theme="carbon"], [data-theme="arcade"]) .tok-cls { color: #93C5FD; }
-:is([data-theme="dark"], [data-theme="terminal"], [data-theme="forge"], [data-theme="carbon"], [data-theme="arcade"]) .tok-str { color: #86EFAC; }
-:is([data-theme="dark"], [data-theme="terminal"], [data-theme="forge"], [data-theme="carbon"], [data-theme="arcade"]) .tok-com { color: #9CA3AF; }
-:is([data-theme="dark"], [data-theme="terminal"], [data-theme="forge"], [data-theme="carbon"], [data-theme="arcade"]) .tok-num { color: #FBBF24; }
-:is([data-theme="dark"], [data-theme="terminal"], [data-theme="forge"], [data-theme="carbon"], [data-theme="arcade"]) .tok-mac { color: #C4B5FD; }
-
-/* CALLOUT / aside */
-.callout {
-  border-left: 3px solid var(--accent);
-  background: color-mix(in oklab, var(--accent) 6%, transparent);
-  padding: 12px 16px; margin: 20px 0;
-  border-radius: 0 var(--radius) var(--radius) 0;
-}
-.callout .tag {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 11px; text-transform: uppercase;
-  letter-spacing: 0.08em; color: var(--accent);
-  font-weight: 600; margin-bottom: 4px;
-}
-
-/* ─── RIGHT RAIL (ToC) ───────────────────────────── */
-aside.toc {
-  font-size: 13px;
-  position: sticky; top: 110px; align-self: start;
-}
-.toc .label {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 11px; color: var(--faint);
-  text-transform: uppercase; letter-spacing: 0.12em;
-  margin-bottom: 8px;
-}
-.toc ul { list-style: none; padding: 0; margin: 0; }
-.toc li a {
-  display: block; padding: 4px 0 4px 12px;
-  color: var(--muted); text-decoration: none;
-  border-left: 1px solid var(--border);
-  transition: color 0.15s, border-color 0.15s;
-}
-.toc li a:hover,
-.toc li a.active {
-  color: var(--accent);
-  border-left-color: var(--accent);
-}
-
-/* ─── PAGE NAV ───────────────────────────────────── */
-.page-nav {
-  margin-top: 48px; padding-top: 24px;
-  border-top: 1px solid var(--border);
-  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
-}
-.page-nav a {
-  display: block; padding: 14px 18px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  text-decoration: none; color: var(--ink);
-  transition: border-color 0.15s, background 0.15s;
-}
-.page-nav a:hover {
-  border-color: var(--accent);
-  background: color-mix(in oklab, var(--accent) 5%, transparent);
-}
-.page-nav a .dir {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 11px; color: var(--muted);
-  text-transform: uppercase; letter-spacing: 0.1em;
-}
-.page-nav a .title {
-  font-family: 'Fraunces', serif; font-weight: 600;
-  font-size: 16px; margin-top: 4px;
-}
-.page-nav a.next { text-align: right; }
-
-/* ─── SECTION SWITCHER (demo-only overlay) ────────── */
-.demo-panel {
-  position: fixed; bottom: 20px; right: 20px; z-index: 30;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 14px 16px;
-  box-shadow: 0 12px 32px rgba(20, 15, 10, 0.12);
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 12px;
-  min-width: 210px;
-}
-.demo-panel .head {
-  color: var(--accent); font-weight: 600;
-  margin-bottom: 8px; font-size: 11px;
-  text-transform: uppercase; letter-spacing: 0.1em;
-}
-.demo-panel .sub {
-  color: var(--faint); font-size: 11px;
-  margin-top: 10px; margin-bottom: 4px;
-  text-transform: uppercase; letter-spacing: 0.08em;
-}
-.demo-panel button {
-  display: block; width: 100%; text-align: left;
-  background: none; border: 1px solid transparent;
-  padding: 5px 8px; margin: 2px 0;
-  color: var(--ink); cursor: pointer;
-  border-radius: 4px;
-  font-family: inherit; font-size: inherit;
-  transition: color 0.15s, background 0.15s;
-}
-.demo-panel button:hover {
-  color: var(--accent);
-  background: color-mix(in oklab, var(--accent) 7%, transparent);
-}
-.demo-panel button.on {
-  color: var(--accent);
-  background: color-mix(in oklab, var(--accent) 10%, transparent);
-  font-weight: 600;
-}
-.demo-panel .hint {
-  color: var(--faint); font-size: 10px;
-  margin-top: 10px; line-height: 1.5;
-  font-family: 'Inter', sans-serif;
-}
-
-/* ─── TOAST ──────────────────────────────────────── */
-.toast {
-  position: fixed; bottom: 28px; left: 50%;
-  transform: translateX(-50%) translateY(16px);
-  background: var(--ink); color: var(--bg);
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 13px; padding: 9px 18px;
-  border-radius: 6px;
-  opacity: 0; pointer-events: none;
-  transition: opacity 0.2s, transform 0.2s;
-  z-index: 40;
-}
-.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-/* ─── COMPANIONS (CRAFT + CODE) ──────────────────── */
-/* Characters patrol the entire viewport perimeter (bottom → right → top → left).
-   JS sets {left, top, data-wall}; CSS rotates the sprite-wrap to match the wall. */
-.companions {
-  position: fixed;
-  inset: 0;
-  z-index: 25;
-  pointer-events: none;
-  overflow: hidden;
-}
-.companion {
-  position: absolute;
-  /* top & left set by JS */
-  width: 48px; height: 48px;
-  display: grid; place-items: end center;   /* feet-align sprite to the bottom of the hitbox */
-  cursor: pointer;
-  pointer-events: auto;
-  user-select: none;
-  filter: drop-shadow(0 3px 6px rgba(0,0,0,0.18));
-  transition: filter 0.3s;
-  border-radius: 50%;
-}
-.companion[data-facing="left"] .sprite { transform: scaleX(-1); }
-/* 32×32 pixel-art sprite upscaled 1.5× to 48×48 display size. Offsets ×1.5. */
-.companion .sprite {
-  position: relative;
-  width: 48px; height: 48px;
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
-  background-repeat: no-repeat;
-  background-size: 960px 48px;
-  background-position-x: 0;
-  animation: sprite-breath 0.7s infinite step-end;
-}
-.companion[data-who="craft"] .sprite { background-image: url(/sprites/craft.png); }
-.companion[data-who="code"]  .sprite { background-image: url(/sprites/code.png); }
-
-/* Frame map (48px display/frame, 32px source × 1.5):
-   0 idle_a(0)       1 idle_b(-48)     2 blink(-96)
-   3 walk_a(-144)    4 walk_b(-192)
-   5 climb_a(-240)   6 climb_b(-288)
-   7 talk_a(-336)    8 talk_b(-384)
-   9 surprise(-432) 10 sleep(-480)
-  11 wave_a(-528)   12 wave_b(-576)
-  13 typing_a(-624) 14 typing_b(-672)
-  15 excited(-720)
-  ── claude-code.gif thinking sequence ──
-  16 idea_a(-768)   17 idea_b(-816)         — antenna grows on the head
-  18 think_a(-864)  19 think_b(-912)        — squat + antenna + laptop  */
-
-@keyframes sprite-breath {
-  0%, 44%    { background-position-x: 0; }           /* idle_a */
-  45%, 49%   { background-position-x: -96px; }       /* blink */
-  50%, 100%  { background-position-x: -48px; }       /* idle_b */
-}
-.companion.walking .sprite {
-  animation: sprite-walk 0.28s infinite step-end;   /* slower frame swap */
-}
-@keyframes sprite-walk {
-  0%, 49%   { background-position-x: -144px; }       /* walk_a */
-  50%, 100% { background-position-x: -192px; }       /* walk_b */
-}
-/* Climb frames repurposed for FALLING — when they're airborne (thrown, dragged)
-   the legs kick through the air. Fast frame-swap = panic-legs. */
-.companion.falling .sprite {
-  animation: sprite-fall 0.12s infinite step-end;
-}
-@keyframes sprite-fall {
-  0%, 49%   { background-position-x: -240px; }       /* climb_a — legs up */
-  50%, 100% { background-position-x: -288px; }       /* climb_b — legs down */
-}
-.companion.talking .sprite {
-  animation: sprite-talk 0.22s infinite step-end;
-}
-@keyframes sprite-talk {
-  0%, 49%   { background-position-x: -336px; }       /* talk_a */
-  50%, 100% { background-position-x: -384px; }       /* talk_b */
-}
-.companion.surprised .sprite { animation: none !important; background-position-x: -432px !important; }
-.companion.sleeping  .sprite { animation: none !important; background-position-x: -480px !important; }
-.companion.excited   .sprite { animation: none !important; background-position-x: -720px !important; }
-.companion.waving    .sprite {
-  animation: sprite-wave 0.30s infinite step-end;
-}
-@keyframes sprite-wave {
-  0%, 49%   { background-position-x: -528px; }       /* wave_a */
-  50%, 100% { background-position-x: -576px; }       /* wave_b */
-}
-.companion.typing .sprite {
-  animation: sprite-typing 0.28s infinite step-end;
-}
-@keyframes sprite-typing {
-  0%, 49%   { background-position-x: -624px; }       /* typing_a */
-  50%, 100% { background-position-x: -672px; }       /* typing_b */
-}
-/* claude-code.gif thinking sequence — idea → thinking
-   idea: plays ONCE linearly — first half shows idea_a (laptop high, hands
-   catching), second half shows idea_b (laptop descending to floor).
-   Duration matches the 900ms idea phase in runThinkingSequence. No loop. */
-.companion.idea .sprite {
-  animation: sprite-idea 0.9s steps(1) 1 forwards;
-}
-@keyframes sprite-idea {
-  0%, 49%   { background-position-x: -768px; }       /* idea_a (laptop pulled out, high) */
-  50%, 100% { background-position-x: -816px; }       /* idea_b (laptop lowered to floor) */
-}
-.companion.thinking .sprite {
-  animation: sprite-thinking 0.26s infinite step-end;
-}
-@keyframes sprite-thinking {
-  0%, 49%   { background-position-x: -864px; }       /* think_a */
-  50%, 100% { background-position-x: -912px; }       /* think_b */
-}
-.companion::before {
-  content: ''; position: absolute; inset: -4px;
-  border-radius: 50%;
-  background: radial-gradient(circle, color-mix(in oklab, var(--accent) 20%, transparent) 0%, transparent 70%);
-  opacity: 0; transition: opacity 0.2s;
-  z-index: -1;
-}
-.companion:hover::before { opacity: 1; }
-
-/* Idle-bob is drawn INTO the sprite (idle_b is 4px higher with dust under feet).
-   No wrapper animation on plain idle — would double-count the hop.
-   Walking and excited add a small wrapper hop because those sprites are feet-level. */
-.companion.walking {
-  animation: companion-hop 0.56s steps(2) infinite;   /* wrapper hop halved too */
-}
-@keyframes companion-hop {
-  0%, 49%    { transform: translateY(0); }
-  50%, 100%  { transform: translateY(-2px); }
-}
-/* While dragging, sprite scales slightly to feel "grabbed" */
-.companion.dragging {
-  animation: none;
-  cursor: grabbing !important;
-  filter: drop-shadow(0 8px 12px rgba(0,0,0,0.35)) !important;
-}
-.companion.dragging .sprite {
-  animation: sprite-fall 0.16s infinite step-end !important;
-}
-.companion { cursor: grab; }
-
-/* ─── FX overlays (dust, sparkle, shake) ─── */
-.fx-layer {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 24;
-  overflow: hidden;
-}
-.fx-dust {
-  position: absolute;
-  width: 30px; height: 10px;
-  background: radial-gradient(ellipse, rgba(180,158,132,0.55) 0%, rgba(180,158,132,0.25) 50%, transparent 75%);
-  border-radius: 50%;
-  transform-origin: 50% 100%;
-  animation: fx-dust 0.7s ease-out forwards;
-}
-.fx-dust.big {
-  width: 46px; height: 14px;
-  animation-duration: 1s;
-}
-@keyframes fx-dust {
-  0%   { transform: scale(0.3, 0.5); opacity: 0; }
-  15%  { opacity: 0.9; }
-  100% { transform: scale(2.2, 1) translateY(-2px); opacity: 0; }
-}
-.fx-sparkle {
-  position: absolute;
-  width: 10px; height: 10px;
-  font-size: 12px;
-  line-height: 1;
-  color: #ffd966;
-  text-shadow: 0 0 6px rgba(255, 217, 102, 0.7);
-  animation: fx-sparkle 0.7s ease-out forwards;
-  transform: translate(-50%, -50%);
-  will-change: transform, opacity;
-}
-@keyframes fx-sparkle {
-  0%   { transform: translate(-50%, -50%) scale(0); opacity: 0; }
-  30%  { transform: translate(calc(-50% + var(--dx,0px) * 0.4), calc(-50% + var(--dy,0px) * 0.4)) scale(1.2); opacity: 1; }
-  100% { transform: translate(calc(-50% + var(--dx,0px)), calc(-50% + var(--dy,0px))) scale(0.3); opacity: 0; }
-}
-.fx-shock {
-  /* Quick impact ring — appears on hard landings */
-  position: absolute;
-  width: 40px; height: 40px;
-  border: 2px solid rgba(255, 220, 180, 0.6);
-  border-radius: 50%;
-  transform: translate(-50%, -50%) scale(0);
-  animation: fx-shock 0.45s ease-out forwards;
-}
-@keyframes fx-shock {
-  0%   { transform: translate(-50%, -50%) scale(0);   opacity: 0.9; }
-  100% { transform: translate(-50%, -50%) scale(1.6); opacity: 0; }
-}
-
-/* Slight camera-shake on hard landing */
-@keyframes screen-shake {
-  0%, 100% { transform: translate(0, 0); }
-  20%      { transform: translate(-2px, 1px); }
-  40%      { transform: translate(2px, -1px); }
-  60%      { transform: translate(-1px, -1px); }
-  80%      { transform: translate(1px, 1px); }
-}
-body.fx-shake {
-  animation: screen-shake 0.3s ease-in-out;
-}
-.companion.excited {
-  animation: companion-excited 0.18s steps(2) infinite;
-}
-@keyframes companion-excited {
-  0%, 49%   { transform: translateY(0) scale(1.02, 0.98); }
-  50%, 100% { transform: translateY(-3px) scale(0.98, 1.04); }
-}
-
-.companion-bubble {
-  position: absolute;
-  bottom: 56px; left: 50%;
-  transform: translateX(-50%) translateY(6px);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 8px 14px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 13px;
-  color: var(--ink);
-  white-space: nowrap;
-  max-width: 280px;
-  box-shadow: 0 10px 24px rgba(10, 8, 5, 0.14);
-  opacity: 0; pointer-events: none;
-  transition: opacity 0.2s, transform 0.2s;
-  line-height: 1.5;
-}
-.companion-bubble::after {
-  content: '';
-  position: absolute;
-  bottom: -6px; left: 50%;
-  transform: translateX(-50%) rotate(45deg);
-  width: 10px; height: 10px;
-  background: var(--surface);
-  border-right: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
-}
-.companion-bubble.visible {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
-}
-.companion-bubble .who {
-  display: inline;
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--accent);
-  font-weight: 700;
-  margin-right: 6px;
-}
-
-/* Mute toggle on hover */
-.companion-mute {
-  position: absolute;
-  top: -8px; right: -8px;
-  width: 20px; height: 20px;
-  border-radius: 50%;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  cursor: pointer;
-  pointer-events: auto;
-  display: grid; place-items: center;
-  font-size: 12px; color: var(--muted);
-  opacity: 0;
-  transition: opacity 0.15s, color 0.15s, border-color 0.15s;
-  font-family: 'Inter', sans-serif;
-  line-height: 1; padding: 0;
-}
-.companions:hover .companion-mute { opacity: 1; }
-.companion-mute:hover {
-  color: var(--accent);
-  border-color: var(--accent);
-}
-
-/* Muted state */
-.companions-muted .companion {
-  filter: grayscale(1) opacity(0.4);
-  animation-play-state: paused;
-}
-.companions-muted .companion-bubble { display: none !important; }
-.companions-muted .companion-mute { opacity: 1; }
-
-/* Arcade theme — subtle bubble restyle, no companion glow */
-[data-theme="arcade"] .companion-bubble {
-  border-radius: 0;
-  font-family: 'VT323', monospace;
-  font-size: 16px;
-  letter-spacing: 0.02em;
-  background: var(--bg);
-  border-color: var(--accent);
-}
-[data-theme="arcade"] .companion-bubble::after {
-  background: var(--bg);
-  border-color: var(--accent);
-}
-[data-theme="arcade"] .companion-bubble .who {
-  color: var(--accent-2);
-}
-
-/* reduced motion — kill all movement */
-@media (prefers-reduced-motion: reduce) {
-  .companion, .companion.talking, .companion.angry, .companion.dance {
-    animation: none !important;
-  }
-  .companion-bubble { transition: opacity 0.1s !important; }
-}
-
-/* ─── RESPONSIVE ─────────────────────────────────── */
-@media (max-width: 1100px) {
-  .shell { grid-template-columns: 240px 1fr; }
-  aside.toc { display: none; }
-}
-@media (max-width: 760px) {
-  .shell { grid-template-columns: 1fr; padding: 20px; gap: 24px; }
-  aside.sidebar { position: static; max-height: none; }
-  nav.top-nav { display: none; }
-  .search-btn { min-width: 0; }
-  h1 { font-size: 32px; }
-  .demo-panel { bottom: 10px; right: 10px; padding: 10px; }
-  .companions { bottom: 10px; left: 10px; gap: 14px; }
-  /* companion keeps its 48×48 size on mobile — integer pixel-art upscale only */
-  .companion-bubble { font-size: 12px; max-width: 220px; white-space: normal; }
-}
-</style>
-</head>
-<body data-section="sprite">
-
-<!-- ═══ TOPBAR ═══════════════════════════════════ -->
-<header class="top">
-  <div class="top-row">
-    <a href="#" class="brand">
-      <img src="/logo/craftcode_icon.png" class="logo-icon" alt="CraftCode">
-      <span class="wordmark">CRAFTCODE</span>
-    </a>
-    <nav class="top-nav">
-      <a href="#" aria-current="page">Plugins</a>
-      <a href="#">Games</a>
-      <a href="#">Blog</a>
-      <a href="#">About</a>
-    </nav>
-    <div class="spacer"></div>
-    <button class="search-btn" title="Search docs">
-      <span>Search docs…</span>
-      <span class="spacer"></span>
-      <kbd>⌘K</kbd>
-    </button>
-    <button class="theme-toggle" aria-label="Toggle theme" id="theme-toggle">
-      <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
-      <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-    </button>
-  </div>
-</header>
-
-<!-- ═══ CONTEXT STRIP (so users ALWAYS know where they are) ═══ -->
-<div class="subnav">
-  <div class="subnav-row">
-    <a href="#" class="back">← All Plugins</a>
-    <span style="color:var(--faint)">│</span>
-    <span class="current">
-      Sprite Optimizer
-      <span class="version-badge">v2.1</span>
-    </span>
-    <div class="spacer" style="flex:1"></div>
-    <span style="color:var(--faint)">Unreal Engine 5.0 – 5.6 · 9 engines supported</span>
-  </div>
-</div>
-
-<!-- ═══ MAIN SHELL ═══════════════════════════════ -->
-<div class="shell">
-
-  <!-- SIDEBAR -->
-  <aside class="sidebar">
-    <div class="sidebar-header">
-      <div class="label">// Plugin</div>
-      <div class="title">Sprite Optimizer</div>
-    </div>
-
-    <div class="group-label">// Start Here</div>
-    <ul>
-      <li><a href="#">Overview</a></li>
-      <li><a href="#">Getting Started</a></li>
-      <li><a href="#">Installation</a></li>
-    </ul>
-
-    <div class="group-label">// Guides</div>
-    <ul>
-      <li><a href="#">Typical Workflow</a></li>
-      <li><a href="#" class="active">Atlas Editor</a></li>
-      <li><a href="#">Cross-Engine Export</a></li>
-      <li><a href="#">Slice Textures</a></li>
-      <li><a href="#">Materials & Safety</a></li>
-    </ul>
-
-    <div class="group-label">// Reference</div>
-    <ul>
-      <li><a href="#">Settings</a></li>
-      <li><a href="#">Troubleshooting</a></li>
-      <li><a href="#">FAQ</a></li>
-    </ul>
-
-    <div class="group-label">// Project</div>
-    <ul>
-      <li><a href="#">Changelog</a></li>
-      <li><a href="#">Roadmap</a></li>
-      <li><a href="#">Support</a></li>
-    </ul>
-  </aside>
-
-  <!-- ARTICLE -->
-  <main>
-    <article>
-
-      <div class="breadcrumbs">
-        <a href="#">Plugins</a>
-        <span class="sep">::</span>
-        <a href="#">SpriteOptimizer</a>
-        <span class="sep">::</span>
-        <a href="#">Guides</a>
-        <span class="sep">::</span>
-        <span class="current">Atlas Editor</span>
-      </div>
-
-      <h1>Atlas Editor Workflow</h1>
-
-      <pre class="metadata">// Last updated  2026-04-20
-// Engine        UE 5.5
-// Plugin v      2.1
-// Reading time  ~ 4 min</pre>
-
-      <div class="ruled"><span class="ticks"></span></div>
-
-      <p>The <strong>Atlas Editor</strong> lets you pack multiple sprites into a single texture atlas with configurable padding, power-of-two alignment, and automatic slice generation. This guide walks through a typical import-to-export workflow.</p>
-
-      <p>If you're new to the plugin, start with the <a href="#">Getting Started</a> guide — it covers installation and project-wide settings that apply to every atlas you'll build.</p>
-
-      <figure class="hero">
-        <div class="dim-line"></div>
-        <span class="dim-label">1920 × 1080</span>
-        <img src="/images/sprite-optimizer/gallery/Gallery_02_AtlasEditor.png"
-             alt="Atlas Editor interface">
-        <figcaption><span class="fig">Fig. 1</span> — Atlas Editor, main view with packed atlas preview</figcaption>
-      </figure>
-
-      <h2>Step 1: Declare your sprite array</h2>
-
-      <p>Define a <code>UPROPERTY</code> array that the editor can populate with the sprites you want to pack:</p>
-
-      <pre class="code"><button class="copy-btn" data-copy>// copy</button><code><span class="tok-com">// MyAtlasBuilder.h</span>
-<span class="tok-mac">#pragma once</span>
-
-<span class="tok-mac">#include</span> <span class="tok-str">"CoreMinimal.h"</span>
-<span class="tok-mac">#include</span> <span class="tok-str">"SpriteOptimizer/AtlasTypes.h"</span>
-
-<span class="tok-key">class</span> <span class="tok-cls">SPRITEOPT_API</span> <span class="tok-cls">AMyAtlasBuilder</span> : <span class="tok-key">public</span> <span class="tok-cls">AActor</span>
-{
-    <span class="tok-cls">GENERATED_BODY</span>()
-
-<span class="tok-key">public</span>:
-    <span class="tok-cls">UPROPERTY</span>(EditAnywhere, Category = <span class="tok-str">"Atlas"</span>)
-    <span class="tok-cls">TArray</span>&lt;<span class="tok-cls">UTexture2D</span>*&gt; Sprites;
-
-    <span class="tok-cls">UPROPERTY</span>(EditAnywhere, Category = <span class="tok-str">"Atlas"</span>, meta = (ClampMin = <span class="tok-str">"2"</span>))
-    <span class="tok-key">int32</span> Padding = <span class="tok-num">4</span>;
-};</code></pre>
-
-      <p>The <code>ClampMin</code> meta prevents negative padding — see <a href="#">Settings Reference</a> for the full list of meta specifiers the plugin honours.</p>
-
-      <div class="callout">
-        <div class="tag">// Note</div>
-        <div>Atlas size is always rounded up to the nearest power of two. For a strict size, use <a href="#">Fixed Atlas mode</a> instead — it trades packing efficiency for predictability.</div>
-      </div>
-
-      <h2>Step 2: Run the optimizer</h2>
-
-      <p>Right-click your actor in the Outliner and select <strong>Sprite Optimizer → Build Atlas</strong>. The editor opens a preview window showing packed layout, wasted pixels, and estimated VRAM savings. Use the <a href="#">Cross-Engine Export</a> dialog to save the atlas as Unity TexturePacker JSON, Godot `.tres`, or plain PNG + `.json`.</p>
-
-      <h2>Step 3: Verify the generated slices</h2>
-
-      <p>The plugin writes a <code>USpriteAtlasSlice</code> asset per sprite, with UV bounds pre-computed. Reference these from your materials:</p>
-
-      <pre class="code"><button class="copy-btn" data-copy>// copy</button><code><span class="tok-com">// MyAtlasBuilder.cpp</span>
-<span class="tok-key">void</span> <span class="tok-cls">AMyAtlasBuilder</span>::ApplyAtlasToMaterial(<span class="tok-cls">UMaterialInstanceDynamic</span>* MID, <span class="tok-cls">int32</span> SliceIndex)
-{
-    <span class="tok-key">if</span> (!MID || !Atlas) <span class="tok-key">return</span>;
-
-    <span class="tok-key">const</span> <span class="tok-cls">FAtlasSlice</span>&amp; Slice = Atlas-&gt;GetSlice(SliceIndex);
-    MID-&gt;SetTextureParameterValue(<span class="tok-str">"AtlasTexture"</span>, Atlas-&gt;Texture);
-    MID-&gt;SetVectorParameterValue(<span class="tok-str">"UVBounds"</span>, Slice.UVBounds);
-}</code></pre>
-
-      <!-- PAGE NAV -->
-      <nav class="page-nav">
-        <a href="#" class="prev">
-          <div class="dir">← previous</div>
-          <div class="title">Typical Workflow</div>
-        </a>
-        <a href="#" class="next">
-          <div class="dir">next →</div>
-          <div class="title">Cross-Engine Export</div>
-        </a>
-      </nav>
-
-    </article>
-  </main>
-
-  <!-- RIGHT RAIL: On This Page -->
-  <aside class="toc">
-    <div class="label">// On This Page</div>
-    <ul>
-      <li><a href="#" class="active">Atlas Editor Workflow</a></li>
-      <li><a href="#">Step 1: Declare array</a></li>
-      <li><a href="#">Step 2: Run the optimizer</a></li>
-      <li><a href="#">Step 3: Verify slices</a></li>
-    </ul>
-  </aside>
-
-</div>
-
-<!-- ═══ DEMO PANEL ═══════════════════════════════ -->
-<aside class="demo-panel">
-  <div class="head">// Preview controls</div>
-  <div class="sub">Theme</div>
-  <button data-t="arcade" class="on">▸ Arcade (pixel CRT boot) ★ default</button>
-  <button data-t="dark">▸ Midnight (dark blue)</button>
-  <button data-t="forge">▸ Forge (warm dark)</button>
-  <button data-t="terminal">▸ Terminal (CRT green)</button>
-  <button data-t="carbon">▸ Carbon (neutral + blue)</button>
-  <button data-t="paper">▸ Paper (warm cream)</button>
-  <button data-t="blueprint">▸ Blueprint (pale blue)</button>
-  <button data-t="swiss">▸ Swiss (pure white)</button>
-  <div class="sub">Accent (per product)</div>
-  <button data-section="sprite" class="on">▸ Sprite Optimizer (pink)</button>
-  <button data-section="iso">▸ Iso Shooter (radar green)</button>
-  <button data-section="vn">▸ VN Engine (evidence red)</button>
-  <button data-section="default">▸ CraftCode base (copper)</button>
-  <div class="sub">Companions</div>
-  <button data-action="companions-wake">▸ Wake them up</button>
-  <button data-action="companions-angry">▸ Make angry</button>
-  <button data-action="companions-think">▸ Thinking moment</button>
-  <button data-action="companions-konami">▸ Konami dance</button>
-  <button data-action="companions-mute-toggle">▸ Mute / Unmute</button>
-  <div class="hint">Theme + Accent are independent — mix any combination. Companions in bottom-left corner. Click them, ignore them, try ↑↑↓↓←→←→BA.</div>
-</aside>
-
-<!-- ═══ COMPANIONS (CRAFT ⨯ CODE) ═══════════════ -->
-<div class="fx-layer" aria-hidden="true"></div>
-<div class="companions" aria-live="polite" aria-atomic="false">
-  <div class="companion" data-who="craft" data-wall="bottom" role="button" tabindex="0"
-       aria-label="CRAFT — press Enter to talk.">
-    <div class="sprite-wrap"><div class="sprite"></div></div>
-    <div class="companion-bubble" id="bubble-craft"></div>
-    <button class="companion-mute" data-toggle-mute title="Mute companions" aria-label="Mute companions">×</button>
-  </div>
-  <div class="companion" data-who="code" data-wall="bottom" role="button" tabindex="0"
-       aria-label="CODE — press Enter to talk.">
-    <div class="sprite-wrap"><div class="sprite"></div></div>
-    <div class="companion-bubble" id="bubble-code"></div>
-  </div>
-</div>
-
-<div class="toast" id="toast">// copied</div>
-
-<script>
-  const DARK_THEMES = ['dark', 'terminal', 'forge', 'carbon', 'arcade'];
-
-  function setTheme(t) {
-    if (!t || t === 'paper') document.documentElement.removeAttribute('data-theme');
-    else document.documentElement.setAttribute('data-theme', t);
-    document.querySelectorAll('.demo-panel [data-t]').forEach(b => {
-      b.classList.toggle('on', b.dataset.t === (t || 'paper'));
-    });
-  }
-
-  // Theme toggle (sun/moon in topbar) — flips light <-> dark
-  document.getElementById('theme-toggle').addEventListener('click', () => {
-    const cur = document.documentElement.getAttribute('data-theme') || 'paper';
-    setTheme(DARK_THEMES.includes(cur) ? 'paper' : 'dark');
-  });
-
-  // Theme preset buttons in demo panel
-  document.querySelectorAll('.demo-panel [data-t]').forEach(btn => {
-    btn.addEventListener('click', () => setTheme(btn.dataset.t));
-  });
-
-  // Section (accent) switcher
-  document.querySelectorAll('.demo-panel [data-section]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.demo-panel [data-section]').forEach(b => b.classList.remove('on'));
-      btn.classList.add('on');
-      const s = btn.dataset.section;
-      if (s === 'default') document.body.removeAttribute('data-section');
-      else document.body.setAttribute('data-section', s);
-    });
-  });
-
-  // Copy toast
-  document.querySelectorAll('[data-copy]').forEach(b => {
-    b.addEventListener('click', () => {
-      const t = document.getElementById('toast');
-      t.classList.add('show');
-      clearTimeout(window._toastT);
-      window._toastT = setTimeout(() => t.classList.remove('show'), 1600);
-    });
-  });
-
-  // ⌘K placeholder
-  document.addEventListener('keydown', (e) => {
-    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-      e.preventDefault();
-      alert('Search would open here. In real site — Starlight pagefind.');
-    }
-  });
-
   // ═══ COMPANIONS — dialogue engine + content ═════════
   // ════════════════════════════════════════════════════
   // SCENE-BASED DIALOGUE SYSTEM
@@ -1659,6 +342,80 @@ body.fx-shake {
     { id: 'insight.code.5', tags: ['insight:code'], weight: 0.7, cooldown: 45,
       lines: [{ who: 'code', text: 'рефактор готов' }] },
 
+    // ─── TOSS — dialogue that ends with one robot launching the other ───
+    // The `toss_intro:X` scene plays, THEN actionToss(X → victim) fires.
+    // Attacker sprints up to victim and throws them for the fun of it.
+
+    // CRAFT loses patience and tosses CODE
+    { id: 'toss.craft.chertyozh', tags: ['toss_intro:craft'], weight: 1, cooldown: 420,
+      lines: [
+        { who: 'craft', text: 'ты опять поправил мой чертёж?' },
+        { who: 'code',  text: 'он был косой' },
+        { who: 'craft', text: 'он был ТВОРЧЕСКИЙ', act: 'surprised' },
+        { who: 'code',  text: 'и косой' },
+        { who: 'craft', text: '.всё.' },
+      ]},
+    { id: 'toss.craft.ruler', tags: ['toss_intro:craft'], weight: 1, cooldown: 420,
+      lines: [
+        { who: 'code',  text: '3.14 см. отойди' },
+        { who: 'craft', text: 'отойду? я?' },
+        { who: 'code',  text: 'ты мешаешь замеру' },
+        { who: 'craft', text: 'знаешь что ещё мешает' },
+        { who: 'code',  text: 'что' },
+        { who: 'craft', text: 'ничего. ты летишь.' },
+      ]},
+    { id: 'toss.craft.silent', tags: ['toss_intro:craft'], weight: 0.8, cooldown: 500,
+      lines: [
+        { who: 'craft', text: 'CODE' },
+        { who: 'code',  text: 'что' },
+        { who: 'craft', text: 'у меня идея' },
+        { who: 'code',  text: 'ок' },
+        { who: 'craft', text: 'ты не спросил какая', act: 'surprised' },
+        { who: 'code',  text: '...какая' },
+        { who: 'craft', text: 'поздно' },
+      ]},
+
+    // CODE loses patience and tosses CRAFT (calmer, more deliberate)
+    { id: 'toss.code.noise', tags: ['toss_intro:code'], weight: 1, cooldown: 420,
+      lines: [
+        { who: 'craft', text: 'ААААААА' },
+        { who: 'code',  text: 'тише' },
+        { who: 'craft', text: 'АААААА' },
+        { who: 'code',  text: 'ладно.' },
+      ]},
+    { id: 'toss.code.plan', tags: ['toss_intro:code'], weight: 1, cooldown: 420,
+      lines: [
+        { who: 'craft', text: '*лепит круглое*', act: 'typing' },
+        { who: 'code',  text: 'должно быть квадратным' },
+        { who: 'craft', text: 'нет' },
+        { who: 'code',  text: 'проверь траекторию' },
+        { who: 'craft', text: 'чью' },
+        { who: 'code',  text: 'свою.' },
+      ]},
+    { id: 'toss.code.measurement', tags: ['toss_intro:code'], weight: 0.8, cooldown: 500,
+      lines: [
+        { who: 'code',  text: 'между нами стало 2 см' },
+        { who: 'craft', text: 'это я подошёл' },
+        { who: 'code',  text: 'нарушение протокола' },
+        { who: 'craft', text: 'ой', act: 'surprised' },
+        { who: 'code',  text: 'коррекция' },
+      ]},
+
+    // Gag one-liners the attacker shouts WHILE launching the victim.
+    { id: 'toss_shout.craft.1', tags: ['toss_shout:craft'], weight: 1, cooldown: 10,
+      lines: [{ who: 'craft', text: 'АЛЛЕ-ОП!' }] },
+    { id: 'toss_shout.craft.2', tags: ['toss_shout:craft'], weight: 1, cooldown: 10,
+      lines: [{ who: 'craft', text: 'ЛЕТИ' }] },
+    { id: 'toss_shout.craft.3', tags: ['toss_shout:craft'], weight: 0.7, cooldown: 20,
+      lines: [{ who: 'craft', text: '*хех*' }] },
+
+    { id: 'toss_shout.code.1', tags: ['toss_shout:code'], weight: 1, cooldown: 10,
+      lines: [{ who: 'code', text: 'замер высоты' }] },
+    { id: 'toss_shout.code.2', tags: ['toss_shout:code'], weight: 1, cooldown: 10,
+      lines: [{ who: 'code', text: 'параболический эксперимент' }] },
+    { id: 'toss_shout.code.3', tags: ['toss_shout:code'], weight: 0.7, cooldown: 20,
+      lines: [{ who: 'code', text: 'давай ещё раз' }] },
+
     // ─── CONTINUITY scenes — reference recent events ────
     // Played from the 'idle' tag but only when context makes them fit.
     // Higher weight than regular idle scenes so they bubble up after events.
@@ -1892,7 +649,9 @@ body.fx-shake {
     idleTimer: null,
     wanderTimer: null,
     thinkingTimer: null,
+    tossTimer: null,
     clickResetTimer: null,
+    pendingAction: null,   // queued scene-end action (e.g. { type: 'toss', attacker, victim })
     lastPicked: null,
     lastFrameTime: 0,
 
@@ -1900,16 +659,38 @@ body.fx-shake {
     activeDrag: null,
     pointerMoved: false,       // was the current press a drag, or a click?
 
-    floorY() { return window.innerHeight - this.FLOOR_M - this.S; },
+    // All physics coords are RELATIVE to the .companions container, which is
+    // position:absolute + bottom:0 on <body>. So floorY is the container's
+    // own inner height minus margin/sprite, NOT window.innerHeight.
+    floorY() {
+      const c = this.els.container;
+      return (c ? c.clientHeight : 480) - this.FLOOR_M - this.S;
+    },
+    containerWidth() {
+      const c = this.els.container;
+      return c ? c.clientWidth : window.innerWidth;
+    },
 
     init() {
       if (this.muted) this.applyMute();
+
+      // Reparent the fx-layer and companions container directly under <body>
+      // so `position: absolute; bottom: 0` anchors to the DOCUMENT, not
+      // whatever positioned ancestor Astro/Starlight wrapped us in (like
+      // the sticky <header>). DOM move is fine — refs to elements stay valid.
+      const fxLayer = document.querySelector('.fx-layer');
+      if (fxLayer && fxLayer.parentElement !== document.body) {
+        document.body.appendChild(fxLayer);
+      }
+      if (this.els.container && this.els.container.parentElement !== document.body) {
+        document.body.appendChild(this.els.container);
+      }
 
       // Drop both on the floor at start
       this.pos.craft.x = 80;
       this.pos.craft.y = this.floorY();
       this.pos.craft.grounded = true;
-      this.pos.code.x  = Math.min(200, window.innerWidth - this.SIDE_M - this.S - 20);
+      this.pos.code.x  = Math.min(200, this.containerWidth() - this.SIDE_M - this.S - 20);
       this.pos.code.y  = this.floorY();
       this.pos.code.grounded = true;
       this.applyPosition('craft');
@@ -1956,10 +737,12 @@ body.fx-shake {
           clearTimeout(this.idleTimer);
           clearTimeout(this.wanderTimer);
           clearTimeout(this.thinkingTimer);
+          clearTimeout(this.tossTimer);
         } else if (!this.muted) {
-          if (this.dialogueState === 'idle') this.scheduleIdle(30000);
+          if (this.dialogueState === 'idle') this.scheduleIdle(15000);
           this.scheduleWander(4000);
           this.scheduleThinking(20000);
+          this.scheduleToss(70000);
         }
       });
 
@@ -1978,22 +761,29 @@ body.fx-shake {
       this.watchAccent();
 
       // Keep characters inside the viewport when it resizes
-      window.addEventListener('resize', () => this.clampToViewport());
+      window.addEventListener('resize', () => {
+        this.clampToViewport();
+        this.positionBubble('craft');
+        this.positionBubble('code');
+      });
 
       // Start physics RAF loop
       this.lastFrameTime = performance.now();
       requestAnimationFrame(this.tick.bind(this));
 
       if (!this.muted) {
-        this.scheduleIdle(22000);
-        this.scheduleWander(6000);
-        this.scheduleThinking(12000);
+        // Tighter opening cadence — something happens in the first 15 s so
+        // returning readers aren't greeted by motionless robots.
+        this.scheduleIdle(10000);
+        this.scheduleWander(3000);
+        this.scheduleThinking(18000);
+        this.scheduleToss(55000);
       }
     },
 
     clampToViewport() {
       const floor = this.floorY();
-      const maxX = window.innerWidth - this.SIDE_M - this.S;
+      const maxX = this.containerWidth() - this.SIDE_M - this.S;
       ['craft','code'].forEach(who => {
         const p = this.pos[who];
         if (p.x > maxX) p.x = Math.max(this.SIDE_M, maxX);
@@ -2027,15 +817,19 @@ body.fx-shake {
       e.preventDefault();
       const el = this.els[who];
       try { el.setPointerCapture(e.pointerId); } catch (_) {}
+      // All drag math happens in .companions container coords, not viewport.
+      // Viewport deltas == container deltas, so velocity calc is unaffected.
+      const local = this._toLocal(e.clientX, e.clientY);
       const rect = el.getBoundingClientRect();
+      const elLocal = this._toLocal(rect.left, rect.top);
       this.activeDrag = {
         who,
         pointerId: e.pointerId,
-        startX: e.clientX,
-        startY: e.clientY,
-        offsetX: e.clientX - rect.left,
-        offsetY: e.clientY - rect.top,
-        history: [{ x: e.clientX, y: e.clientY, t: performance.now() }],
+        startX: local.x,
+        startY: local.y,
+        offsetX: local.x - elLocal.x,
+        offsetY: local.y - elLocal.y,
+        history: [{ x: local.x, y: local.y, t: performance.now() }],
       };
       this.pointerMoved = false;
     },
@@ -2043,9 +837,10 @@ body.fx-shake {
     onPointerMove(e) {
       if (!this.activeDrag || e.pointerId !== this.activeDrag.pointerId) return;
       const d = this.activeDrag;
+      const local = this._toLocal(e.clientX, e.clientY);
       // Upgrade to "drag" once pointer moved > 4 px
       if (!this.pointerMoved &&
-          Math.hypot(e.clientX - d.startX, e.clientY - d.startY) > 4) {
+          Math.hypot(local.x - d.startX, local.y - d.startY) > 4) {
         this.pointerMoved = true;
         const p = this.pos[d.who];
         p.vx = 0; p.vy = 0; p.grounded = false; p.walkTarget = null;
@@ -2054,13 +849,18 @@ body.fx-shake {
       }
       if (this.pointerMoved) {
         const p = this.pos[d.who];
-        p.x = e.clientX - d.offsetX;
-        p.y = e.clientY - d.offsetY;
+        p.x = local.x - d.offsetX;
+        p.y = local.y - d.offsetY;
         this.applyPosition(d.who);
-        d.history.push({ x: e.clientX, y: e.clientY, t: performance.now() });
+        d.history.push({ x: local.x, y: local.y, t: performance.now() });
         const cutoff = performance.now() - 80;
         while (d.history.length > 3 && d.history[0].t < cutoff) d.history.shift();
       }
+    },
+
+    _toLocal(clientX, clientY) {
+      const r = this.els.container.getBoundingClientRect();
+      return { x: clientX - r.left, y: clientY - r.top };
     },
 
     onPointerUp(e) {
@@ -2096,17 +896,31 @@ body.fx-shake {
       if (this.muted) return;
       const p = this.pos[who];
       if (p.state !== 'idle' || !p.grounded) return;
-      const maxX = window.innerWidth - this.SIDE_M - this.S;
+      const maxX = this.containerWidth() - this.SIDE_M - this.S;
       const nudge = (80 + Math.random() * 180) * (Math.random() < 0.5 ? 1 : -1);
       p.walkTarget = Math.max(this.SIDE_M, Math.min(maxX, p.x + nudge));
       p.facing = p.walkTarget > p.x ? 'right' : 'left';
       this.setCharState(who, 'walking');
     },
 
+    // Imperative walk with a callback on arrival. Used by the toss action
+    // (attacker walks up to victim, then throws).  Setting `sprint: true`
+    // multiplies walk speed so cross-stage dashes don't take forever.
+    walkTo(who, targetX, { sprint = false, onArrive = null } = {}) {
+      const p = this.pos[who];
+      const maxX = this.containerWidth() - this.SIDE_M - this.S;
+      p.walkTarget = Math.max(this.SIDE_M, Math.min(maxX, targetX));
+      p.facing = p.walkTarget > p.x ? 'right' : 'left';
+      p._sprint = sprint;
+      p._onArrive = onArrive;
+      this.setCharState(who, 'walking');
+    },
+
     scheduleWander(delay) {
       clearTimeout(this.wanderTimer);
       if (this.muted) return;
-      const d = delay !== undefined ? delay : 6000 + Math.random() * 8000;
+      // Tighter wander cadence — idle stillness was the #1 "dead" feeling.
+      const d = delay !== undefined ? delay : 4000 + Math.random() * 7000;
       this.wanderTimer = setTimeout(() => {
         if (this.dialogueState === 'idle') {
           const who = Math.random() < 0.5 ? 'craft' : 'code';
@@ -2121,7 +935,7 @@ body.fx-shake {
     scheduleThinking(delay) {
       clearTimeout(this.thinkingTimer);
       if (this.muted) return;
-      const d = delay !== undefined ? delay : 40000 + Math.random() * 40000;
+      const d = delay !== undefined ? delay : 30000 + Math.random() * 40000;
       this.thinkingTimer = setTimeout(() => {
         const who = Math.random() < 0.5 ? 'craft' : 'code';
         const p = this.pos[who];
@@ -2135,6 +949,73 @@ body.fx-shake {
         if (canThink) this.runThinkingSequence(who);
         this.scheduleThinking();
       }, d);
+    },
+
+    // ── TOSS macro — dialogue that ends in one robot physically tossing
+    // the other. A full scene plays first (intro), then actionToss fires:
+    // attacker sprints up to the victim and launches them into the air.
+    scheduleToss(delay) {
+      clearTimeout(this.tossTimer);
+      if (this.muted) return;
+      // 80-170 s — rare enough to stay a gag, frequent enough to catch.
+      const d = delay !== undefined ? delay : 80000 + Math.random() * 90000;
+      this.tossTimer = setTimeout(() => {
+        if (this.canToss()) {
+          const attacker = Math.random() < 0.5 ? 'craft' : 'code';
+          const victim   = attacker === 'craft' ? 'code' : 'craft';
+          this.startTossScene(attacker, victim);
+        }
+        this.scheduleToss();
+      }, d);
+    },
+
+    canToss() {
+      return !this.muted &&
+             this.dialogueState === 'idle' &&
+             this.pos.craft.grounded && this.pos.code.grounded &&
+             this.pos.craft.state === 'idle' && this.pos.code.state === 'idle' &&
+             !this.activeDrag;
+    },
+
+    // Plays an argumentative intro, then (on scene end) fires actionToss.
+    startTossScene(attacker, victim) {
+      const scene = dialogue.pick(`toss_intro:${attacker}`);
+      if (!scene) return;
+      const lines = dialogue.play(scene);
+      this.pendingAction = { type: 'toss', attacker, victim };
+      this.playSequence(lines);
+    },
+
+    // Actual physical toss: attacker sprints to victim, winds up, launches.
+    actionToss(attacker, victim) {
+      const va = this.pos[attacker];
+      const vv = this.pos[victim];
+      if (!va.grounded || !vv.grounded) return;
+      // Stand ~34 px to the near side of the victim
+      const approach = vv.x + (va.x < vv.x ? -34 : +34);
+      this.walkTo(attacker, approach, {
+        sprint: true,
+        onArrive: () => {
+          va.facing = vv.x > va.x ? 'right' : 'left';
+          this.applyPosition(attacker);
+          // Wind-up pose
+          this.setCharState(attacker, 'excited');
+          setTimeout(() => {
+            // LAUNCH: slight horizontal kick AWAY from attacker, big upward vy
+            vv.grounded = false;
+            const dir = vv.x > va.x ? 1 : -1;
+            vv.vx = dir * (240 + Math.random() * 140);
+            vv.vy = -1250 - Math.random() * 350;
+            this.setCharState(victim, 'falling');
+            dialogue.recordEvent('throw', victim);
+            // Attacker's gag line + return to idle
+            this.setCharState(attacker, 'idle');
+            this.reactFromScene(`toss_shout:${attacker}`, attacker, 1500);
+            // Victim yells while airborne (reuse existing throw pool)
+            setTimeout(() => this.reactFromScene(`throw:${victim}`, victim, 1600), 220);
+          }, 360);
+        },
+      });
     },
 
     runThinkingSequence(who) {
@@ -2167,7 +1048,7 @@ body.fx-shake {
       const dt = Math.min(0.04, (now - this.lastFrameTime) / 1000);
       this.lastFrameTime = now;
       const floor = this.floorY();
-      const maxX = window.innerWidth - this.SIDE_M - this.S;
+      const maxX = this.containerWidth() - this.SIDE_M - this.S;
       const minX = this.SIDE_M;
 
       ['craft','code'].forEach(who => {
@@ -2201,15 +1082,21 @@ body.fx-shake {
         // Grounded: walk toward walkTarget if set
         if (p.state === 'walking' && p.walkTarget !== null) {
           const dir = p.walkTarget > p.x ? 1 : -1;
-          const step = this.WALK_SPEED * dt;
-          if (Math.abs(p.walkTarget - p.x) < step) {
-            p.x = p.walkTarget; p.walkTarget = null;
+          const step = (p._sprint ? this.WALK_SPEED * 2.5 : this.WALK_SPEED) * dt;
+          const arrive = () => {
+            p.walkTarget = null;
+            p._sprint = false;
+            const cb = p._onArrive; p._onArrive = null;
             this.setCharState(who, 'idle');
+            if (cb) cb();
+          };
+          if (Math.abs(p.walkTarget - p.x) < step) {
+            p.x = p.walkTarget; arrive();
           } else {
             p.x += step * dir;
             p.facing = dir > 0 ? 'right' : 'left';
-            if (p.x < minX) { p.x = minX; p.walkTarget = null; this.setCharState(who, 'idle'); }
-            if (p.x > maxX) { p.x = maxX; p.walkTarget = null; this.setCharState(who, 'idle'); }
+            if (p.x < minX) { p.x = minX; arrive(); }
+            if (p.x > maxX) { p.x = maxX; arrive(); }
           }
           this.applyPosition(who);
         }
@@ -2269,22 +1156,33 @@ body.fx-shake {
       }
     },
 
-    // Dust at the feet of the companion (where it is NOW).
+    // Dust at the FEET of the companion. .fx-dust has transform-origin:
+    // bottom-center, so we align the element's BOTTOM edge with the
+    // character's floor-line. Element is 10 px tall → top = bottom - 10.
     emitDustAtFeet(who, big) {
       const rect = this.els[who].getBoundingClientRect();
-      this.emitEffect('dust', rect.left + rect.width / 2 - 15, rect.bottom - 8, { big });
+      this.emitEffect('dust', rect.left + rect.width / 2 - 15, rect.bottom - 10, { big });
     },
 
+    // Shock ring centred exactly on the floor line under the feet.
     emitShockAtFeet(who) {
       const rect = this.els[who].getBoundingClientRect();
-      this.emitEffect('shock', rect.left + rect.width / 2, rect.bottom - 4);
+      this.emitEffect('shock', rect.left + rect.width / 2, rect.bottom - 2);
     },
 
+    // Shake only the .companions container, and only if it's on screen.
+    // This prevents the page layout from jittering when a character crashes
+    // while the reader is scrolled far from the bottom of the doc.
     screenShake() {
-      document.body.classList.remove('fx-shake');
-      void document.body.offsetWidth;    // re-trigger animation
-      document.body.classList.add('fx-shake');
-      setTimeout(() => document.body.classList.remove('fx-shake'), 300);
+      const c = this.els.container;
+      if (!c) return;
+      const r = c.getBoundingClientRect();
+      const inView = r.bottom > 0 && r.top < window.innerHeight;
+      if (!inView) return;
+      c.classList.remove('fx-shake');
+      void c.offsetWidth;    // re-trigger animation
+      c.classList.add('fx-shake');
+      setTimeout(() => c.classList.remove('fx-shake'), 300);
     },
 
     // ── Quick reaction helpers ──────────────────────────
@@ -2297,8 +1195,26 @@ body.fx-shake {
       textEl.className = 'text'; textEl.textContent = text;
       bubble.appendChild(whoEl); bubble.appendChild(textEl);
       bubble.classList.add('visible');
+      this.positionBubble(who);
       clearTimeout(bubble._hideTimer);
       bubble._hideTimer = setTimeout(() => bubble.classList.remove('visible'), holdMs);
+    },
+
+    // Shift a visible bubble horizontally so it never clips the viewport.
+    // Writes to --bubble-x; the CSS ::after tail compensates to keep pointing
+    // at the companion. Safe to call repeatedly (e.g. during typewriter).
+    positionBubble(who) {
+      const bubble = this.bubbles[who];
+      if (!bubble || !bubble.classList.contains('visible')) return;
+      bubble.style.setProperty('--bubble-x', '0px');
+      const r = bubble.getBoundingClientRect();
+      const pad = 10;
+      let shift = 0;
+      if (r.left < pad) shift = pad - r.left;
+      else if (r.right > window.innerWidth - pad) {
+        shift = (window.innerWidth - pad) - r.right;
+      }
+      if (shift !== 0) bubble.style.setProperty('--bubble-x', `${shift}px`);
     },
 
     // Play a single-line reaction via the scene engine.
@@ -2408,7 +1324,9 @@ body.fx-shake {
     scheduleIdle(delay) {
       clearTimeout(this.idleTimer);
       if (this.muted) return;
-      const d = delay !== undefined ? delay : 90000 + Math.random() * 60000;
+      // Much shorter than before (was 90-150 s) — they chatter often so the
+      // stage doesn't feel dead between macro events.
+      const d = delay !== undefined ? delay : 22000 + Math.random() * 28000;
       this.idleTimer = setTimeout(() => this.startIdle(), d);
     },
 
@@ -2430,6 +1348,15 @@ body.fx-shake {
     playNext() {
       if (!this.queue.length) {
         this.dialogueState = 'idle';
+        // If a scene queued up an after-action (like a toss), run it now.
+        if (this.pendingAction) {
+          const a = this.pendingAction;
+          this.pendingAction = null;
+          if (a.type === 'toss') {
+            // Short beat so the last line finishes clearing before action fires
+            setTimeout(() => this.actionToss(a.attacker, a.victim), 300);
+          }
+        }
         this.scheduleIdle();
         return;
       }
@@ -2457,6 +1384,7 @@ body.fx-shake {
       bubble.appendChild(textEl);
 
       bubble.classList.add('visible');
+      this.positionBubble(who);
       // Face toward listener (only when grounded — don't override airborne state)
       const mine = this.pos[who];
       const their = this.pos[otherWho];
@@ -2494,6 +1422,7 @@ body.fx-shake {
           return;
         }
         textEl.textContent += text[i++];
+        this.positionBubble(who);            // re-fit as text grows
         setTimeout(type, 42 + Math.random() * 28);
       };
       setTimeout(type, 130);
@@ -2581,6 +1510,8 @@ body.fx-shake {
       } else {
         document.body.classList.remove('companions-muted');
         this.scheduleWander(5000);
+        this.scheduleThinking(25000);
+        this.scheduleToss(80000);
         const u = dialogue.pick('unmuted');
         if (u) this.playSequence(dialogue.play(u));
       }
@@ -2591,7 +1522,9 @@ body.fx-shake {
       clearTimeout(this.idleTimer);
       clearTimeout(this.wanderTimer);
       clearTimeout(this.thinkingTimer);
+      clearTimeout(this.tossTimer);
       this.queue = [];
+      this.pendingAction = null;
       this.dialogueState = 'idle';
       // Snap both to the floor so muted state is stable
       const floor = this.floorY();
@@ -2608,6 +1541,10 @@ body.fx-shake {
   };
 
   companions.init();
-</script>
-</body>
-</html>
+
+  // Expose for devtools / automated checks. Harmless in prod.
+  if (typeof window !== 'undefined') {
+    window.__companions = companions;
+    window.__dialogue = dialogue;
+    window.__SCENES = SCENES;
+  }

@@ -1,0 +1,67 @@
+---
+title: ManualSprite Editor Tools
+description: Ручной редактор 2D-геометрии для PaperSprite с генерацией StaticMesh и SkeletalMesh.
+sidebar:
+  label: Обзор
+  order: 1
+head:
+  - tag: style
+    content: |
+      .content-panel > .sl-markdown-content > h1:first-child { display: none; }
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+import PluginHero from '~/components/PluginHero.astro';
+
+<PluginHero
+  kicker="// plugin · paper2d · geometry"
+  title="ManualSprite"
+  version="UE 5.0+"
+  tagline="Закрывает пробел стандартного Paper2D: вручную расставляй вершины, делай треугольники, генерируй StaticMesh / SkeletalMesh прямо из 2D-арта."
+  image="https://raw.githubusercontent.com/CRAFTCODE-CJD/ManualSprite/main/Images/Screen_00.png"
+  accent="#F472B6"
+  ctas={[
+    { label: 'GitHub', href: 'https://github.com/CRAFTCODE-CJD/ManualSprite', variant: 'primary', external: true },
+    { label: 'Как использовать →', href: '/plugins/manualsprite/getting-started/' },
+  ]}
+/>
+
+> **Демо на YouTube** — [полный показ редактирования геометрии и генерации меша](https://youtu.be/MbnoJhVYDTc).
+
+## Ключевые возможности
+
+<CardGrid>
+  <Card title="Полный контроль геометрии" icon="pencil">
+    Добавляй, удаляй и перемещай вершины вручную. Создавай треугольники из любых трёх точек.
+  </Card>
+  <Card title="Генерация мешей" icon="rocket">
+    StaticMesh или SkeletalMesh в один клик (Ctrl+M) — с материалами и базовым скелетом.
+  </Card>
+  <Card title="Зеркальное редактирование" icon="approve-check">
+    Зеркалирование по осям X, Y или обоим сразу — ускоряет симметричные объекты вдвое.
+  </Card>
+  <Card title="Триангуляция Делоне" icon="puzzle">
+    Авто-триангуляция выделенных вершин (клавиша 3) + проверка пересечений.
+  </Card>
+</CardGrid>
+
+---
+
+## Полный список функций
+
+- ✅ **Отдельный редактор ассетов** — вьюпорт, Details-панель, многофункциональный тулбар
+- ✅ **Полный Undo/Redo** для всех операций с геометрией
+- ✅ **Copy, Paste, Cut, Duplicate** для вершин
+- ✅ **Зеркальное редактирование** по X, Y, XY
+- ✅ **Сетка и привязка** для точного размещения вершин
+- ✅ **Выбор пивота** — Center, Bottom, Origin или Custom
+- ✅ **Автоматическое создание материалов** (Lit/Unlit, двусторонние)
+- ✅ **Интеграция с Content Browser** — создавай Manual Sprite ассеты из меню Paper2D
+- ✅ **Проверка на пересечения** — пересекающиеся рёбра подсвечиваются красным
+
+---
+
+## Что дальше
+
+- [Как использовать](/plugins/manualsprite/getting-started/) — пошаговый гайд
+- [Справка](/plugins/manualsprite/reference/) — тулбар, горячие клавиши, Project Settings

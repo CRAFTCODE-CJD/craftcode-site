@@ -1,0 +1,32 @@
+---
+/**
+ * CraftCode wide wordmark — user's authored SVG with CRAFT · icon · CODE.
+ * Inlined so currentColor works on arbitrary backgrounds.
+ */
+import wideSvg from '../assets/logo-wide.svg?raw';
+
+interface Props {
+  height?: number;
+  class?: string;
+}
+const { height = 48, class: className = '' } = Astro.props;
+
+// Original aspect ratio ≈ 1920 × 540 ≈ 3.56:1 — preserve by scaling height.
+const width = Math.round(height * (1920 / 540));
+const sized = wideSvg
+  .replace(/width="\d+"/, `width="${width}"`)
+  .replace(/height="\d+"/, `height="${height}"`);
+---
+<span class={`cc-logo-wide ${className}`} set:html={sized} aria-label="CRAFTCODE" role="img"></span>
+
+<style>
+  .cc-logo-wide {
+    display: inline-grid;
+    place-items: center;
+    color: var(--ink);
+    line-height: 0;
+  }
+  .cc-logo-wide :global(svg) {
+    display: block;
+  }
+</style>

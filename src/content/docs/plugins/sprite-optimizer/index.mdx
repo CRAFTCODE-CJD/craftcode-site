@@ -1,0 +1,82 @@
+---
+title: Sprite Optimizer
+description: Профессиональный плагин пакинга и оптимизации спрайтов для Unreal Engine 4.27–5.7.
+sidebar:
+  label: Обзор
+  order: 1
+head:
+  - tag: style
+    content: |
+      /* Suppress Starlight's auto-h1 — PluginHero renders its own title. */
+      .content-panel > .sl-markdown-content > h1:first-child { display: none; }
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+import PluginHero from '~/components/PluginHero.astro';
+
+<PluginHero
+  kicker="// plugin · paper2d"
+  title="Sprite Optimizer"
+  version="v2.1"
+  tagline="Обрезка прозрачных краёв, пакинг в атласы, Material Instances и реверс-инжиниринг атласов — всё в одном редакторе с 50-уровневым undo/redo."
+  image="/images/plugins/sprite-optimizer/Atlas_02.png"
+  accent="#EC4899"
+  ctas={[
+    { label: 'FAB Marketplace', href: 'https://www.fab.com/listings/d467cf90-8576-4aa9-b55d-285060a5d1bf', variant: 'primary', external: true },
+    { label: 'Быстрый старт →', href: '/plugins/sprite-optimizer/getting-started/' },
+  ]}
+/>
+
+## Ключевые возможности
+
+<CardGrid>
+  <Card title="Одна сборка — 9 движков" icon="rocket">
+    UE 4.27 и 5.0–5.7 из единого исходника. Мигрируй проекты между версиями без перестройки пайплайна.
+  </Card>
+  <Card title="Pixel-perfect вывод" icon="approve-check">
+    Спрайты никогда не масштабируются и не переосмысляются. Что внутри — то и выходит, 1:1.
+  </Card>
+  <Card title="Интерактивный редактор атласа" icon="puzzle">
+    Drag & drop из Content Browser, ручное перемещение и поворот, rubber-band selection, мультистраничные атласы.
+  </Card>
+  <Card title="Возобновляемые сессии" icon="document">
+    Сохрани сессию как **Project-ассет**, открой двойным кликом — всё восстановится с точностью до байта.
+  </Card>
+</CardGrid>
+
+---
+
+## Полный список функций
+
+- **Автоматическая обрезка** — убирает прозрачные края, настраиваемый alpha threshold
+- **Сохранение пивота** — обрезанные спрайты визуально остаются на месте в сцене
+- **4 алгоритма пакинга** — Max Rects, Bin Pack, Fixed Grid, Tile
+- **Import Atlas** — реверс-инжиниринг готового атласа обратно в отдельные элементы
+- **Quick Atlas** — атлас в один клик на настройках по умолчанию
+- **Material Instances** — автогенерация с pixel-based UV параметрами, работает в 3D и UMG
+- **Мультистраничные атласы** — автосоздание дополнительных страниц при нехватке места
+- **Normal maps & HDR** — 16-битные источники и HDR текстуры пакуются корректно
+- **BC7 компрессия** — высококачественное сжатие с поддержкой альфа-канала
+- **Memory warnings** — предупреждение с оценкой RAM перед тяжёлыми операциями
+- **50 уровней undo/redo** — экспериментируй без страха
+- **Нулевой runtime-cost** — плагин editor-only, в пакованную игру не попадает
+
+---
+
+## Поддерживаемые версии движка
+
+| Движок | Статус |
+|--------|--------|
+| UE 4.27 | ✅ Поддерживается (через слой совместимости) |
+| UE 5.0–5.7 | ✅ Полная поддержка |
+
+---
+
+## Что дальше
+
+- [Быстрый старт](/plugins/sprite-optimizer/getting-started/) — первый атлас за 5 минут
+- [Optimize Mode](/plugins/sprite-optimizer/features/optimize/) — обрезка прозрачности
+- [Atlas Mode](/plugins/sprite-optimizer/features/atlas/) — пакинг в атлас
+- [Sprite Optimizer Project](/plugins/sprite-optimizer/features/project-asset/) — возобновляемые сессии
+- [Import Atlas](/plugins/sprite-optimizer/features/import-atlas/) — реверс-инжиниринг
+- [Справка](/plugins/sprite-optimizer/reference/) — горячие клавиши, настройки проекта

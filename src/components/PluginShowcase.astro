@@ -1,0 +1,202 @@
+---
+/**
+ * Plugin showcase grid with real screenshots + accent-coloured per product.
+ * Clicking a card goes to the plugin's docs index. Hover raises and tints
+ * the card with the plugin's accent.
+ */
+interface PluginCard {
+  slug: string;
+  title: string;
+  pitch: string;
+  image: string;      // absolute URL starting at /images/plugins/...
+  accent: string;     // hex colour for hover / border
+  ue: string;         // supported engine range shown on the card, e.g. "4.27 → 5.7"
+  fabUrl?: string;
+}
+
+const plugins: PluginCard[] = [
+  {
+    slug: 'sprite-optimizer',
+    title: 'Sprite Optimizer',
+    pitch: 'Атласы, обрезка, оптимизация. Paper2D workflow в один клик.',
+    image: '/images/plugins/sprite-optimizer/Atlas_02.png',
+    accent: '#EC4899',
+    ue: '4.27 → 5.7',
+    fabUrl: 'https://www.fab.com/listings/d467cf90-8576-4aa9-b55d-285060a5d1bf',
+  },
+  {
+    slug: 'manualsprite',
+    title: 'ManualSprite',
+    pitch: 'Ручная геометрия PaperSprite. Static/SkeletalMesh из 2D-арта.',
+    image: 'https://raw.githubusercontent.com/CRAFTCODE-CJD/ManualSprite/main/Images/Screen_00.png',
+    accent: '#F472B6',
+    ue: '5.0+',
+  },
+  {
+    slug: 'mouseinterceptor',
+    title: 'MouseInterceptor',
+    pitch: 'Глобальный перехват мыши. Двойной клик, Blueprint-делегаты.',
+    image: 'https://raw.githubusercontent.com/CRAFTCODE-CJD/MouseInterceptor/main/Images/Image_01.png',
+    accent: '#38BDF8',
+    ue: '4.27+',
+  },
+];
+---
+
+<section class="showcase" aria-label="Плагины">
+  <h2 class="showcase-title">// Плагины</h2>
+  <div class="showcase-grid">
+    {plugins.map((p) => (
+      <a
+        class="showcase-card"
+        href={`/plugins/${p.slug}/`}
+        style={`--card-accent: ${p.accent};`}
+      >
+        <div class="showcase-thumb">
+          <img src={p.image} alt={p.title} loading="lazy" />
+          <span class="showcase-badge">{p.title.toUpperCase()}</span>
+          <span class="showcase-ue" title={`Supported Unreal Engine: ${p.ue}`}>
+            UE {p.ue}
+          </span>
+        </div>
+        <div class="showcase-body">
+          <h3>{p.title}</h3>
+          <p>{p.pitch}</p>
+          <span class="showcase-cta">Открыть docs <span>→</span></span>
+        </div>
+      </a>
+    ))}
+  </div>
+</section>
+
+<style>
+  .showcase {
+    margin: 56px 0 24px;
+  }
+  .showcase-title {
+    font-family: 'JetBrains Mono', monospace !important;
+    font-size: 13px !important;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted) !important;
+    text-shadow: none !important;
+    margin: 0 0 20px !important;
+  }
+
+  .showcase-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 18px;
+  }
+
+  .showcase-card {
+    --card-accent: var(--accent);
+    display: grid;
+    grid-template-rows: auto 1fr;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface);
+    text-decoration: none;
+    color: var(--ink);
+    overflow: hidden;
+    transition: transform 0.18s, border-color 0.2s, box-shadow 0.25s;
+  }
+  .showcase-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--card-accent);
+    box-shadow: 0 14px 36px -14px var(--card-accent);
+  }
+
+  .showcase-thumb {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    background: #06060a;
+    overflow: hidden;
+  }
+  .showcase-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    filter: saturate(0.9) contrast(1.05);
+    transition: transform 0.4s ease-out, filter 0.3s;
+  }
+  .showcase-card:hover .showcase-thumb img {
+    transform: scale(1.04);
+    filter: saturate(1.15) contrast(1.1);
+  }
+  .showcase-thumb::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, color-mix(in oklab, var(--bg) 80%, transparent) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .showcase-badge {
+    position: absolute;
+    top: 10px; left: 10px;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 9px;
+    padding: 4px 7px;
+    border: 1px solid var(--card-accent);
+    color: var(--card-accent);
+    background: color-mix(in oklab, var(--bg) 85%, transparent);
+    text-transform: uppercase;
+    z-index: 1;
+  }
+  /* Supported-engine pill on the opposite side of the thumb. */
+  .showcase-ue {
+    position: absolute;
+    top: 10px; right: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    padding: 3px 8px;
+    border: 1px solid var(--accent-2);
+    color: var(--accent-2);
+    background: color-mix(in oklab, var(--bg) 85%, transparent);
+    border-radius: 2px;
+    z-index: 1;
+    white-space: nowrap;
+  }
+
+  .showcase-body {
+    padding: 16px 18px 20px;
+    display: grid;
+    gap: 8px;
+    align-content: start;
+  }
+  .showcase-body h3 {
+    font-family: 'VT323', monospace !important;
+    font-size: 28px !important;
+    margin: 0 !important;
+    color: var(--ink) !important;
+    text-transform: none !important;
+    letter-spacing: 0 !important;
+  }
+  .showcase-body p {
+    margin: 0;
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+  .showcase-cta {
+    margin-top: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--card-accent);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .showcase-cta span {
+    transition: transform 0.2s;
+  }
+  .showcase-card:hover .showcase-cta span {
+    transform: translateX(4px);
+  }
+</style>

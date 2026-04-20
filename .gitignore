@@ -1,0 +1,48 @@
+# ─── Node / package managers ─────────────────
+node_modules/
+package-lock.json.bak
+.pnpm-store/
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+yarn-error.log
+npm-debug.log*
+pnpm-debug.log*
+
+# ─── Astro ──────────────────────────────────
+dist/
+.astro/
+.output/
+
+# ─── Cloudflare Pages / Wrangler ────────────
+.wrangler/
+.dev.vars
+.dev.vars.*
+
+# ─── Env / secrets ──────────────────────────
+.env
+.env.*
+!.env.example
+
+# ─── Editor / OS ────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# ─── Build artifacts ────────────────────────
+*.log
+*.tmp
+.cache/
+coverage/
+
+# ─── Claude preview server temp ─────────────
+.claude-preview/

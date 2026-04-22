@@ -15,6 +15,34 @@
 
 <div class="fx-layer" aria-hidden="true"></div>
 <div class="companions" aria-live="polite" aria-atomic="false">
+  <!-- Playground scenery: caption + HUD + obstacles.
+       Obstacles are measured by JS at init time so the physics tick can
+       bounce bots off them. Positions use px + responsive clamp so they
+       stay inside the stage across viewport widths. -->
+  <div class="companions-caption" aria-hidden="true">
+    // workshop · drag a robot and toss it · they bump into things
+  </div>
+  <div class="companions-hud" aria-hidden="true">
+    <span><span class="k">bots</span> <span class="v">2</span></span>
+    <span><span class="k">rapport</span> <span class="v" id="hud-rapport">50</span></span>
+    <span><span class="k">bumps</span> <span class="v" id="hud-bumps">0</span></span>
+  </div>
+
+  <!-- Platforms / obstacles. Positions match the ClaudeDesigner mockup
+       (320 px stage). `data-ob` flags them for the physics engine. -->
+  <div class="companions-obstacle" data-ob
+       style="left: 20%; top: 210px; width: 80px; height: 14px;">
+    <span class="obstacle-lbl">// crate_01</span>
+  </div>
+  <div class="companions-obstacle" data-ob
+       style="left: 50%; top: 140px; width: 14px; height: 80px;">
+    <span class="obstacle-lbl">// pillar_02</span>
+  </div>
+  <div class="companions-obstacle" data-ob
+       style="right: 14%; top: 230px; width: 110px; height: 12px;">
+    <span class="obstacle-lbl">// shelf_03</span>
+  </div>
+
   <div class="companion" data-who="craft" role="button" tabindex="0"
        aria-label="CRAFT — press Enter to talk.">
     <div class="sprite"></div>

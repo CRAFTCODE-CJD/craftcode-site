@@ -1,0 +1,191 @@
+---
+/**
+ * FAB Marketplace storefront card for the home page.
+ *
+ * Mirrors the layout/feel of YoutubeCard / BoostyCard so the three
+ * channels (FAB / YouTube / Boosty) read as a consistent trio of
+ * storefront tiles. Kept intentionally channel-agnostic — the card
+ * doesn't enumerate specific products (plugins/templates/assets),
+ * it just points to the seller profile where current offerings live.
+ */
+interface Props {
+  sellerUrl?: string;
+}
+
+const {
+  sellerUrl = 'https://www.fab.com/sellers/CRAFTCODE',
+} = Astro.props;
+---
+
+<section class="fab-card" aria-label="FAB Marketplace">
+  <div class="fab-left">
+    <span class="fab-mark" aria-hidden="true">
+      <span class="fab-mark-letter">F</span>
+    </span>
+    <span class="ds-label">// fab · marketplace</span>
+    <h3 class="fab-heading">
+      Мой профиль на <span class="accent">FAB</span>
+    </h3>
+    <p class="fab-pitch">
+      Покупка, обновления и лицензии работают напрямую через Epic
+      FAB Marketplace.
+    </p>
+    <div class="fab-actions">
+      <a class="btn primary" href={sellerUrl} target="_blank" rel="noopener">
+        Открыть FAB ↗
+      </a>
+    </div>
+  </div>
+
+  <!-- Right column: decorative storefront-hint graphic (not a catalog).
+       Kept subtle — just 3 faint tiles hinting at "there's stuff here"
+       without enumerating what's in there. -->
+  <div class="fab-hint" aria-hidden="true">
+    <span class="fab-hint-label">storefront</span>
+    <div class="fab-hint-tiles">
+      <span class="tile"></span>
+      <span class="tile"></span>
+      <span class="tile"></span>
+    </div>
+    <span class="fab-hint-sub">↗ fab.com/sellers/CRAFTCODE</span>
+  </div>
+</section>
+
+<style>
+  .fab-card {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 28px;
+    align-items: center;
+    padding: 22px 26px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid #00b4d8;   /* FAB accent — cyan (distinct from YT red, Boosty orange) */
+    border-radius: 4px;
+    margin: 22px 0;
+    position: relative;
+    overflow: hidden;
+  }
+  .fab-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      repeating-linear-gradient(
+        -45deg,
+        transparent 0 32px,
+        color-mix(in oklab, #00b4d8 4%, transparent) 32px 33px
+      );
+    pointer-events: none;
+  }
+
+  .fab-left {
+    position: relative;
+    display: grid;
+    gap: 10px;
+    align-content: start;
+  }
+  .fab-mark {
+    display: inline-grid;
+    place-items: center;
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    background: #00b4d8;
+    color: #0a1520;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 17px;
+    font-weight: 700;
+    box-shadow: 0 0 22px -4px #00b4d8;
+    margin-bottom: 4px;
+  }
+  .fab-mark-letter {
+    transform: translateY(2px);
+  }
+
+  .fab-heading {
+    margin: 0;
+    font-family: 'VT323', monospace;
+    font-size: 30px;
+    line-height: 1.1;
+    color: var(--ink);
+  }
+  .fab-heading .accent {
+    color: #00b4d8;
+    text-shadow: 0 0 10px color-mix(in oklab, #00b4d8 50%, transparent);
+  }
+  .fab-pitch {
+    margin: 0;
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.55;
+    max-width: 46ch;
+  }
+  .fab-actions {
+    margin-top: 4px;
+  }
+
+  /* Right column — decorative storefront hint (no catalog content) */
+  .fab-hint {
+    position: relative;
+    display: grid;
+    gap: 10px;
+    justify-content: center;
+    align-content: center;
+    padding: 20px 24px;
+    min-height: 130px;
+    background: color-mix(in oklab, #00b4d8 6%, var(--code-bg));
+    border: 1px solid color-mix(in oklab, #00b4d8 30%, var(--border));
+    border-radius: 3px;
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .fab-hint-label {
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: color-mix(in oklab, #00b4d8 60%, var(--muted));
+  }
+  .fab-hint-tiles {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+  }
+  .fab-hint-tiles .tile {
+    width: 28px;
+    height: 28px;
+    background: color-mix(in oklab, #00b4d8 18%, transparent);
+    border: 1px solid color-mix(in oklab, #00b4d8 50%, var(--border));
+    border-radius: 2px;
+  }
+  .fab-hint-tiles .tile:nth-child(2) {
+    background: color-mix(in oklab, #00b4d8 24%, transparent);
+    box-shadow: 0 0 10px -2px color-mix(in oklab, #00b4d8 40%, transparent);
+  }
+  .fab-hint-sub {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.04em;
+  }
+
+  /* FAB button override — cyan instead of default pink accent. */
+  .fab-card .btn.primary {
+    background: #00b4d8;
+    border-color: #00b4d8;
+    color: #0a1520;
+  }
+  .fab-card .btn.primary:hover {
+    background: #4dd4f0;
+    border-color: #4dd4f0;
+    box-shadow: 0 10px 28px -12px #00b4d8;
+  }
+
+  @media (max-width: 760px) {
+    .fab-card {
+      grid-template-columns: 1fr;
+      gap: 18px;
+    }
+    .fab-hint {
+      min-height: 90px;
+    }
+  }
+</style>

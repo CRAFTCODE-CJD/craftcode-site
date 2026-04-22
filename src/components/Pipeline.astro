@@ -1,0 +1,101 @@
+---
+/**
+ * 4-step (or N-step) workflow pipeline. Cards connected by arrows (→).
+ * Use on plugin pages to show "Import → Optimize → Pack → Export" flow.
+ *
+ * Adapted from the ClaudeDesigner plugin-page-layouts mockup. Kept
+ * accent-aware so per-plugin pages inherit their colour.
+ */
+interface Step {
+  n: string;        // step number / label — "STEP 01"
+  title: string;    // short action verb — "Import"
+  text: string;     // one-line explanation
+}
+interface Props {
+  title?: string;
+  steps: Step[];
+}
+const { title, steps } = Astro.props;
+---
+
+<section class="pipeline">
+  {title && <h2 class="pipeline-title">{title}</h2>}
+  <div class="pipeline-grid">
+    {steps.map((s) => (
+      <div class="pipeline-step">
+        <span class="pipeline-n">{s.n}</span>
+        <h4>{s.title}</h4>
+        <p>{s.text}</p>
+      </div>
+    ))}
+  </div>
+</section>
+
+<style>
+  .pipeline { margin: 32px 0; }
+  .pipeline-title {
+    font-family: 'VT323', monospace !important;
+    font-size: 24px !important;
+    text-transform: uppercase;
+    color: var(--ink) !important;
+    text-shadow: 2px 2px 0 var(--accent) !important;
+    margin: 0 0 18px !important;
+  }
+  .pipeline-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+  }
+  .pipeline-step {
+    position: relative;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    border-radius: var(--radius);
+    transition: border-color 0.2s, transform 0.15s;
+  }
+  .pipeline-step:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+  }
+  .pipeline-n {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 9px;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    display: block;
+    margin-bottom: 8px;
+  }
+  .pipeline-step h4 {
+    font-family: 'VT323', monospace;
+    font-size: 18px;
+    text-transform: uppercase;
+    color: var(--ink);
+    letter-spacing: 0.04em;
+    margin: 0 0 6px;
+  }
+  .pipeline-step p {
+    margin: 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.55;
+  }
+  /* Arrow between steps (skipped after the last card) */
+  .pipeline-step:not(:last-child)::after {
+    content: '→';
+    position: absolute;
+    right: -11px;
+    top: 18px;
+    color: var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    z-index: 2;
+    background: var(--bg);
+    padding: 0 1px;
+  }
+  @media (max-width: 760px) {
+    .pipeline-grid { grid-template-columns: repeat(2, 1fr); }
+    .pipeline-step:not(:last-child)::after { display: none; }
+  }
+</style>

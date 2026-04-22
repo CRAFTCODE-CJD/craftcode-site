@@ -1,0 +1,81 @@
+---
+/**
+ * Before/after metrics strip with delta indicator. Use on plugin pages to
+ * show results: "atlas size 5.6 MB (−42%)", "draw calls 1 (−97%)", etc.
+ * Adapted from ClaudeDesigner plugin-page-layouts.
+ */
+interface Stat {
+  label: string;       // e.g. "// atlas size"
+  value: string;       // e.g. "5.6 MB"
+  delta?: string;      // e.g. "−42%" (optional)
+}
+interface Props {
+  title?: string;
+  stats: Stat[];       // 2-4 recommended for balance
+}
+const { title, stats } = Astro.props;
+---
+
+<section class="stats">
+  {title && <h2 class="stats-title">{title}</h2>}
+  <div class="stats-grid" data-count={stats.length}>
+    {stats.map((s) => (
+      <div class="stats-cell">
+        <div class="stats-k">{s.label}</div>
+        <div class="stats-v">
+          {s.value}
+          {s.delta && <span class="stats-d">{s.delta}</span>}
+        </div>
+      </div>
+    ))}
+  </div>
+</section>
+
+<style>
+  .stats { margin: 32px 0; }
+  .stats-title {
+    font-family: 'VT323', monospace !important;
+    font-size: 24px !important;
+    text-transform: uppercase;
+    color: var(--ink) !important;
+    text-shadow: 2px 2px 0 var(--accent) !important;
+    margin: 0 0 18px !important;
+  }
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(var(--stats-cols, 4), minmax(0, 1fr));
+    gap: 10px;
+  }
+  .stats-grid[data-count='2'] { --stats-cols: 2; }
+  .stats-grid[data-count='3'] { --stats-cols: 3; }
+  .stats-cell {
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    border-radius: 4px;
+    transition: border-color 0.2s;
+  }
+  .stats-cell:hover { border-color: var(--accent-2); }
+  .stats-k {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .stats-v {
+    font-family: 'VT323', monospace;
+    font-size: 22px;
+    color: var(--accent-2);
+    margin-top: 4px;
+    line-height: 1.1;
+  }
+  .stats-d {
+    color: var(--accent);
+    font-size: 14px;
+    margin-left: 6px;
+  }
+  @media (max-width: 760px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  }
+</style>

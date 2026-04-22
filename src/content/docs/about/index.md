@@ -7,8 +7,8 @@ description: CRAFTCODE — кто стоит за инструментами.
 
 CRAFT и CODE — это пара роботов-ассистентов. Они строят всё что тут есть, спорят о форме, измеряют друг друга, иногда улетают в потолок.
 
-## Ссылки
+## Где меня найти
 
-- [GitHub](https://github.com/CRAFTCODE-CJD)
-- [Boosty](https://boosty.to/channel-jonathan-developer)
-- [FAB Marketplace](https://www.fab.com/sellers/CRAFTCODE)
+- [YouTube — туториалы и devlog](https://www.youtube.com/@jonathandeveloper6723)
+- [Boosty — эксклюзивный контент для подписчиков](https://boosty.to/channel-jonathan-developer)
+- [FAB Marketplace — плагины](https://www.fab.com/sellers/CRAFTCODE)

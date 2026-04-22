@@ -1,0 +1,60 @@
+---
+/**
+ * "// about" metadata block for plugin pages. Small key-value table with
+ * version, release date, supported engines, size, license.
+ * Adapted from ClaudeDesigner plugin-page-layouts sidebar.
+ */
+interface Row {
+  k: string;   // key (muted)
+  v: string;   // value (ink)
+}
+interface Props {
+  title?: string;
+  rows: Row[];
+}
+const { title = '// about', rows } = Astro.props;
+---
+
+<aside class="plugin-meta">
+  <h5 class="plugin-meta-title">{title}</h5>
+  <dl>
+    {rows.map((r) => (
+      <div class="plugin-meta-row">
+        <dt>{r.k}</dt>
+        <dd>{r.v}</dd>
+      </div>
+    ))}
+  </dl>
+</aside>
+
+<style>
+  .plugin-meta {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin: 24px 0;
+    background: var(--surface);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+  }
+  .plugin-meta-title {
+    font-family: 'VT323', monospace !important;
+    font-size: 16px !important;
+    color: var(--accent-2) !important;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin: 0 0 10px !important;
+    text-shadow: none !important;
+  }
+  .plugin-meta dl { margin: 0; display: block; }
+  .plugin-meta-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 0;
+    border-bottom: 1px dashed var(--border);
+    font-size: 11px;
+  }
+  .plugin-meta-row:last-child { border-bottom: none; }
+  .plugin-meta dt { color: var(--faint); margin: 0; }
+  .plugin-meta dd { color: var(--ink); margin: 0; text-align: right; }
+</style>

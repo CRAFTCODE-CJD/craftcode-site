@@ -1,0 +1,198 @@
+---
+/**
+ * YouTube channel + latest-video card for the home page.
+ *
+ * Shows (left) a thumbnail + play-overlay linking to the current video,
+ * (right) a short pitch + "latest: <title>" line + "open channel" CTA.
+ *
+ * Thumbnail URL pattern (no API key): https://img.youtube.com/vi/<id>/maxresdefault.jpg
+ *    (falls back to /hqdefault.jpg if maxres doesn't exist)
+ *
+ * Update the `latest` prop manually when a new video ships — a full
+ * YouTube-API integration would add a network dependency we don't need
+ * for a single visible tile.
+ */
+interface Props {
+  /** Channel handle for the "open channel" link. */
+  channelUrl?: string;
+  /** Displayed channel name/handle. */
+  channelName?: string;
+  /** Optional latest-video to feature. */
+  latest?: { id: string; title: string };
+}
+
+const {
+  channelUrl = 'https://www.youtube.com/@jonathandeveloper6723',
+  channelName = '@jonathandeveloper6723',
+  latest,
+} = Astro.props;
+
+// If no specific latest video is provided, we show a generic channel tile
+// (no thumbnail, just brand + channel name). Author fills `latest` on new uploads.
+const thumbUrl = latest
+  ? `https://img.youtube.com/vi/${latest.id}/hqdefault.jpg`
+  : null;
+const watchUrl = latest
+  ? `https://www.youtube.com/watch?v=${latest.id}`
+  : channelUrl;
+---
+
+<section class="yt-card" aria-label="YouTube">
+  <a class="yt-thumb" href={watchUrl} target="_blank" rel="noopener"
+     aria-label={latest ? `Смотреть: ${latest.title}` : 'Открыть YouTube-канал'}>
+    {thumbUrl ? (
+      <img src={thumbUrl} alt="" loading="lazy" />
+    ) : (
+      <div class="yt-thumb-fallback">
+        <span class="yt-thumb-label">// youtube</span>
+        <span class="yt-thumb-channel">{channelName}</span>
+      </div>
+    )}
+    <div class="yt-play" aria-hidden="true">
+      <svg viewBox="0 0 48 48" width="48" height="48">
+        <polygon points="18,12 38,24 18,36" fill="currentColor"/>
+      </svg>
+    </div>
+  </a>
+
+  <div class="yt-body">
+    <span class="ds-label">// youtube · devlog + туториалы</span>
+    <h3 class="yt-heading">Разбираю UE-разработку, показываю работу над плагинами</h3>
+    {latest && (
+      <p class="yt-latest">
+        <span class="yt-latest-prefix">последнее:</span> {latest.title}
+      </p>
+    )}
+    <div class="yt-actions">
+      <a class="btn primary" href={channelUrl} target="_blank" rel="noopener">
+        Открыть канал ↗
+      </a>
+      {latest && (
+        <a class="btn ghost" href={watchUrl} target="_blank" rel="noopener">
+          ▸ Смотреть видео
+        </a>
+      )}
+    </div>
+  </div>
+</section>
+
+<style>
+  .yt-card {
+    display: grid;
+    grid-template-columns: minmax(280px, 380px) 1fr;
+    gap: 22px;
+    padding: 18px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid #ff3939;   /* YouTube red */
+    border-radius: 4px;
+    margin: 28px 0;
+  }
+
+  /* Thumbnail (left) — 16:9 */
+  .yt-thumb {
+    position: relative;
+    display: block;
+    aspect-ratio: 16 / 9;
+    background: #06060a;
+    border-radius: 3px;
+    overflow: hidden;
+    text-decoration: none;
+    transition: transform 0.18s;
+  }
+  .yt-thumb:hover {
+    transform: translateY(-2px);
+  }
+  .yt-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: filter 0.2s;
+  }
+  .yt-thumb:hover img {
+    filter: brightness(1.1);
+  }
+
+  .yt-thumb-fallback {
+    display: grid;
+    place-items: center;
+    align-content: center;
+    gap: 8px;
+    width: 100%;
+    height: 100%;
+    background:
+      radial-gradient(ellipse 80% 60% at 50% 50%,
+        color-mix(in oklab, #ff3939 10%, transparent), transparent),
+      var(--code-bg);
+  }
+  .yt-thumb-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: color-mix(in oklab, #ff3939 80%, var(--muted));
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .yt-thumb-channel {
+    font-family: 'VT323', monospace;
+    font-size: 22px;
+    color: var(--ink);
+  }
+
+  .yt-play {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    color: rgba(255, 255, 255, 0.92);
+    filter: drop-shadow(0 2px 6px rgba(255, 57, 57, 0.55));
+    pointer-events: none;
+    opacity: 0.85;
+    transition: opacity 0.2s, transform 0.2s;
+  }
+  .yt-thumb:hover .yt-play {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+
+  /* Right column */
+  .yt-body {
+    display: grid;
+    align-content: center;
+    gap: 10px;
+  }
+  .yt-heading {
+    margin: 0;
+    font-family: 'VT323', monospace;
+    font-size: 26px;
+    line-height: 1.15;
+    color: var(--ink);
+  }
+  .yt-latest {
+    margin: 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+  .yt-latest-prefix {
+    color: var(--accent-2);
+    text-transform: uppercase;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    margin-right: 6px;
+  }
+  .yt-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+  }
+
+  @media (max-width: 700px) {
+    .yt-card {
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+  }
+</style>

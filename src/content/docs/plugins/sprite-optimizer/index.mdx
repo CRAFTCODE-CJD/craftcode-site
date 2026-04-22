@@ -13,6 +13,10 @@ head:
 
 import { Card, CardGrid } from '@astrojs/starlight/components';
 import PluginHero from '~/components/PluginHero.astro';
+import Pipeline from '~/components/Pipeline.astro';
+import GalleryGrid from '~/components/GalleryGrid.astro';
+import StatsStrip from '~/components/StatsStrip.astro';
+import PluginMeta from '~/components/PluginMeta.astro';
 
 <PluginHero
   kicker="// plugin · paper2d"
@@ -24,6 +28,25 @@ import PluginHero from '~/components/PluginHero.astro';
   ctas={[
     { label: 'FAB Marketplace', href: 'https://www.fab.com/listings/d467cf90-8576-4aa9-b55d-285060a5d1bf', variant: 'primary', external: true },
     { label: 'Быстрый старт →', href: '/plugins/sprite-optimizer/getting-started/' },
+  ]}
+/>
+
+<PluginMeta
+  rows={[
+    { k: 'version',  v: '2.1.0' },
+    { k: 'engine',   v: 'UE 4.27 — 5.7' },
+    { k: 'scope',    v: 'Editor-only' },
+    { k: 'license',  v: 'FAB Standard' },
+  ]}
+/>
+
+<Pipeline
+  title="Пайплайн · 4 шага"
+  steps={[
+    { n: 'STEP 01', title: 'Import',   text: 'Drag PNG из Content Browser. Alpha сохраняется как есть.' },
+    { n: 'STEP 02', title: 'Optimize', text: 'Обрезка прозрачных краёв. Пивот не сдвигается.' },
+    { n: 'STEP 03', title: 'Pack',     text: 'Max Rects · Bin · Grid · Tile. Мультистраничный.' },
+    { n: 'STEP 04', title: 'Export',   text: 'BC7 + Material Instance, UMG-ready за клик.' },
   ]}
 />
 
@@ -44,6 +67,27 @@ import PluginHero from '~/components/PluginHero.astro';
   </Card>
 </CardGrid>
 
+<GalleryGrid
+  title="Галерея"
+  shots={[
+    { n: '01', src: '/images/plugins/sprite-optimizer/Atlas_02.png',   caption: 'Atlas Editor · 4K preview' },
+    { n: '02', src: '/images/plugins/sprite-optimizer/Atlas_Page.png', caption: 'Мультистраничный атлас' },
+    { n: '03', src: '/images/plugins/sprite-optimizer/Atlas_03.png',   caption: 'Drag & drop композиция' },
+    { n: '04', src: '/images/plugins/sprite-optimizer/Collision_01.png', caption: 'Collision preview' },
+    { n: '05', src: '/images/plugins/sprite-optimizer/AtlasToolBar_01.png', caption: 'Toolbar + режимы' },
+  ]}
+/>
+
+<StatsStrip
+  title="Результаты"
+  stats={[
+    { label: '// atlas size',  value: '5.6 MB', delta: '−42%' },
+    { label: '// draw calls',  value: '1',      delta: '−97%' },
+    { label: '// load time',   value: '0.18s',  delta: '−60%' },
+    { label: '// memory',      value: '24 MB',  delta: '−31%' },
+  ]}
+/>
+
 ---
 
 ## Полный список функций
@@ -60,15 +104,6 @@ import PluginHero from '~/components/PluginHero.astro';
 - **Memory warnings** — предупреждение с оценкой RAM перед тяжёлыми операциями
 - **50 уровней undo/redo** — экспериментируй без страха
 - **Нулевой runtime-cost** — плагин editor-only, в пакованную игру не попадает
-
----
-
-## Поддерживаемые версии движка
-
-| Движок | Статус |
-|--------|--------|
-| UE 4.27 | ✅ Поддерживается (через слой совместимости) |
-| UE 5.0–5.7 | ✅ Полная поддержка |
 
 ---
 

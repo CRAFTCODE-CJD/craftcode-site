@@ -65,18 +65,19 @@ export default defineConfig({
           ],
         },
         {
-          label: 'Games',
-          translations: { ru: 'Игры' },
+          label: 'Templates',
+          translations: { ru: 'Шаблоны' },
           collapsed: true,
           items: [
-            { label: 'Soon', translations: { ru: 'Скоро' }, link: '/games/' },
+            { label: 'Soon', translations: { ru: 'Скоро' }, link: '/templates/' },
           ],
         },
         { label: 'About', translations: { ru: 'О нас' }, link: '/about/' },
       ],
-      social: {
-        github: 'https://github.com/CRAFTCODE-CJD',
-      },
+      // GitHub link intentionally absent — the project is not marketing
+      // its source repo from the site. Plugins ship via FAB; subscriber
+      // content via Boosty; video content via YouTube.
+      social: {},
     }),
     mdx(),
   ],

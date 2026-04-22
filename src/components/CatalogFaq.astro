@@ -28,7 +28,7 @@ const copy = {
         href: '/plugins/mouseinterceptor/',
       },
     ],
-    note: 'Все три ставятся одинаково: копируешь папку в <code>Plugins/</code> проекта, перезапускаешь Unreal.',
+    note: '',
   },
   en: {
     head: '// which one do I need',
@@ -49,7 +49,7 @@ const copy = {
         href: '/plugins/mouseinterceptor/',
       },
     ],
-    note: 'All three install the same way: drop the folder into <code>Plugins/</code> of your project, restart Unreal.',
+    note: '',
   },
 };
 
@@ -66,7 +66,7 @@ const t = copy[lang];
       </>
     ))}
   </dl>
-  <p class="catalog-note" set:html={t.note}></p>
+  {t.note && <p class="catalog-note" set:html={t.note}></p>}
 </aside>
 
 <style>

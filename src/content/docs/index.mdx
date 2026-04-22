@@ -16,17 +16,26 @@ head:
       /* Hide Starlight's default splash hero — we render our own BootHero. */
       .hero { display: none !important; }
       .sl-markdown-content { max-width: 1080px; margin-inline: auto; }
+      /* Zero out Starlight's default content-frame padding on the home
+         page so the playground stage sits flush under the topbar —
+         otherwise we get 64+24+24=112 px of dead space above the stage. */
+      .main-frame { padding-top: 8px !important; }
+      .content-panel { padding-top: 0 !important; }
+      .sl-markdown-content { margin-top: 0 !important; }
 ---
 
-import BootHero from '~/components/BootHero.astro';
-import FeatureStrip from '~/components/FeatureStrip.astro';
-import PluginShowcase from '~/components/PluginShowcase.astro';
-import WorkshopHint from '~/components/WorkshopHint.astro';
+import BootToPlayground from '~/components/BootToPlayground.astro';
+import FabCard from '~/components/FabCard.astro';
+import YoutubeCard from '~/components/YoutubeCard.astro';
+import BoostyCard from '~/components/BoostyCard.astro';
+import TemplatesTeaser from '~/components/TemplatesTeaser.astro';
 
-<BootHero />
+<BootToPlayground />
 
-<FeatureStrip />
+<FabCard />
 
-<PluginShowcase />
+<YoutubeCard />
 
-<WorkshopHint />
+<BoostyCard />
+
+<TemplatesTeaser />

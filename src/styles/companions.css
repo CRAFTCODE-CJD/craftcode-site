@@ -14,23 +14,120 @@
     16 idea_a(-768)   17 idea_b(-816)           — thinking sequence
     18 think_a(-864)  19 think_b(-912)           — squat + laptop    */
 
-/* Anchored to the BOTTOM of the document (not the viewport). Users only see
-   the companions when scrolled near the page bottom — they "live" there,
-   like a footer, rather than following the reader. Height gives them some
-   vertical room for throws without escaping onto the docs content area. */
+/* `.companions` now lives INSIDE the BootToPlayground .cc-stage on the
+   home page only. The stage provides the border, background, grid, and
+   box-shadow — .companions just needs to fill it and host the robots. */
 .companions {
   position: absolute;
-  left: 0; right: 0;
-  bottom: 0;
-  height: 480px;
-  z-index: 5;                    /* well below topbar (z:100) and bubbles */
+  inset: 0;
   pointer-events: none;
   overflow: visible;
-  /* Isolate shake-transforms from page layout so translate(±2px) can't
-     briefly push content past body bounds and flicker the scrollbar. */
   contain: layout paint;
   will-change: transform;
 }
+
+/* Dashed floor line now lives on `.cc-stage::after` (BootToPlayground)
+   so it persists visually across both boot and playground phases. */
+
+/* ─── Collision emotes + sparks (appear on bumps) ─── */
+.cc-emote {
+  position: absolute;
+  z-index: 9;
+  pointer-events: none;
+  background: var(--bg);
+  border: 1px solid var(--accent-2);
+  color: var(--accent-2);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  padding: 3px 7px;
+  border-radius: 3px;
+  white-space: nowrap;
+  transform: translate(-50%, -100%);
+  animation: cc-emote 1.2s ease-out forwards;
+}
+@keyframes cc-emote {
+  0%   { opacity: 0; transform: translate(-50%, -80%)  scale(0.9); }
+  15%  { opacity: 1; transform: translate(-50%, -100%) scale(1); }
+  75%  { opacity: 1; transform: translate(-50%, -115%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -135%) scale(1); }
+}
+.cc-spark {
+  position: absolute;
+  z-index: 7;
+  pointer-events: none;
+  width: 24px; height: 24px;
+  transform: translate(-50%, -50%);
+  animation: cc-spark 0.42s ease-out forwards;
+}
+.cc-spark::before,
+.cc-spark::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, var(--accent-2), transparent 60%);
+}
+.cc-spark::after {
+  background: radial-gradient(circle at 50% 50%, var(--accent), transparent 50%);
+  transform: rotate(45deg);
+}
+@keyframes cc-spark {
+  0%   { opacity: 1; transform: translate(-50%, -50%) scale(0.3); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(2.2); }
+}
+
+/* ─── Platforms (obstacles) ─── */
+.companions-obstacle {
+  position: absolute;
+  background:
+    repeating-linear-gradient(
+      45deg,
+      color-mix(in oklab, var(--accent) 30%, transparent) 0 4px,
+      transparent 4px 8px
+    ),
+    var(--surface);
+  border: 1px solid color-mix(in oklab, var(--accent) 45%, transparent);
+  z-index: 2;
+  pointer-events: none;
+}
+.companions-obstacle .obstacle-lbl {
+  position: absolute;
+  top: -14px;
+  left: 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: var(--faint);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  opacity: 0.65;
+}
+
+/* HUD strip — small corner labels like the designer mockup. Purely
+   decorative; no JS wires into these. */
+.companions-hud {
+  position: absolute;
+  top: 10px; right: 14px;
+  display: flex;
+  gap: 14px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--faint);
+  pointer-events: none;
+  z-index: 3;
+}
+.companions-hud .k { color: var(--muted); }
+.companions-hud .v { color: var(--accent-2); }
+
+.companions-caption {
+  position: absolute;
+  top: 10px; left: 14px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--faint);
+  letter-spacing: 0.04em;
+  pointer-events: none;
+  z-index: 3;
+}
+
 .fx-layer { z-index: 4; }        /* FX render below topbar and above page content */
 
 .companion {
@@ -44,66 +141,37 @@
   filter: drop-shadow(0 3px 6px var(--companion-shadow, rgba(0, 0, 0, 0.35)));
   transition: filter 0.3s;
   border-radius: 50%;
+  /* Above obstacles (z=2), HUD / caption (z=3) so bot + bubble always
+     render on top of platforms. Bubbles inside get z=30 on top of that. */
+  z-index: 10;
 }
 .companion[data-facing='left'] .sprite { transform: scaleX(-1); }
 
+/*
+  Sprite sheet: 92 frames × 32 px = 2944 × 32 px at source resolution.
+  Rendered at 48 × 48 for visibility (1.5× scale), so the background
+  image is also scaled to 92 × 48 = 4416 × 48 px.
+
+  The currently-shown frame is a CSS custom property `--cc-frame` that
+  companions.js writes from its clip-animation driver. No @keyframes,
+  no per-state class toggles — the JS tick advances `--cc-frame`
+  directly, so each robot's clip progresses independently.
+
+  See public/sprites/ANIMATIONS.md for the full index → name → semantics
+  catalog and src/scripts/companions.js → CLIPS for the named clips.
+*/
 .companion .sprite {
   position: relative;
   width: 48px; height: 48px;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
   background-repeat: no-repeat;
-  background-size: 960px 48px;
-  background-position-x: 0;
-  animation: sprite-breath 0.7s infinite step-end;
+  background-size: 4416px 48px;                 /* 92 frames × 48 px */
+  background-position-x: calc(var(--cc-frame, 0) * -48px);
+  /* NO CSS animation — the JS clip driver owns --cc-frame. */
 }
 .companion[data-who='craft'] .sprite { background-image: url('/sprites/craft.png'); }
 .companion[data-who='code']  .sprite { background-image: url('/sprites/code.png'); }
-
-@keyframes sprite-breath {
-  0%, 44%    { background-position-x: 0; }
-  45%, 49%   { background-position-x: -96px; }
-  50%, 100%  { background-position-x: -48px; }
-}
-.companion.walking .sprite { animation: sprite-walk 0.28s infinite step-end; }
-@keyframes sprite-walk {
-  0%, 49%   { background-position-x: -144px; }
-  50%, 100% { background-position-x: -192px; }
-}
-.companion.falling .sprite { animation: sprite-fall 0.12s infinite step-end; }
-@keyframes sprite-fall {
-  0%, 49%   { background-position-x: -240px; }
-  50%, 100% { background-position-x: -288px; }
-}
-.companion.talking .sprite { animation: sprite-talk 0.22s infinite step-end; }
-@keyframes sprite-talk {
-  0%, 49%   { background-position-x: -336px; }
-  50%, 100% { background-position-x: -384px; }
-}
-.companion.surprised .sprite { animation: none !important; background-position-x: -432px !important; }
-.companion.sleeping  .sprite { animation: none !important; background-position-x: -480px !important; }
-.companion.excited   .sprite { animation: none !important; background-position-x: -720px !important; }
-
-.companion.waving .sprite { animation: sprite-wave 0.30s infinite step-end; }
-@keyframes sprite-wave {
-  0%, 49%   { background-position-x: -528px; }
-  50%, 100% { background-position-x: -576px; }
-}
-.companion.typing .sprite { animation: sprite-typing 0.28s infinite step-end; }
-@keyframes sprite-typing {
-  0%, 49%   { background-position-x: -624px; }
-  50%, 100% { background-position-x: -672px; }
-}
-.companion.idea .sprite { animation: sprite-idea 0.9s steps(1) 1 forwards; }
-@keyframes sprite-idea {
-  0%, 49%   { background-position-x: -768px; }
-  50%, 100% { background-position-x: -816px; }
-}
-.companion.thinking .sprite { animation: sprite-thinking 0.26s infinite step-end; }
-@keyframes sprite-thinking {
-  0%, 49%   { background-position-x: -864px; }
-  50%, 100% { background-position-x: -912px; }
-}
 
 /* Soft hover glow */
 .companion::before {
@@ -134,7 +202,7 @@
   cursor: grabbing !important;
   filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.35)) !important;
 }
-.companion.dragging .sprite { animation: sprite-fall 0.16s infinite step-end !important; }
+/* Dragging plays the `tumble` clip via JS — no CSS keyframe needed. */
 
 /* ── FX overlays (dust, sparkle, shock, camera shake) ── */
 .fx-layer {
@@ -200,14 +268,20 @@
 .companions.fx-shake { animation: companions-shake 0.3s ease-in-out; }
 
 /* ── Speech bubble ──
-   --bubble-x is set by companions.js after the bubble becomes visible
-   so the bubble can shift sideways to stay on screen. The tail (::after)
-   negates the shift to keep pointing at the companion. */
+   --bubble-x / --bubble-y are set by companions.js after the bubble
+   becomes visible so the bubble can shift to stay INSIDE the stage
+   (not the viewport). The tail (::after) negates the shift to keep
+   pointing at the companion. */
 .companion-bubble {
   --bubble-x: 0px;
+  --bubble-y: 0px;
   position: absolute;
+  /* Dialogue bubbles must stay ON TOP of everything in the playground
+     (obstacles z=2, HUD z=3, caption z=3, fx z=4). A reader should
+     never have a platform or FX overlay obscure the text. */
+  z-index: 30;
   bottom: 56px; left: 50%;
-  transform: translate(calc(-50% + var(--bubble-x)), 6px);
+  transform: translate(calc(-50% + var(--bubble-x)), calc(6px + var(--bubble-y)));
   /* Arcade-styled bubble (we ship only arcade theme) */
   background: var(--bg);
   border: 1px solid var(--accent);
@@ -217,12 +291,29 @@
   font-size: 16px;
   letter-spacing: 0.02em;
   color: var(--ink);
-  white-space: nowrap;
+  /* Sizing strategy:
+     - `width: max-content` says "use the natural one-line width of the
+        content", which overrides shrink-to-fit. Without this, absolute
+        positioning with `left: 50%` inside a 48px-wide `.companion`
+        container gave the bubble only ~24px of "available" space, and
+        text wrapped per-word into a tall skinny column.
+     - `max-width` then caps that natural width so long phrases still
+        wrap into multiple lines instead of extending past the stage.
+     - `overflow-wrap: break-word` only breaks mid-word if a single
+        word exceeds max-width (rare in Russian). */
+  white-space: normal;
+  overflow-wrap: break-word;
+  width: max-content;
   max-width: min(280px, calc(100vw - 24px));
   box-shadow: 0 10px 24px rgba(10, 8, 5, 0.14);
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.2s, transform 0.2s;
+  /* Only opacity transitions — NOT transform. If the transform were
+     animated, positionBubble() would measure a mid-animation rect and
+     under-correct (each call reads the current tweening position and
+     computes a shrinking shift). With transform snapping, the clamp
+     is deterministic and re-enters the same position every time. */
+  transition: opacity 0.2s;
   line-height: 1.5;
 }
 .companion-bubble::after {
@@ -238,7 +329,9 @@
 }
 .companion-bubble.visible {
   opacity: 1;
-  transform: translate(calc(-50% + var(--bubble-x)), 0);
+  /* Must include --bubble-y so vertical clamp (bot near stage top)
+     works when bubble is visible. */
+  transform: translate(calc(-50% + var(--bubble-x)), var(--bubble-y));
 }
 .companion-bubble .who {
   display: inline;
@@ -263,7 +356,7 @@
   .companion-bubble { transition: opacity 0.1s !important; }
 }
 
-/* Mobile */
+/* Mobile — narrower bubbles, slightly larger text for legibility */
 @media (max-width: 760px) {
-  .companion-bubble { font-size: 14px; max-width: 220px; white-space: normal; }
+  .companion-bubble { font-size: 14px; max-width: 220px; }
 }

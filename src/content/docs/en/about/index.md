@@ -4,8 +4,9 @@ description: About CRAFTCODE — two-robot workshop shipping Unreal Engine tooli
 ---
 
 CRAFTCODE is a small workshop shipping tooling and games for Unreal Engine.
-Plugins are released on [FAB Marketplace](https://www.fab.com/sellers/CraftCode)
-and open-source repos live on [GitHub](https://github.com/CRAFTCODE-CJD).
+Plugins ship via [FAB Marketplace](https://www.fab.com/sellers/CraftCode);
+tutorials and devlog on [YouTube](https://www.youtube.com/@jonathandeveloper6723);
+subscriber-exclusive projects on [Boosty](https://boosty.to/channel-jonathan-developer).
 
 This site is the docs + info hub. It's not a sales channel — purchase happens
 on FAB, and the site sends traffic outward to storefronts.

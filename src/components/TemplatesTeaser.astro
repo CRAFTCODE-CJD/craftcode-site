@@ -1,0 +1,108 @@
+---
+/**
+ * "Templates — soon" teaser card for the home page.
+ *
+ * Kept minimal on purpose — the page doesn't exist yet as content, but
+ * the home page has space and this sets up the expectation that future
+ * products will live under /templates/. No fake screenshots.
+ */
+---
+
+<section class="tmpl-teaser" aria-label="Шаблоны — скоро">
+  <div class="tmpl-grid">
+    <div>
+      <span class="ds-label">// templates · скоро</span>
+      <h3 class="tmpl-heading">Шаблоны проектов и геймплея</h3>
+      <p class="tmpl-pitch">
+        UE-шаблоны с готовой архитектурой: спрайтовый рогалик, top-down
+        стрелялка, инвентарь, диалоговая система. Распаковал — работает.
+      </p>
+      <a class="btn ghost" href="/templates/">Раздел →</a>
+    </div>
+
+    <div class="tmpl-status" aria-hidden="true">
+      <span class="tmpl-status-label">status</span>
+      <span class="tmpl-status-value">прототипы</span>
+      <span class="tmpl-status-dots">
+        <span class="dot on"></span>
+        <span class="dot on"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+      </span>
+      <span class="tmpl-status-hint">~50% · черновые механики в работе</span>
+    </div>
+  </div>
+</section>
+
+<style>
+  .tmpl-teaser {
+    margin: 22px 0;
+    padding: 20px 24px;
+    background: var(--surface);
+    border: 1px dashed var(--border);
+    border-radius: 4px;
+  }
+  .tmpl-grid {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 28px;
+    align-items: center;
+  }
+  .tmpl-heading {
+    margin: 4px 0 6px;
+    font-family: 'VT323', monospace;
+    font-size: 26px;
+    color: var(--ink);
+    line-height: 1.15;
+  }
+  .tmpl-pitch {
+    margin: 0 0 12px;
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.55;
+    max-width: 56ch;
+  }
+
+  .tmpl-status {
+    display: grid;
+    gap: 4px;
+    padding: 12px 14px;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .tmpl-status-label {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .tmpl-status-value {
+    font-size: 16px;
+    color: var(--accent-2);
+  }
+  .tmpl-status-dots {
+    display: flex;
+    gap: 4px;
+    margin-top: 6px;
+  }
+  .tmpl-status-dots .dot {
+    width: 10px; height: 10px;
+    border-radius: 2px;
+    background: color-mix(in oklab, var(--muted) 30%, transparent);
+  }
+  .tmpl-status-dots .dot.on {
+    background: var(--accent-2);
+    box-shadow: 0 0 8px -2px var(--accent-2);
+  }
+  .tmpl-status-hint {
+    margin-top: 6px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  @media (max-width: 640px) {
+    .tmpl-grid { grid-template-columns: 1fr; gap: 16px; }
+  }
+</style>

@@ -10,10 +10,11 @@ html, body { margin: 0; padding: 0; }
 html, body { overflow-x: hidden; }
 
 body {
-  position: relative;   /* anchor for .companions (absolute, bottom:0) */
-  /* Reserve the companion stage (480 px) plus 24 px gap so page content
-     never overlaps the robots. Any page on the site gets this automatically. */
-  padding-bottom: 504px;
+  position: relative;
+  /* Only the topbar is globally persistent now — the robot playground
+     lives inside BootToPlayground on the home page only, in normal flow. */
+  --cc-topbar-h: 56px;
+  padding-top: var(--cc-topbar-h);
   background: var(--bg);
   color: var(--ink);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
@@ -93,4 +94,219 @@ body {
   letter-spacing: 0.04em;
   text-transform: uppercase;
   margin-top: 12px;
+}
+
+/* ══════════════════════════════════════════════════════
+   Design-system utilities — ported from ClaudeDesigner
+   (component-buttons / callout / card). Reusable across
+   any page without per-component overrides.
+   ══════════════════════════════════════════════════════ */
+
+/* ── BUTTONS ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'VT323', monospace;
+  font-size: 18px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: 1px solid var(--accent);
+  background: transparent;
+  color: var(--accent);
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.btn:hover {
+  background: var(--accent);
+  color: var(--bg);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px -12px var(--accent);
+}
+.btn.primary {
+  background: var(--accent);
+  color: var(--bg);
+}
+.btn.primary:hover {
+  background: var(--accent-2);
+  border-color: var(--accent-2);
+  color: var(--bg);
+}
+.btn.ghost {
+  border-color: var(--border);
+  color: var(--muted);
+}
+.btn.ghost:hover {
+  border-color: var(--accent-2);
+  color: var(--accent-2);
+  background: transparent;
+  box-shadow: none;
+}
+.btn.pixel {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  padding: 9px 12px 8px;
+  letter-spacing: 0;
+}
+
+/* ── CALLOUT ── */
+.callout {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent-2);
+  background: var(--surface);
+  padding: 12px 16px;
+  border-radius: 4px;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 14px;
+  color: var(--ink);
+  line-height: 1.55;
+}
+.callout .m {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--accent-2);
+  margin-bottom: 4px;
+  letter-spacing: 0.04em;
+}
+
+/* ── CARD (generic, non-image) ── */
+.ds-card {
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  transition: all 0.18s ease;
+  color: var(--ink);
+  text-decoration: none;
+  display: block;
+}
+.ds-card.hover:hover,
+a.ds-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 32px -14px var(--accent);
+}
+.ds-card h3 {
+  font-family: 'VT323', monospace;
+  font-size: 24px;
+  color: var(--ink);
+  margin: 6px 0 4px;
+  text-transform: uppercase;
+  letter-spacing: 0;
+}
+.ds-card p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.ds-card .tag {
+  display: inline-block;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  padding: 3px 6px;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0;
+}
+.ds-card.hover:hover .tag,
+a.ds-card:hover .tag {
+  border-color: var(--accent-2);
+  color: var(--accent-2);
+}
+
+/* Small labels used in ds-card meta rows */
+.ds-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.ds-caption {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--faint, color-mix(in oklab, var(--muted) 60%, var(--bg)));
+}
+
+/* ══════════════════════════════════════════════════════
+   Starlight docs sidebar — design-system override.
+   Original styling was rendering the active page on a
+   solid accent background with invisible text. Ported
+   the `.sb / .group / .item` look from ClaudeDesigner's
+   component-sidebar.html — muted items, accent left
+   border on active, soft tinted bg + ink text colour.
+   ══════════════════════════════════════════════════════ */
+
+/* Group label (mono, uppercase, // prefix) */
+.sidebar-pane .group-label > span {
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: 11px !important;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--faint, color-mix(in oklab, var(--muted) 60%, var(--bg))) !important;
+  font-weight: 400 !important;
+}
+.sidebar-pane .group-label > span::before {
+  content: '// ';
+  opacity: 0.7;
+}
+
+/* Summary row (the collapsible group header) */
+.sidebar-pane details > summary {
+  padding: 8px 10px;
+  cursor: pointer;
+}
+.sidebar-pane details > summary:hover .group-label > span {
+  color: var(--ink) !important;
+}
+
+/* Individual nav items (a.large for standalone + a inside ul) */
+.sidebar-pane a {
+  font-family: 'Inter', system-ui, sans-serif !important;
+  font-size: 13px !important;
+  color: var(--muted) !important;
+  text-decoration: none;
+  padding: 5px 10px !important;
+  border-left: 2px solid transparent !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  transition: color 0.12s, border-color 0.12s, background 0.12s;
+  display: block;
+}
+.sidebar-pane a:hover {
+  color: var(--ink) !important;
+  border-left-color: var(--faint, color-mix(in oklab, var(--muted) 60%, var(--bg))) !important;
+  background: transparent !important;
+}
+
+/* Active page — soft tint + accent border + ◂ marker */
+.sidebar-pane a[aria-current='page'] {
+  color: var(--ink) !important;
+  border-left-color: var(--accent) !important;
+  background: color-mix(in oklab, var(--accent) 10%, transparent) !important;
+  font-weight: 500 !important;
+}
+.sidebar-pane a[aria-current='page']::before {
+  content: '◂ ';
+  color: var(--accent);
+  margin-right: 2px;
+}
+
+/* Clean up default big sidebar top-level styling */
+.sidebar-pane .top-level > li {
+  margin: 4px 0;
+}
+.sidebar-pane .top-level {
+  padding: 10px 8px;
+}
+/* Kill default Starlight font-weight bumps on "large" items */
+.sidebar-pane a.large {
+  font-size: 13px !important;
+  font-weight: 400 !important;
 }

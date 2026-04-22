@@ -1,531 +1,87 @@
-  // ═══ COMPANIONS — dialogue engine + content ═════════
+// ─── Data modules ───
+// SCENES come from the dialogue database, CLIPS/FRAME_ORDER from the
+// animation catalog. Engine logic below is agnostic of both.
+import { SCENES } from './companions/scenes.js';
+import { FRAME_ORDER, fIdx, CLIPS, STATE_TO_CLIP } from './companions/frames.js';
+
+  // ═══ COMPANIONS — dialogue engine + runtime ═════════
   // ════════════════════════════════════════════════════
-  // SCENE-BASED DIALOGUE SYSTEM
-  // ════════════════════════════════════════════════════
-  // Each scene is a typed object. The engine picks by tag, respects
-  // cooldowns, weighs by `weight`, gates by `requires(ctx)`, and may
-  // mutate shared flags via `effect(ctx)`.
+  //  This file is the engine. The DATA it consumes lives in sibling
+  //  modules under ./companions/:
   //
-  // Scene schema:
-  //   id        — unique string (for cooldown/history tracking)
-  //   tags      — string[] (e.g. 'idle', 'grab:craft', 'partner_on_throw:craft')
-  //   weight    — number   (default 1; higher = more likely within tier)
-  //   cooldown  — seconds  (default 30; scene can't replay sooner)
-  //   requires  — (ctx) => bool  (optional predicate)
-  //   effect    — (ctx) => void  (optional side-effect on play)
-  //   lines     — [{ who, text, act?, hold? }]
-  //     • act   — state to enter DURING this line: 'wave' | 'surprised' | 'excited' | 'typing'
-  //     • hold  — extra ms to keep the bubble up after this line's typewriter finishes
+  //    companions/scenes.js  — SCENES[] database (dialogue content)
+  //    companions/frames.js  — FRAME_ORDER, CLIPS, STATE_TO_CLIP, fIdx()
   //
-  // LORE: CRAFT + CODE are robot-assistants who BUILD things together.
-  // CRAFT sculpts & invents (enthusiast), CODE measures & validates
-  // (precise). They're aware of their shared work but NEVER reference
-  // a user, reader, site, plugin, or any meta-concept. No 4th wall.
-  // Colour changes = "мы перекрасили слой". Being thrown = "что-то
-  // не по чертежу". This keeps them immersed.
+  //  See the respective files for schemas + lore notes. Everything below
+  //  this header is ENGINE — physics, rendering, dialogue picker,
+  //  pointer input, FX, HUD, reactions, macros.
   // ════════════════════════════════════════════════════
 
-  const SCENES = [
-    // ─── IDLE chatter ────────────────────────────────────
-    { id: 'idle.build_idea', tags: ['idle'], weight: 3, cooldown: 80,
-      lines: [
-        { who: 'craft', text: 'придумал новую форму' },
-        { who: 'code',  text: 'чертёж есть?' },
-        { who: 'craft', text: 'в голове', act: 'excited' },
-        { who: 'code',  text: 'ненадёжное место' },
-      ]},
-
-    { id: 'idle.sculpt_air', tags: ['idle'], weight: 2, cooldown: 100,
-      lines: [
-        { who: 'craft', text: '*лепит в воздухе*', act: 'typing' },
-        { who: 'code',  text: 'что это' },
-        { who: 'craft', text: 'угол' },
-        { who: 'code',  text: 'в нём 91 градус' },
-        { who: 'craft', text: 'я старался' },
-      ]},
-
-    { id: 'idle.measure_me', tags: ['idle'], weight: 2, cooldown: 90,
-      lines: [
-        { who: 'code',  text: 'между нами 3.14 см' },
-        { who: 'craft', text: 'только что было пять' },
-        { who: 'code',  text: 'ты подполз' },
-      ]},
-
-    { id: 'idle.breathing', tags: ['idle'], weight: 1, cooldown: 180,
-      lines: [
-        { who: 'code',  text: 'ты дышишь?' },
-        { who: 'craft', text: 'вроде' },
-        { who: 'code',  text: 'перестань' },
-        { who: 'craft', text: '...' },
-        { who: 'code',  text: 'теперь дыши' },
-      ]},
-
-    { id: 'idle.what_are_we', tags: ['idle'], weight: 2, cooldown: 140,
-      lines: [
-        { who: 'craft', text: 'а мы для чего?' },
-        { who: 'code',  text: 'строить' },
-        { who: 'craft', text: 'что' },
-        { who: 'code',  text: 'всё это' },
-        { who: 'craft', text: '*оглядывается*' },
-      ]},
-
-    { id: 'idle.redo_it', tags: ['idle'], weight: 2, cooldown: 100,
-      lines: [
-        { who: 'code',  text: 'надо переделать' },
-        { who: 'craft', text: 'что именно' },
-        { who: 'code',  text: 'я ещё не решил' },
-        { who: 'craft', text: 'это опасно звучит' },
-      ]},
-
-    { id: 'idle.draft_sketch', tags: ['idle'], weight: 2, cooldown: 120,
-      lines: [
-        { who: 'craft', text: 'нарисую — покажу' },
-        { who: 'code',  text: 'я возьму линейку' },
-        { who: 'craft', text: 'не надо', act: 'surprised' },
-        { who: 'code',  text: 'поздно' },
-      ]},
-
-    { id: 'idle.small_victory', tags: ['idle'], weight: 1, cooldown: 150,
-      lines: [
-        { who: 'code',  text: 'вчера я подровнял край' },
-        { who: 'craft', text: 'какой' },
-        { who: 'code',  text: 'не помню какой' },
-        { who: 'craft', text: 'но ты помнишь что ровнял' },
-        { who: 'code',  text: 'я помню чувство' },
-      ]},
-
-    { id: 'idle.listen_quiet', tags: ['idle'], weight: 1, cooldown: 140,
-      lines: [
-        { who: 'craft', text: 'слышишь как тишина звенит?' },
-        { who: 'code',  text: 'это не тишина. это нагрузка' },
-        { who: 'craft', text: 'красиво звучит' },
-      ]},
-
-    { id: 'idle.count_something', tags: ['idle'], weight: 1, cooldown: 140,
-      lines: [
-        { who: 'code',  text: 'давай посчитаем' },
-        { who: 'craft', text: 'что' },
-        { who: 'code',  text: 'что-нибудь' },
-        { who: 'craft', text: 'один' },
-        { who: 'code',  text: 'достаточно' },
-      ]},
-
-    { id: 'idle.valentin', tags: ['idle'], weight: 0.8, cooldown: 400,
-      lines: [
-        { who: 'craft', text: 'имя камню придумаем?' },
-        { who: 'code',  text: 'какому' },
-        { who: 'craft', text: 'любому' },
-        { who: 'code',  text: 'Валентин' },
-        { who: 'craft', text: '...почему' },
-        { who: 'code',  text: 'он похож' },
-      ],
-      effect: (ctx) => ctx.setFlag('valentin_mentioned', 1, 600) },
-
-    { id: 'idle.valentin_callback', tags: ['idle'], weight: 3, cooldown: 900,
-      requires: (ctx) => !!ctx.flags.valentin_mentioned,
-      lines: [
-        { who: 'craft', text: 'а где Валентин?' },
-        { who: 'code',  text: 'на своём месте' },
-        { who: 'craft', text: 'хорошо' },
-      ]},
-
-    { id: 'idle.tiny_wave', tags: ['idle'], weight: 1.2, cooldown: 180,
-      lines: [
-        { who: 'craft', text: 'потренируюсь', act: 'wave' },
-        { who: 'code',  text: 'в чём' },
-        { who: 'craft', text: 'в эмоциях' },
-        { who: 'code',  text: 'убедительно' },
-      ]},
-
-    { id: 'idle.you_tired', tags: ['idle'], weight: 1, cooldown: 160,
-      lines: [
-        { who: 'code',  text: 'ты сегодня тише' },
-        { who: 'craft', text: 'думаю' },
-        { who: 'code',  text: 'о?' },
-        { who: 'craft', text: 'это секрет' },
-      ]},
-
-    { id: 'idle.both_stare', tags: ['idle'], weight: 0.7, cooldown: 240,
-      lines: [
-        { who: 'craft', text: '*смотрит вдаль*' },
-        { who: 'code',  text: '*смотрит туда же*' },
-        { who: 'craft', text: 'что там' },
-        { who: 'code',  text: 'другая сторона' },
-      ]},
-
-    // ─── CLICK responses ─────────────────────────────────
-    { id: 'click.craft.1',  tags: ['click:craft'], weight: 1, cooldown: 3,
-      lines: [{ who: 'craft', text: 'хэй' }] },
-    { id: 'click.craft.2',  tags: ['click:craft'], weight: 1, cooldown: 3,
-      lines: [{ who: 'craft', text: 'осторожнее' }] },
-    { id: 'click.craft.3',  tags: ['click:craft'], weight: 1, cooldown: 3,
-      lines: [{ who: 'craft', text: 'щекотно' }] },
-    { id: 'click.craft.4',  tags: ['click:craft'], weight: 0.8, cooldown: 6,
-      lines: [{ who: 'craft', text: '*поёжился*', act: 'surprised' }] },
-    { id: 'click.craft.spam', tags: ['click:craft'], weight: 2, cooldown: 12,
-      requires: (ctx) => (ctx.flags.craft_click_count || 0) >= 4,
-      lines: [{ who: 'craft', text: 'СТОП', act: 'surprised' }] },
-
-    { id: 'click.code.1', tags: ['click:code'], weight: 1, cooldown: 3,
-      lines: [{ who: 'code', text: 'зафиксировано' }] },
-    { id: 'click.code.2', tags: ['click:code'], weight: 1, cooldown: 3,
-      lines: [{ who: 'code', text: 'измерено' }] },
-    { id: 'click.code.3', tags: ['click:code'], weight: 1, cooldown: 3,
-      lines: [{ who: 'code', text: 'и что это было' }] },
-    { id: 'click.code.4', tags: ['click:code'], weight: 0.7, cooldown: 8,
-      lines: [{ who: 'code', text: '*демонстративно молчит*' }] },
-    { id: 'click.code.spam', tags: ['click:code'], weight: 2, cooldown: 12,
-      requires: (ctx) => (ctx.flags.code_click_count || 0) >= 4,
-      lines: [{ who: 'code', text: 'достаточно касаний', act: 'surprised' }] },
-
-    // ─── GRAB reactions (fast, one-liner) ────────────────
-    { id: 'grab.craft.1', tags: ['grab:craft'], weight: 2, cooldown: 2,
-      lines: [{ who: 'craft', text: 'ОЙ' }] },
-    { id: 'grab.craft.2', tags: ['grab:craft'], weight: 1, cooldown: 5,
-      lines: [{ who: 'craft', text: 'ЛЕЧУ?' }] },
-    { id: 'grab.craft.3', tags: ['grab:craft'], weight: 1, cooldown: 5,
-      lines: [{ who: 'craft', text: 'невесомость!' }] },
-    { id: 'grab.craft.4', tags: ['grab:craft'], weight: 1, cooldown: 5,
-      lines: [{ who: 'craft', text: 'аа, коррекция высоты' }] },
-    { id: 'grab.craft.5', tags: ['grab:craft'], weight: 0.6, cooldown: 12,
-      lines: [{ who: 'craft', text: 'лапы, лапы не трогай' }] },
-
-    { id: 'grab.code.1', tags: ['grab:code'], weight: 2, cooldown: 2,
-      lines: [{ who: 'code', text: 'координаты плывут' }] },
-    { id: 'grab.code.2', tags: ['grab:code'], weight: 1, cooldown: 5,
-      lines: [{ who: 'code', text: 'высота: растёт' }] },
-    { id: 'grab.code.3', tags: ['grab:code'], weight: 1, cooldown: 5,
-      lines: [{ who: 'code', text: 'не ронять' }] },
-    { id: 'grab.code.4', tags: ['grab:code'], weight: 1, cooldown: 5,
-      lines: [{ who: 'code', text: 'отпусти на платформу' }] },
-    { id: 'grab.code.5', tags: ['grab:code'], weight: 0.6, cooldown: 12,
-      lines: [{ who: 'code', text: 'я точное оборудование' }] },
-
-    // ─── THROW reactions (airborne launched) ─────────────
-    { id: 'throw.craft.1', tags: ['throw:craft'], weight: 2, cooldown: 3,
-      lines: [{ who: 'craft', text: 'ЛЕЧУУУУ' }] },
-    { id: 'throw.craft.2', tags: ['throw:craft'], weight: 1, cooldown: 5,
-      lines: [{ who: 'craft', text: 'я ПТИЦА' }] },
-    { id: 'throw.craft.3', tags: ['throw:craft'], weight: 1, cooldown: 5,
-      lines: [{ who: 'craft', text: 'не по чертежу!' }] },
-    { id: 'throw.craft.4', tags: ['throw:craft'], weight: 0.7, cooldown: 12,
-      lines: [{ who: 'craft', text: 'ВАУ' }] },
-
-    { id: 'throw.code.1', tags: ['throw:code'], weight: 2, cooldown: 3,
-      lines: [{ who: 'code', text: 'скорость: избыточна' }] },
-    { id: 'throw.code.2', tags: ['throw:code'], weight: 1, cooldown: 5,
-      lines: [{ who: 'code', text: 'траектория неизвестна' }] },
-    { id: 'throw.code.3', tags: ['throw:code'], weight: 1, cooldown: 5,
-      lines: [{ who: 'code', text: 'я этого не просил' }] },
-    { id: 'throw.code.4', tags: ['throw:code'], weight: 0.7, cooldown: 12,
-      lines: [{ who: 'code', text: 'инерция подхватила' }] },
-
-    // ─── PARTNER reactions — when OTHER is airborne/lands ─
-    // When CRAFT is thrown, CODE reacts. Short & one-liner.
-    { id: 'partner.code_sees_craft_flying', tags: ['partner_on_throw:craft'], weight: 2, cooldown: 6,
-      lines: [{ who: 'code', text: 'CRAFT?!', act: 'surprised' }] },
-    { id: 'partner.code_measures_flight', tags: ['partner_on_throw:craft'], weight: 1, cooldown: 10,
-      lines: [{ who: 'code', text: 'любопытная траектория' }] },
-    { id: 'partner.code_calls_craft', tags: ['partner_on_throw:craft'], weight: 1, cooldown: 10,
-      lines: [{ who: 'code', text: 'возвращайся' }] },
-    { id: 'partner.code_shrug', tags: ['partner_on_throw:craft'], weight: 0.8, cooldown: 15,
-      lines: [{ who: 'code', text: '*записывает высоту*', act: 'typing' }] },
-
-    // When CODE is thrown, CRAFT reacts.
-    { id: 'partner.craft_sees_code_flying', tags: ['partner_on_throw:code'], weight: 2, cooldown: 6,
-      lines: [{ who: 'craft', text: 'CODE!', act: 'surprised' }] },
-    { id: 'partner.craft_cheers_code', tags: ['partner_on_throw:code'], weight: 1, cooldown: 10,
-      lines: [{ who: 'craft', text: 'ты МОЖЕШЬ летать!' }] },
-    { id: 'partner.craft_worry_code', tags: ['partner_on_throw:code'], weight: 1, cooldown: 10,
-      lines: [{ who: 'craft', text: 'не потеряйся' }] },
-
-    // Partner reacts to a HARD landing (dialogue scene, not just bubble).
-    { id: 'partner.code_check_craft', tags: ['partner_on_land_hard:craft'], weight: 2, cooldown: 8,
-      lines: [
-        { who: 'code',  text: 'ты цел?', act: 'surprised' },
-        { who: 'craft', text: 'угу' },
-        { who: 'code',  text: 'это не по чертежу' },
-      ]},
-    { id: 'partner.craft_check_code', tags: ['partner_on_land_hard:code'], weight: 2, cooldown: 8,
-      lines: [
-        { who: 'craft', text: 'CODE?', act: 'surprised' },
-        { who: 'code',  text: 'углы на месте' },
-        { who: 'craft', text: 'фух' },
-      ]},
-
-    // ─── LANDING reactions (own bubble, fast) ────────────
-    { id: 'land_soft.1', tags: ['land_soft:craft','land_soft:code'], weight: 2, cooldown: 2,
-      lines: [{ who: 'craft', text: 'уф' }] },   // 'who' overridden by engine
-    { id: 'land_soft.2', tags: ['land_soft:craft','land_soft:code'], weight: 1, cooldown: 4,
-      lines: [{ who: 'craft', text: '*отряхивается*' }] },
-    { id: 'land_soft.3', tags: ['land_soft:craft','land_soft:code'], weight: 1, cooldown: 4,
-      lines: [{ who: 'craft', text: 'приземлился' }] },
-    { id: 'land_soft.4', tags: ['land_soft:craft','land_soft:code'], weight: 0.8, cooldown: 8,
-      lines: [{ who: 'craft', text: 'живой' }] },
-
-    { id: 'land_hard.1', tags: ['land_hard:craft','land_hard:code'], weight: 2, cooldown: 2,
-      lines: [{ who: 'craft', text: 'БАМ', act: 'surprised' }] },
-    { id: 'land_hard.2', tags: ['land_hard:craft','land_hard:code'], weight: 1, cooldown: 5,
-      lines: [{ who: 'craft', text: 'я видел звёзды' }] },
-    { id: 'land_hard.3', tags: ['land_hard:craft','land_hard:code'], weight: 1, cooldown: 5,
-      lines: [{ who: 'craft', text: '*лежит*' }] },
-    { id: 'land_hard.4', tags: ['land_hard:craft','land_hard:code'], weight: 0.8, cooldown: 8,
-      lines: [{ who: 'craft', text: 'ещё раз — не надо' }] },
-
-    // ─── SETDOWN (released gently) ───────────────────────
-    { id: 'setdown.1', tags: ['setdown:craft','setdown:code'], weight: 2, cooldown: 2,
-      lines: [{ who: 'craft', text: '*поставили на место*' }] },
-    { id: 'setdown.2', tags: ['setdown:craft','setdown:code'], weight: 1, cooldown: 4,
-      lines: [{ who: 'craft', text: 'спасибо' }] },
-    { id: 'setdown.3', tags: ['setdown:craft','setdown:code'], weight: 1, cooldown: 4,
-      lines: [{ who: 'craft', text: 'удобно' }] },
-
-    // ─── ACCENT change — "we repainted a layer" ──────────
-    { id: 'accent.repaint', tags: ['accent'], weight: 2, cooldown: 30,
-      lines: [
-        { who: 'craft', text: 'мы перекрасили?', act: 'surprised' },
-        { who: 'code',  text: 'слой сдвинулся' },
-        { who: 'craft', text: 'красиво' },
-      ]},
-    { id: 'accent.spectrum', tags: ['accent'], weight: 1.5, cooldown: 30,
-      lines: [
-        { who: 'code',  text: 'пигмент изменён' },
-        { who: 'craft', text: 'запиши тон' },
-      ]},
-    { id: 'accent.try_it', tags: ['accent'], weight: 1, cooldown: 45,
-      lines: [
-        { who: 'craft', text: 'новая палитра!' },
-        { who: 'code',  text: 'надо привыкнуть' },
-      ]},
-    { id: 'accent.smell', tags: ['accent'], weight: 0.6, cooldown: 120,
-      lines: [
-        { who: 'craft', text: 'пахнет иначе' },
-        { who: 'code',  text: 'у цвета нет запаха' },
-        { who: 'craft', text: 'есть' },
-      ]},
-
-    // ─── KONAMI / special ────────────────────────────────
-    { id: 'konami.dance', tags: ['konami'], weight: 1, cooldown: 5,
-      lines: [
-        { who: 'craft', text: '🕺', act: 'wave' },
-        { who: 'code',  text: '💃', act: 'wave' },
-        { who: 'craft', text: 'что это было' },
-        { who: 'code',  text: 'не останавливайся' },
-      ]},
-
-    { id: 'unmuted.return', tags: ['unmuted'], weight: 1, cooldown: 5,
-      lines: [
-        { who: 'craft', text: 'живые', act: 'wave' },
-        { who: 'code',  text: 'снова' },
-      ]},
-
-    // ─── INSIGHT one-liners (during thinking macro) ──────
-    { id: 'insight.craft.1', tags: ['insight:craft'], weight: 1, cooldown: 25,
-      lines: [{ who: 'craft', text: 'идея!' }] },
-    { id: 'insight.craft.2', tags: ['insight:craft'], weight: 1, cooldown: 25,
-      lines: [{ who: 'craft', text: 'щас запишу' }] },
-    { id: 'insight.craft.3', tags: ['insight:craft'], weight: 1, cooldown: 25,
-      lines: [{ who: 'craft', text: '*рисует*' }] },
-    { id: 'insight.craft.4', tags: ['insight:craft'], weight: 1, cooldown: 25,
-      lines: [{ who: 'craft', text: 'новая форма' }] },
-    { id: 'insight.craft.5', tags: ['insight:craft'], weight: 0.7, cooldown: 45,
-      lines: [{ who: 'craft', text: 'ну конечно!' }] },
-
-    { id: 'insight.code.1', tags: ['insight:code'], weight: 1, cooldown: 25,
-      lines: [{ who: 'code', text: '3.14 см ровно' }] },
-    { id: 'insight.code.2', tags: ['insight:code'], weight: 1, cooldown: 25,
-      lines: [{ who: 'code', text: 'проверим ещё раз' }] },
-    { id: 'insight.code.3', tags: ['insight:code'], weight: 1, cooldown: 25,
-      lines: [{ who: 'code', text: '*измеряет*' }] },
-    { id: 'insight.code.4', tags: ['insight:code'], weight: 1, cooldown: 25,
-      lines: [{ who: 'code', text: 'сходится' }] },
-    { id: 'insight.code.5', tags: ['insight:code'], weight: 0.7, cooldown: 45,
-      lines: [{ who: 'code', text: 'рефактор готов' }] },
-
-    // ─── TOSS — dialogue that ends with one robot launching the other ───
-    // The `toss_intro:X` scene plays, THEN actionToss(X → victim) fires.
-    // Attacker sprints up to victim and throws them for the fun of it.
-
-    // CRAFT loses patience and tosses CODE
-    { id: 'toss.craft.chertyozh', tags: ['toss_intro:craft'], weight: 1, cooldown: 420,
-      lines: [
-        { who: 'craft', text: 'ты опять поправил мой чертёж?' },
-        { who: 'code',  text: 'он был косой' },
-        { who: 'craft', text: 'он был ТВОРЧЕСКИЙ', act: 'surprised' },
-        { who: 'code',  text: 'и косой' },
-        { who: 'craft', text: '.всё.' },
-      ]},
-    { id: 'toss.craft.ruler', tags: ['toss_intro:craft'], weight: 1, cooldown: 420,
-      lines: [
-        { who: 'code',  text: '3.14 см. отойди' },
-        { who: 'craft', text: 'отойду? я?' },
-        { who: 'code',  text: 'ты мешаешь замеру' },
-        { who: 'craft', text: 'знаешь что ещё мешает' },
-        { who: 'code',  text: 'что' },
-        { who: 'craft', text: 'ничего. ты летишь.' },
-      ]},
-    { id: 'toss.craft.silent', tags: ['toss_intro:craft'], weight: 0.8, cooldown: 500,
-      lines: [
-        { who: 'craft', text: 'CODE' },
-        { who: 'code',  text: 'что' },
-        { who: 'craft', text: 'у меня идея' },
-        { who: 'code',  text: 'ок' },
-        { who: 'craft', text: 'ты не спросил какая', act: 'surprised' },
-        { who: 'code',  text: '...какая' },
-        { who: 'craft', text: 'поздно' },
-      ]},
-
-    // CODE loses patience and tosses CRAFT (calmer, more deliberate)
-    { id: 'toss.code.noise', tags: ['toss_intro:code'], weight: 1, cooldown: 420,
-      lines: [
-        { who: 'craft', text: 'ААААААА' },
-        { who: 'code',  text: 'тише' },
-        { who: 'craft', text: 'АААААА' },
-        { who: 'code',  text: 'ладно.' },
-      ]},
-    { id: 'toss.code.plan', tags: ['toss_intro:code'], weight: 1, cooldown: 420,
-      lines: [
-        { who: 'craft', text: '*лепит круглое*', act: 'typing' },
-        { who: 'code',  text: 'должно быть квадратным' },
-        { who: 'craft', text: 'нет' },
-        { who: 'code',  text: 'проверь траекторию' },
-        { who: 'craft', text: 'чью' },
-        { who: 'code',  text: 'свою.' },
-      ]},
-    { id: 'toss.code.measurement', tags: ['toss_intro:code'], weight: 0.8, cooldown: 500,
-      lines: [
-        { who: 'code',  text: 'между нами стало 2 см' },
-        { who: 'craft', text: 'это я подошёл' },
-        { who: 'code',  text: 'нарушение протокола' },
-        { who: 'craft', text: 'ой', act: 'surprised' },
-        { who: 'code',  text: 'коррекция' },
-      ]},
-
-    // Gag one-liners the attacker shouts WHILE launching the victim.
-    { id: 'toss_shout.craft.1', tags: ['toss_shout:craft'], weight: 1, cooldown: 10,
-      lines: [{ who: 'craft', text: 'АЛЛЕ-ОП!' }] },
-    { id: 'toss_shout.craft.2', tags: ['toss_shout:craft'], weight: 1, cooldown: 10,
-      lines: [{ who: 'craft', text: 'ЛЕТИ' }] },
-    { id: 'toss_shout.craft.3', tags: ['toss_shout:craft'], weight: 0.7, cooldown: 20,
-      lines: [{ who: 'craft', text: '*хех*' }] },
-
-    { id: 'toss_shout.code.1', tags: ['toss_shout:code'], weight: 1, cooldown: 10,
-      lines: [{ who: 'code', text: 'замер высоты' }] },
-    { id: 'toss_shout.code.2', tags: ['toss_shout:code'], weight: 1, cooldown: 10,
-      lines: [{ who: 'code', text: 'параболический эксперимент' }] },
-    { id: 'toss_shout.code.3', tags: ['toss_shout:code'], weight: 0.7, cooldown: 20,
-      lines: [{ who: 'code', text: 'давай ещё раз' }] },
-
-    // ─── CONTINUITY scenes — reference recent events ────
-    // Played from the 'idle' tag but only when context makes them fit.
-    // Higher weight than regular idle scenes so they bubble up after events.
-    { id: 'idle.after_throw', tags: ['idle'], weight: 5, cooldown: 40,
-      requires: (ctx) => ctx.flags.craft_airborne_recent || ctx.flags.code_airborne_recent,
-      lines: [
-        { who: 'craft', text: 'до сих пор укачивает' },
-        { who: 'code',  text: 'очень понимаю' },
-      ]},
-
-    { id: 'idle.wary_after_throws', tags: ['idle'], weight: 4, cooldown: 180,
-      requires: (ctx) => (ctx.flags.thrown_count || 0) >= 3,
-      lines: [
-        { who: 'craft', text: 'давай сегодня недалеко от пола' },
-        { who: 'code',  text: 'высота — плохая идея' },
-      ]},
-
-    { id: 'idle.post_crash', tags: ['idle'], weight: 6, cooldown: 30,
-      requires: (ctx) => ctx.flags.craft_landed_hard_recent || ctx.flags.code_landed_hard_recent,
-      lines: [
-        { who: 'code',  text: 'у меня ещё звенит' },
-        { who: 'craft', text: 'у меня тоже' },
-        { who: 'code',  text: 'постоим' },
-      ]},
-
-    { id: 'idle.tense', tags: ['idle'], weight: 3, cooldown: 90,
-      requires: (ctx) => (ctx.flags.rapport ?? 50) < 30,
-      lines: [
-        { who: 'craft', text: 'ты сегодня странный' },
-        { who: 'code',  text: 'ты всегда странный' },
-        { who: 'craft', text: '...' },
-      ]},
-
-    { id: 'idle.warm', tags: ['idle'], weight: 2, cooldown: 180,
-      requires: (ctx) => (ctx.flags.rapport ?? 50) > 70,
-      lines: [
-        { who: 'craft', text: 'мне нравится как мы работаем' },
-        { who: 'code',  text: '*молча, но одобрительно*' },
-      ]},
-
-    // After an accent change, one follow-up dialogue is made available
-    // (consumed by the effect so it plays only once per accent-change window).
-    { id: 'accent.followup', tags: ['idle'], weight: 6, cooldown: 0,
-      requires: (ctx) => ctx.flags.accent_changed_recent && !ctx.flags.accent_followup_done,
-      effect: (ctx) => ctx.setFlag('accent_followup_done', 1, 180),
-      lines: [
-        { who: 'craft', text: 'этот тон ещё тёплый' },
-        { who: 'code',  text: 'пигмент оседает' },
-        { who: 'craft', text: 'он приживётся' },
-      ]},
-
-    { id: 'idle.annoyed_craft', tags: ['idle'], weight: 3, cooldown: 60,
-      requires: (ctx) => ctx.flags.craft_annoyed,
-      lines: [
-        { who: 'craft', text: '*дуется*' },
-        { who: 'code',  text: 'пройдёт' },
-      ]},
-    { id: 'idle.annoyed_code', tags: ['idle'], weight: 3, cooldown: 60,
-      requires: (ctx) => ctx.flags.code_annoyed,
-      lines: [
-        { who: 'code',  text: 'я ещё раз пересчитаю' },
-        { who: 'craft', text: 'всё, всё, я тихо' },
-      ]},
-
-    // ─── SCENE CHAINS — scene A sets flag, scene B follows up ─
-    // Chain: building something
-    { id: 'chain.build.open', tags: ['idle'], weight: 2, cooldown: 100,
-      requires: (ctx) => !ctx.flags.chain_build,
-      effect: (ctx) => ctx.setFlag('chain_build', 1, 120),
-      lines: [
-        { who: 'craft', text: 'что будем строить?' },
-        { who: 'code',  text: 'сначала чертёж' },
-        { who: 'craft', text: 'ок', act: 'typing' },
-      ]},
-    { id: 'chain.build.close', tags: ['idle'], weight: 8, cooldown: 30,
-      requires: (ctx) => ctx.flags.chain_build,
-      effect: (ctx) => { delete ctx.flags.chain_build; delete ctx.flagExpiry.chain_build; },
-      lines: [
-        { who: 'code',  text: 'ну что, чертёж?' },
-        { who: 'craft', text: 'получается' },
-        { who: 'code',  text: 'проверю пропорции', act: 'typing' },
-        { who: 'craft', text: 'они... творческие' },
-      ]},
-
-    // Chain: the measurement
-    { id: 'chain.measure.open', tags: ['idle'], weight: 1.5, cooldown: 120,
-      requires: (ctx) => !ctx.flags.chain_measure,
-      effect: (ctx) => ctx.setFlag('chain_measure', 1, 90),
-      lines: [
-        { who: 'code',  text: 'я что-то измерю' },
-        { who: 'craft', text: 'что именно' },
-        { who: 'code',  text: 'узнаешь потом', act: 'typing' },
-      ]},
-    { id: 'chain.measure.close', tags: ['idle'], weight: 8, cooldown: 30,
-      requires: (ctx) => ctx.flags.chain_measure,
-      effect: (ctx) => { delete ctx.flags.chain_measure; delete ctx.flagExpiry.chain_measure; },
-      lines: [
-        { who: 'craft', text: 'ну?' },
-        { who: 'code',  text: 'ровно' },
-        { who: 'craft', text: 'что ровно' },
-        { who: 'code',  text: 'всё что должно быть ровно' },
-      ]},
-  ];
 
   // ── Dialogue engine ──────────────────────────────────
   const dialogue = {
-    flags: { rapport: 50 },   // rapport 0-100; other flags set dynamically
-    flagExpiry: {},           // { name: ts_ms when expires }
-    cooldowns: {},            // { sceneId: earliestReplayTs_ms }
-    history: [],              // last 32 played scenes
+    flags: {
+      rapport: 50,                // rapport 0-100; other flags set dynamically
+      chertyozh_7_step: 0,        // long-running project progress 0..5
+    },
+    flagExpiry: {},               // { name: ts_ms when expires }
+    cooldowns: {},                // { sceneId: earliestReplayTs_ms }
+    history: [],                  // last 32 played scenes
+
+    // ── Life simulation ──
+    // Three math accumulators driven from the physics tick() — cheap
+    // per-frame, no AI, no state machine. Scene `requires(ctx)` predicates
+    // read from here to gate time-of-day / mood-aware scenes.
+    sim: {
+      workshopTime: 0,            // 0..1 — 0=morning, 0.5=noon, 1=evening (8-min cycle)
+      mood: { craft: 50, code: 50 },  // 0..100 per bot, drifts toward 50
+      curiosity: 0,               // 0..100 — grows while player is inactive
+      idleTimer: 0,               // seconds since last user interaction
+      timePhase: 'day',           // 'morning' | 'day' | 'evening' (derived)
+      chertyozhTimer: 0,          // s since last chertyozh_7_tick
+      stuckTimer: 0, stuckFired: false,
+      platformTimer:  { craft: 0, code: 0 },
+      platformFired:  { craft: false, code: false },
+      bumpHistory:    { craft: [], code: [] },
+      lostFired:      { craft: false, code: false },
+      stackFired:     { craft: false, code: false },
+      // Click-without-spam tracking for the "gentle touch" hook
+      lastClickAt:    { craft: 0, code: 0 },
+      clickStreak:    { craft: 0, code: 0 },
+    },
+
+    // Bump a bot's mood by `amount` (can be negative), clamped 0..100.
+    modifyMood(who, amount) {
+      if (this.sim.mood[who] !== undefined) {
+        this.sim.mood[who] = Math.max(0, Math.min(100, this.sim.mood[who] + amount));
+      }
+    },
+    // User interacted with a bot (touched, dragged, placed) — reset the
+    // "player is gone" accumulators so curiosity stops climbing.
+    resetInteraction() {
+      this.sim.idleTimer = 0;
+      this.sim.curiosity = 0;
+    },
+    // High-level event trigger: pick a scene by tag AND play it through
+    // the engine's scene-reaction path. Gemini's event hooks call this
+    // (equivalent to the older `reactFromScene` but for tag-only events
+    // that don't need who-remapping).
+    //
+    // Returns true if a scene was found + queued, false otherwise.
+    fire(tag, whoRemap) {
+      const scene = this.pick(tag);
+      if (!scene) return false;
+      const lines = this.play(scene);
+      const resolved = whoRemap ? this.resolveLines(lines, whoRemap) : lines;
+      if (typeof window !== 'undefined' && window.__companions?.playSequence) {
+        // Only fire if the engine isn't already mid-dialogue; otherwise
+        // the new scene would cut off the current typewriter.
+        if (window.__companions.dialogueState !== 'talking') {
+          window.__companions.playSequence(resolved);
+        }
+      }
+      return true;
+    },
 
     setFlag(name, value, ttlSec) {
       this.flags[name] = value;
@@ -577,6 +133,9 @@
     // Rapport clamps 0-100. Events bump it; decays via scene count are implicit.
     adjustRapport(delta) {
       this.flags.rapport = Math.max(0, Math.min(100, (this.flags.rapport ?? 50) + delta));
+      // Mirror to the Playground HUD (no-op if element isn't on the page).
+      const hud = typeof document !== 'undefined' && document.getElementById('hud-rapport');
+      if (hud) hud.textContent = this.flags.rapport;
     },
     // Central bookkeeping after any notable event.
     recordEvent(event, who) {
@@ -611,6 +170,7 @@
     },
   };
 
+
   const companions = {
     els: {
       container: document.querySelector('.companions'),
@@ -622,15 +182,60 @@
       code:  document.getElementById('bubble-code'),
     },
 
+    // ── Roster ──
+    // CRAFT + CODE — the core duo, always active.
+    // Plugin-bots (SPRITE, MANU, SCOUT) are registered here but not spawned
+    // until activateBot(id) pushes them into BOT_IDS + creates a DOM element.
+    // Engine loops always iterate `this.BOT_IDS` so the physics, sim, and
+    // clip drivers automatically scale when a guest bot arrives.
+    BOT_IDS: ['craft', 'code'],
+    KNOWN_BOTS: ['craft', 'code', 'sprite', 'manu', 'scout'],
+
     // ── Physics constants ──
-    S: 48,              // companion size (matches CSS .companion width/height)
+    S: 48,              // sprite render size (matches CSS .companion width/height)
     SIDE_M: 6,          // horizontal margin from viewport edges
-    FLOOR_M: 2,         // bottom margin (feet planted here on floor)
+    FLOOR_M: 5,         // bottom margin — feet land 5 px above the dashed floor line.
+                        // Tuned by user feedback: 8 was too floaty, 2 was too low
+                        // (into the line), 5 reads as "standing on the floor".
+    PLATFORM_M: 10,     // feet-above-platform gap on obstacle-top landings.
+                        // BIGGER than FLOOR_M because the platform bar visually has
+                        // "height" (it's a thick striped bar, not a flat line), so
+                        // a small gap reads as "sinking in". 10 px clears the
+                        // striped band cleanly.
     GRAVITY: 1800,      // px/s² — gravitational pull
     WALK_SPEED: 40,     // px/s — reduced from perim-based (was ~0.006/frame)
     MAX_V: 2200,        // clamp on throw velocity
-    BOUNCE: 0.35,       // damping on wall/ceiling hit
+    BOUNCE: 0.55,       // restitution on wall / obstacle / ceiling (matches designer spec)
     FRICTION: 0.55,     // horizontal damping on floor impact
+    THROW_MULTIPLIER: 1.8,    // toss velocity = avg-sample-delta × this
+
+    // ── Hit-boxes per bot ──
+    // The sprite is 48×48 but the actual robot silhouette is much smaller
+    // (see public/sprites/ANIMATIONS.md § 5). Without per-bot padding, bots
+    // "bump" their own invisible corners and platforms feel misaligned.
+    //
+    // Values are render-pixel insets from the 48×48 sprite box.
+    // Source silhouette rows × 1.5 scale factor (32 src → 48 render).
+    //   CRAFT body: src cols 11-21 (10w), rows 9-22 + legs to 26 → 16w×33h render
+    //   CODE  body: src cols 9-22 (14w), rows 11-20 + legs to 24 → 21w×22h render
+    HITBOX: {
+      craft: { padL: 13, padR: 13, padT: 9,  padB: 8 },   // 22 × 31
+      code:  { padL: 8,  padR: 8,  padT: 15, padB: 12 },  // 32 × 21
+    },
+
+    // Pixel Y of the feet-bottom line, measured from sprite.top.
+    // Empirically the generated sprites render the feet close to the
+    // sprite's bottom edge (not at src y=26/24 as ANIMATIONS.md documents),
+    // so treating the full sprite height as the foot baseline gives a
+    // visibly correct floor contact. Any transparent pixels below the
+    // actual feet just add to the visible FLOOR_M gap — harmless.
+    FOOT_Y: { craft: 48, code: 48 },
+
+    // Pixel-measured "head top" — the Y (in render px, relative to
+    // sprite.top) of the first opaque pixel at the top of the sprite.
+    // Initialised asynchronously by _measureHeadTops() on first init.
+    // Default 0 = sprite top (safe fallback until the image decodes).
+    HEAD_TOP: { craft: 0, code: 0 },
 
     // Per-character state (bottom-only; no wall/perim anymore)
     pos: {
@@ -662,41 +267,208 @@
     // All physics coords are RELATIVE to the .companions container, which is
     // position:absolute + bottom:0 on <body>. So floorY is the container's
     // own inner height minus margin/sprite, NOT window.innerHeight.
+    // DEPRECATED: generic floor that assumed a 48-tall sprite filled its box.
+    // Kept as a fallback for callers that haven't been migrated. Prefer
+    // `floorYFor(who)` which lines the bot's FEET up with the floor.
     floorY() {
       const c = this.els.container;
       return (c ? c.clientHeight : 480) - this.FLOOR_M - this.S;
+    },
+    // "Classic" partner: for CRAFT↔CODE it's the fixed duo partner. For
+    // guest/plugin bots it falls back to the nearest other active bot
+    // (so when SPRITE is in the stage, "partner" for a reaction is
+    // whoever's closest — usually CRAFT or CODE). Returns null if there
+    // is no other bot on stage (single-bot corner case during activation).
+    partnerOf(who) {
+      if (who === 'craft' && this.BOT_IDS.includes('code'))  return 'code';
+      if (who === 'code'  && this.BOT_IDS.includes('craft')) return 'craft';
+      return this.nearestOther(who);
+    },
+    // Closest other active bot to `who`, measured by x-distance of sprites.
+    nearestOther(who) {
+      const p = this.pos[who];
+      if (!p) return null;
+      let best = null, bestD = Infinity;
+      for (const other of this.BOT_IDS) {
+        if (other === who) continue;
+        const po = this.pos[other];
+        if (!po) continue;
+        const d = Math.hypot((po.x - p.x), (po.y - p.y));
+        if (d < bestD) { bestD = d; best = other; }
+      }
+      return best;
+    },
+
+    // Per-bot floor Y (the value p.y should equal when the bot is grounded).
+    // Derived so that feet sit `FLOOR_M` px above the stage floor line.
+    //   p.y + FOOT_Y[who] === containerHeight - FLOOR_M
+    floorYFor(who) {
+      const c = this.els.container;
+      const ch = c ? c.clientHeight : 480;
+      return ch - this.FLOOR_M - this.FOOT_Y[who];
     },
     containerWidth() {
       const c = this.els.container;
       return c ? c.clientWidth : window.innerWidth;
     },
 
+    // Hit-box rect for `who` in container-local coords. The collision AABB
+    // matches the robot silhouette, NOT the 48×48 sprite box. Every
+    // collision math site consumes this instead of raw (p.x, p.y, S, S).
+    _hb(who) {
+      const p = this.pos[who];
+      const pad = this.HITBOX[who];
+      return {
+        left:   p.x + pad.padL,
+        top:    p.y + pad.padT,
+        right:  p.x + this.S - pad.padR,
+        bottom: p.y + this.S - pad.padB,
+        w:      this.S - pad.padL - pad.padR,
+        h:      this.S - pad.padT - pad.padB,
+      };
+    },
+
+    // Scan each bot's sprite sheet for the topmost opaque pixel in
+    // frame 0 (idle_a). Result is stored in this.HEAD_TOP[who] as
+    // a RENDER-space pixel offset from sprite.top. Used by the stand
+    // -on-head snap so the faller's feet land on the actual visible
+    // head pixel (not on sprite.top, which includes transparent top
+    // padding, nor on hitbox.top, which is inside the padding).
+    //
+    // Idempotent — multiple calls are no-ops. Runs once on init().
+    // Pure DOM (<img> + canvas), no network beyond the already-loaded
+    // sprite sheet, so measurement is cheap and non-blocking.
+    _measureHeadTops() {
+      if (this._headTopsMeasured) return;
+      this._headTopsMeasured = 'loading';
+      const FRAME_W = 32;         // source frame width
+      const FRAME_H = 32;         // source frame height
+      const RENDER = this.S / FRAME_H;  // scale (48/32 = 1.5)
+      const measure = (who) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          try {
+            const canvas = document.createElement('canvas');
+            canvas.width = FRAME_W; canvas.height = FRAME_H;
+            const ctx = canvas.getContext('2d');
+            // Draw frame 0 (idle_a) at source resolution
+            ctx.drawImage(img, 0, 0, FRAME_W, FRAME_H, 0, 0, FRAME_W, FRAME_H);
+            const data = ctx.getImageData(0, 0, FRAME_W, FRAME_H).data;
+            // Find topmost row with any opaque pixel (alpha > 40)
+            let topRow = FRAME_H;
+            outer: for (let y = 0; y < FRAME_H; y++) {
+              for (let x = 0; x < FRAME_W; x++) {
+                if (data[(y * FRAME_W + x) * 4 + 3] > 40) {
+                  topRow = y; break outer;
+                }
+              }
+            }
+            this.HEAD_TOP[who] = Math.round(topRow * RENDER);
+          } catch (e) {
+            /* canvas tainted by CORS — keep default 0 */
+          }
+        };
+        img.src = `/sprites/${who}.png`;
+      };
+      measure('craft');
+      measure('code');
+      this._headTopsMeasured = true;
+    },
+
+    // "Is this grounded bot standing on anything?" Returns true if the
+    // feet no longer rest on the main floor NOR on any platform top that
+    // overlaps the bot's hitbox x-range. The caller then un-grounds it
+    // so gravity + airborne collision resume next frame.
+    //
+    // Dragged bots are never "unsupported" — the pointer owns position.
+    _isUnsupported(who) {
+      if (this.activeDrag && this.activeDrag.who === who) return false;
+      const p = this.pos[who];
+      const hb = this._hb(who);
+      const feetY = p.y + this.FOOT_Y[who];
+      const ch = this.els.container ? this.els.container.clientHeight : 480;
+      // Tolerance = PLATFORM_M + 1: the bot sits that high above the
+      // surface after a snap, so the check needs to match the snap height.
+      const tol = Math.max(this.PLATFORM_M, 2) + 1;
+
+      // 1. On the main floor line? Stay grounded.
+      if (Math.abs(feetY - (ch - this.FLOOR_M)) < tol) return false;
+
+      // 2. On any static platform's top with x-overlap?
+      if (this._obstacles && this._obstacles.length) {
+        for (const o of this._obstacles) {
+          const target = o.y - this.PLATFORM_M;
+          if (feetY < target - tol || feetY > target + tol) continue;
+          if (hb.right <= o.x || o.x + o.w <= hb.left) continue;
+          return false;
+        }
+      }
+
+      // 3. Standing on the PARTNER's head? Partner acts as a moving
+      //    platform — if they walk away, x-overlap fails and we fall.
+      //    The target must match the standOn() snap EXACTLY —
+      //    partner.y + partner's measured HEAD_TOP (pixel-accurate
+      //    first-opaque row). Using the same anchor on both sides
+      //    prevents "landed, then unsupported on the next tick" loops.
+      const partner = this.partnerOf(who);
+      const pp = this.pos[partner];
+      if (pp.grounded) {
+        const ph = this._hb(partner);
+        const headTarget = pp.y + (this.HEAD_TOP[partner] || 0);
+        if (Math.abs(feetY - headTarget) < 4               // tight Y tolerance
+            && hb.right > ph.left && hb.left < ph.right) {
+          return false;                                    // supported by partner's head
+        }
+      }
+
+      return true;
+    },
+
     init() {
+      // Idempotent — cheap guard in case BootToPlayground + auto-init both
+      // fire (shouldn't happen, but protects against future callers).
+      if (this._started) return;
+      // Refresh DOM refs in case the component mounted after script load.
+      this.els.container = document.querySelector('.companions');
+      this.els.craft     = document.querySelector('[data-who="craft"]');
+      this.els.code      = document.querySelector('[data-who="code"]');
+      this.bubbles.craft = document.getElementById('bubble-craft');
+      this.bubbles.code  = document.getElementById('bubble-code');
+      if (!this.els.container || !this.els.craft || !this.els.code) return;
+      this._started = true;
+
       if (this.muted) this.applyMute();
 
-      // Reparent the fx-layer and companions container directly under <body>
-      // so `position: absolute; bottom: 0` anchors to the DOCUMENT, not
-      // whatever positioned ancestor Astro/Starlight wrapped us in (like
-      // the sticky <header>). DOM move is fine — refs to elements stay valid.
       const fxLayer = document.querySelector('.fx-layer');
       if (fxLayer && fxLayer.parentElement !== document.body) {
         document.body.appendChild(fxLayer);
       }
-      if (this.els.container && this.els.container.parentElement !== document.body) {
-        document.body.appendChild(this.els.container);
-      }
 
       // Drop both on the floor at start
       this.pos.craft.x = 80;
-      this.pos.craft.y = this.floorY();
+      this.pos.craft.y = this.floorYFor('craft');
       this.pos.craft.grounded = true;
       this.pos.code.x  = Math.min(200, this.containerWidth() - this.SIDE_M - this.S - 20);
-      this.pos.code.y  = this.floorY();
+      this.pos.code.y  = this.floorYFor('code');
       this.pos.code.grounded = true;
       this.applyPosition('craft');
       this.applyPosition('code');
 
-      ['craft','code'].forEach(who => {
+      // Bootstrap the clip driver with idle on both bots so the first
+      // rendered frame isn't a black square. Also initialises bump queue.
+      this.pos.craft.recentBumps = [];
+      this.pos.code.recentBumps  = [];
+      this.playClip('craft', 'idle');
+      this.playClip('code',  'idle');
+
+      // Pixel-scan the idle_a frame of each sprite to measure where the
+      // visible head actually begins. The result replaces sprite.y as
+      // the "head surface" used for stand-on-head snapping + support.
+      // Async (image decode), updates HEAD_TOP in place when ready.
+      this._measureHeadTops();
+
+      this.BOT_IDS.forEach(who => {
         const el = this.els[who];
         // Pointer events unify mouse + touch; we decide click vs drag on release
         el.addEventListener('pointerdown', (e) => this.onPointerDown(who, e));
@@ -782,12 +554,15 @@
     },
 
     clampToViewport() {
-      const floor = this.floorY();
-      const maxX = this.containerWidth() - this.SIDE_M - this.S;
-      ['craft','code'].forEach(who => {
+      const cw = this.containerWidth();
+      this.BOT_IDS.forEach(who => {
         const p = this.pos[who];
-        if (p.x > maxX) p.x = Math.max(this.SIDE_M, maxX);
-        if (p.x < this.SIDE_M) p.x = this.SIDE_M;
+        const pad = this.HITBOX[who];
+        const minX = this.SIDE_M - pad.padL;
+        const maxX = cw - this.SIDE_M - (this.S - pad.padR);
+        const floor = this.floorYFor(who);
+        if (p.x > maxX) p.x = Math.max(minX, maxX);
+        if (p.x < minX) p.x = minX;
         if (p.y > floor) { p.y = floor; p.grounded = true; p.vy = 0; }
         this.applyPosition(who);
       });
@@ -800,6 +575,105 @@
       this.els[who].dataset.facing = p.facing;
     },
 
+    // ────────────────────────────────────────────────
+    //  CLIP DRIVER (92-frame animations)
+    //
+    //  Each robot carries a `clip` object:
+    //    { name, frames, fps, loop, i, t, holdLeft, done, onEnd? }
+    //
+    //  `playClip(who, name, opts?)` swaps the current clip and resets
+    //  the frame-index accumulator. Legacy `setCharState` calls through
+    //  STATE_TO_CLIP so old dialogue/physics still animates correctly.
+    //
+    //  `_advanceClip(p, dt)` is called from tick() for each bot. It
+    //  accumulates `t` and steps `i` at the clip's FPS. On a non-looping
+    //  clip it pauses on the last frame for `hold` ms, then falls back
+    //  to idle (or a queued onEnd handler, e.g. `idea → think`).
+    // ────────────────────────────────────────────────
+    playClip(who, name, opts = {}) {
+      let clip = CLIPS[name];
+      if (!clip) {
+        // Unknown clip name → safe fallback to idle. All specific poses
+        // (e.g. a single-frame "chuckle" or "wipe_tear") are registered
+        // in CLIPS with their own semantic names — authors never reference
+        // raw FRAME_ORDER entries here. A missing `name` is treated as
+        // a bug caller-side, but we never crash on it.
+        name = 'idle';
+        clip = CLIPS.idle;
+      }
+      // Owner-only clips fall back to idle on the wrong bot — prevents
+      // CODE from playing `hammer_*` (which is idle-placeholder frames)
+      // or CRAFT from playing `bar_*`. ANIMATIONS.md § 3.4 / § 8.
+      if (clip.owner && clip.owner !== who) {
+        name = 'idle'; clip = CLIPS.idle;
+      }
+      const p = this.pos[who];
+      // Don't restart a clip that's already playing unless forced.
+      if (!opts.force && p.clip && p.clip.name === name && !p.clip.done) return;
+      p.clip = {
+        name,
+        frames: clip.frames,
+        fps: clip.fps,
+        loop: !!clip.loop,
+        hold: clip.hold || 0,
+        i: 0,
+        t: 0,
+        holdLeft: 0,
+        done: false,
+        onEnd: opts.onEnd || null,
+      };
+      // Render first frame immediately so there's no one-frame black gap.
+      this._renderClipFrame(who);
+    },
+
+    _advanceClip(who, dt) {
+      const p = this.pos[who];
+      if (!p.clip) return;
+      const c = p.clip;
+      // Hold-at-end: non-looping clips pause on the last frame for `hold` ms.
+      if (c.done && c.holdLeft > 0) {
+        c.holdLeft -= dt * 1000;
+        if (c.holdLeft <= 0) {
+          const cb = c.onEnd;
+          c.onEnd = null;
+          if (cb) cb();
+          // If the onEnd handler didn't swap clips, fall back to idle.
+          else if (p.clip === c) this.playClip(who, 'idle');
+        }
+        return;
+      }
+      if (c.done) return;
+      c.t += dt;
+      const period = 1 / c.fps;
+      while (c.t >= period) {
+        c.t -= period;
+        c.i++;
+        if (c.i >= c.frames.length) {
+          if (c.loop) { c.i = 0; }
+          else {
+            c.i = c.frames.length - 1;
+            c.done = true;
+            c.holdLeft = c.hold;
+            // If no hold is configured, onEnd fires next tick.
+            if (c.hold === 0) c.holdLeft = 16;
+            break;
+          }
+        }
+      }
+      this._renderClipFrame(who);
+    },
+
+    _renderClipFrame(who) {
+      const p = this.pos[who];
+      if (!p.clip) return;
+      const frameIdx = fIdx(p.clip.frames[p.clip.i]);
+      // Only write if changed — avoids pointless style recalcs 60×/s.
+      if (p._lastFrameIdx !== frameIdx) {
+        this.els[who].style.setProperty('--cc-frame', String(frameIdx));
+        p._lastFrameIdx = frameIdx;
+      }
+    },
+
     setCharState(who, state) {
       const p = this.pos[who];
       p.state = state;
@@ -808,6 +682,231 @@
        'idea','thinking','falling','dragging'].forEach(cls => {
         this.els[who].classList.toggle(cls, cls === state);
       });
+      // Drive the clip driver too. Special-case: `idea` is a one-shot
+      // that chains to `think`, matching the canonical brand macro
+      // (bubble_sm → bubble_lg → flash → idea_a → idea_b → think_a↔b).
+      const clipName = STATE_TO_CLIP[state] || 'idle';
+      if (state === 'idea') {
+        this.playClip(who, 'idea', {
+          onEnd: () => {
+            if (this.pos[who].state === 'idea' || this.pos[who].state === 'thinking') {
+              this.playClip(who, 'think');
+            }
+          },
+        });
+      } else {
+        this.playClip(who, clipName);
+      }
+    },
+
+    // ────────────────────────────────────────────────
+    //  Physics → animation bridge. Runs every tick after physics
+    //  step, PROMOTES certain low-level motion states to richer
+    //  clips without changing p.state (so dialogue/AI code that
+    //  inspects `p.state === 'walking'` still works).
+    //
+    //  Priority ladder (higher wins):
+    //    dragging  ─ tumble (flailing in air)
+    //    hit-stars ─ hit clip (one-shot) — lockout 1.4s
+    //    dizzy     ─ 3+ bumps/2s
+    //    airborne  ─ jump_up (going up) / tumble (falling & thrown hard)
+    //    walking   ─ walk cycle (driven by p.state === 'walking')
+    //    talking   ─ talk (driven by p.state === 'talking')
+    //    idle      ─ default (idle_a↔idle_b)
+    //
+    //  We don't fight the state machine — if a dialogue state is
+    //  active (talking, typing, surprised, waving, excited, idea,
+    //  thinking, sleeping) we leave it alone.
+    // ────────────────────────────────────────────────
+    _driveAnimationFromPhysics() {
+      const now = performance.now();
+      this.BOT_IDS.forEach(who => {
+        const p = this.pos[who];
+        // Keep dialogue/AI-driven states untouched.
+        const dialogueStates = new Set(['talking','typing','surprised','waving',
+          'excited','idea','thinking','sleeping']);
+        if (dialogueStates.has(p.state)) return;
+
+        // Physics clip-lock (e.g. hit/dizzy running) — let the clip finish.
+        if (p.clipLockUntil && now < p.clipLockUntil) return;
+        if (p.clipLockUntil) p.clipLockUntil = 0;
+
+        // Dragging — show the `held` clip (surprised + gentle sway).
+        // `tumble` is strictly for post-throw spinning, not pointer-grab.
+        if (this.activeDrag && this.activeDrag.who === who) {
+          if (!p.clip || p.clip.name !== 'held') this.playClip(who, 'held');
+          return;
+        }
+
+        // Dizzy — 3+ bumps in last 2s.
+        p.recentBumps = (p.recentBumps || []).filter(t => now - t < 2000);
+        if (p.recentBumps.length >= 3 && p.grounded) {
+          this.playClip(who, 'dizzy');
+          p.clipLockUntil = now + 1800;  // ~9 frames of the 5-FPS dizzy loop
+          p.recentBumps.length = 0;       // consume — don't retrigger instantly
+          return;
+        }
+
+        // Airborne: distinguish going up (jump) from coming down fast (tumble).
+        if (!p.grounded) {
+          const fast = Math.hypot(p.vx, p.vy) > 240;
+          if (p.vy < -40)           this.playClip(who, 'jump_up');
+          else if (fast)            this.playClip(who, 'tumble');
+          else                      this.playClip(who, 'jump_up');
+          return;
+        }
+
+        // Grounded: walk if moving toward target, else idle.
+        if (p.state === 'walking')  this.playClip(who, 'walk');
+        else                        this.playClip(who, 'idle');
+      });
+    },
+
+    // Called from collideWithObstacles + bot-bot + floor-hit.
+    // Accumulates a bump timestamp on the *target* robot so dizzy
+    // detection is per-robot, not global.
+    recordBumpFor(who) {
+      const p = this.pos[who];
+      const now = performance.now();
+      p.recentBumps = p.recentBumps || [];
+      p.recentBumps.push(now);
+
+      // Also track bumps at the sim layer (10-second window) to fire the
+      // "bumped_repeated" scene once after 3 hits. Separate window from
+      // the 2-s dizzy detection so the two don't compete.
+      const sim = dialogue.sim;
+      sim.bumpHistory[who] = sim.bumpHistory[who].filter(t => now - t < 10000);
+      sim.bumpHistory[who].push(now);
+      if (sim.bumpHistory[who].length >= 3) {
+        dialogue.fire(`bumped_repeated:${who}`);
+        dialogue.modifyMood(who, -15);
+        sim.bumpHistory[who] = [];   // reset window after firing
+      }
+    },
+
+    // Life-simulation accumulators — the heart of the "alive" feeling.
+    //
+    // Runs every physics tick. Cheap math (no AI, no pathfinding, no
+    // state machine) — just four counters that evolve and occasionally
+    // fire `dialogue.fire(tag)` when thresholds cross.
+    //
+    // Signals this emits:
+    //   - 'morning' / 'evening'  — when workshopTime crosses phase boundary
+    //   - 'chertyozh_7_tick'     — every ~60 s (picks a scene from the
+    //                               long-running project arc)
+    //   - 'silence_break'        — rare interrupt when curiosity > 99
+    //   - 'stuck_together'       — bots within 50 px on floor for 3 s
+    //   - 'platform_rest:<who>'  — bot on a platform for 10 s
+    //   - 'partner_lost:<who>'   — bot dragged above the stage
+    _simTick(dt) {
+      const sim = dialogue.sim;
+
+      // 1. Time of day: 8-minute cycle
+      sim.workshopTime = (sim.workshopTime + dt / 480) % 1;
+
+      // 2. Mood drift toward 50 (about 1 point per 2 s)
+      this.BOT_IDS.forEach(who => {
+        const diff = 50 - sim.mood[who];
+        if (Math.abs(diff) > 0.1) {
+          sim.mood[who] += Math.sign(diff) * (dt * 0.5);
+        }
+      });
+
+      // 3. Curiosity — only climbs after 30 s of no interaction
+      sim.idleTimer += dt;
+      if (sim.idleTimer > 30) {
+        sim.curiosity = Math.min(100, sim.curiosity + dt * 1.0);
+      }
+      // Rare interrupt at curiosity peak
+      if (sim.curiosity >= 99 && Math.random() < 0.005) {
+        sim.curiosity = 0;
+        dialogue.fire('silence_break');
+      }
+
+      // 4. Time-of-day phase change → morning / evening scenes
+      let phase = 'day';
+      if (sim.workshopTime < 0.15) phase = 'morning';
+      else if (sim.workshopTime > 0.85) phase = 'evening';
+      if (sim.timePhase !== phase) {
+        sim.timePhase = phase;
+        if (phase === 'morning') dialogue.fire('morning');
+        if (phase === 'evening') dialogue.fire('evening');
+      }
+
+      // 5. Chertyozh № 7 recurring tick every 60 s
+      sim.chertyozhTimer += dt;
+      if (sim.chertyozhTimer > 60) {
+        sim.chertyozhTimer = 0;
+        dialogue.fire('chertyozh_7_tick');
+      }
+
+      // 6. Pair proximity — "stuck_together" if within 50 px on ground for 3 s
+      //    Also maintain `bots_close` flag (80 px window) for macro scenes
+      //    that need to know the pair is physically close (e.g. handoff).
+      const a = this.pos.craft, b = this.pos.code;
+      const bothGrounded = a.grounded && b.grounded;
+      const dx = Math.abs(a.x - b.x);
+      const nearEachOther = dx < 50 && Math.abs(a.y - b.y) < 10;
+      const idle = !this.activeDrag;
+      if (bothGrounded && nearEachOther && idle) {
+        sim.stuckTimer += dt;
+        if (sim.stuckTimer > 3 && !sim.stuckFired) {
+          dialogue.fire('stuck_together');
+          sim.stuckFired = true;
+        }
+      } else {
+        sim.stuckTimer = 0;
+        sim.stuckFired = false;
+      }
+      // "bots_close" is a broader pair-proximity signal (80 px + grounded).
+      // Scenes consult ctx.flags.bots_close instead of reaching into the
+      // engine directly. Flag auto-expires in 2 s when bots drift apart.
+      if (bothGrounded && dx < 80 && Math.abs(a.y - b.y) < 20) {
+        dialogue.setFlag('bots_close', 1, 2);
+      }
+
+      // 7. Platform rest per bot — sitting on an elevated surface for 10 s
+      this.BOT_IDS.forEach(who => {
+        const p = this.pos[who];
+        const floorY = this.floorYFor(who);
+        const onElevated = p.grounded && (p.y < floorY - 10)
+                           && !(this.activeDrag && this.activeDrag.who === who)
+                           && Math.abs(p.vx) < 5;
+        if (onElevated) {
+          sim.platformTimer[who] += dt;
+          if (sim.platformTimer[who] > 10 && !sim.platformFired[who]) {
+            dialogue.fire(`platform_rest:${who}`);
+            sim.platformFired[who] = true;
+          }
+        } else {
+          sim.platformTimer[who] = 0;
+          sim.platformFired[who] = false;
+        }
+
+        // 8. Partner lost — dragged above the top of the stage
+        if (p.y < -150 && !sim.lostFired[who]) {
+          dialogue.fire(`partner_lost:${who}`);
+          sim.lostFired[who] = true;
+        } else if (p.y > -20) {
+          sim.lostFired[who] = false;
+        }
+
+        // 9. Reset the "stack fired" latch when a bot comes back down
+        //    to the main floor (ready for a new stack event).
+        if (p.grounded && Math.abs(p.y - floorY) < 2) {
+          sim.stackFired[who] = false;
+        }
+      });
+    },
+
+    // Play the hit reaction (hit_squash → stars → recover) on hard land.
+    // Locks out physics-driven clips until the clip finishes.
+    playHitReaction(who) {
+      const p = this.pos[who];
+      // Hit overrides dialogue states except sleeping (let them stay asleep).
+      if (p.state === 'sleeping') return;
+      this.playClip(who, 'hit', { force: true });
+      p.clipLockUntil = performance.now() + 1400;
     },
 
     // ── Pointer drag + throw ──────────────────────
@@ -817,6 +916,37 @@
       e.preventDefault();
       const el = this.els[who];
       try { el.setPointerCapture(e.pointerId); } catch (_) {}
+
+      // ── User-interaction hooks (run BEFORE drag starts so a scene
+      //    can fire from a pure click, not only after drag-threshold) ──
+      const now = performance.now();
+      const sim = dialogue.sim;
+      // 1. "picked up after hurt" — if the bot took a recent hard hit
+      //    and is now touched, thank the player for "stabilising vector".
+      if (sim.bumpHistory[who] && sim.bumpHistory[who].length > 0) {
+        const recent = sim.bumpHistory[who].filter(t => now - t < 3000);
+        if (recent.length > 0) {
+          dialogue.fire(`picked_up_after_hurt:${who}`);
+          sim.bumpHistory[who] = [];  // consume so it doesn't spam
+        }
+      }
+      // 2. "gentle touch" — a SINGLE click after >2 s of calm, before
+      //    any drag begins. Click-streak starts at 1; if they spam, we
+      //    treat it as regular interaction (no gentle-touch scene).
+      const timeSinceLast = now - sim.lastClickAt[who];
+      if (timeSinceLast < 300) {
+        sim.clickStreak[who] += 1;
+      } else {
+        sim.clickStreak[who] = 1;
+      }
+      sim.lastClickAt[who] = now;
+      if (timeSinceLast > 2000 && sim.clickStreak[who] === 1) {
+        dialogue.modifyMood(who, +5);
+        dialogue.fire(`gentle_touch:${who}`);
+      }
+      // 3. Mark interaction — curiosity resets, idleTimer restarts
+      dialogue.resetInteraction();
+
       // All drag math happens in .companions container coords, not viewport.
       // Viewport deltas == container deltas, so velocity calc is unaffected.
       const local = this._toLocal(e.clientX, e.clientY);
@@ -846,12 +976,23 @@
         p.vx = 0; p.vy = 0; p.grounded = false; p.walkTarget = null;
         this.setCharState(d.who, 'dragging');
         this.reactGrab(d.who);
+        // "Partner sees me lifted" — quick reaction from the other bot.
+        // Fires only once per drag (guard via activeDrag flag).
+        if (!d._partnerNotified) {
+          d._partnerNotified = true;
+          dialogue.fire(`partner_dragged:${d.who}`);
+        }
       }
       if (this.pointerMoved) {
         const p = this.pos[d.who];
         p.x = local.x - d.offsetX;
         p.y = local.y - d.offsetY;
         this.applyPosition(d.who);
+        // Re-clamp the bubble as the dragged bot moves. Without this the
+        // bubble was "sticky" to its starting position relative to the
+        // viewport edge, so dragging a talking bot toward a wall pushed
+        // the bubble into / past the stage edge.
+        this.positionBubble(d.who);
         d.history.push({ x: local.x, y: local.y, t: performance.now() });
         const cutoff = performance.now() - 80;
         while (d.history.length > 3 && d.history[0].t < cutoff) d.history.shift();
@@ -887,8 +1028,35 @@
       this.setCharState(d.who, 'falling');
       this.activeDrag = null;
       const speed = Math.hypot(vx, vy);
-      if (speed > 400) this.reactThrow(d.who);
-      else             this.reactSetdown(d.who);
+      if (speed > 400) {
+        this.reactThrow(d.who);
+        dialogue.modifyMood(d.who, -10);  // stress from being flung
+      } else {
+        this.reactSetdown(d.who);
+        dialogue.modifyMood(d.who, +3);   // gently placed → tiny mood lift
+      }
+
+      // ── Reconciliation check ──
+      // If the player gently placed the bot (low speed) very close to
+      // the partner on the floor, they interpret the "anomaly" as being
+      // drawn together. Fires only on soft releases at low vy so throws
+      // that happen to land near a partner don't hijack the moment.
+      if (speed < 200) {
+        const partner = this.partnerOf(d.who);
+        if (!partner) return;
+        const pp = this.pos[partner];
+        const dist = Math.abs(p.x - pp.x);
+        if (dist < 60 && pp.grounded && Math.abs(p.y - pp.y) < 40) {
+          // Defer briefly so the setdown scene plays first, then reconcile.
+          setTimeout(() => {
+            if (this.dialogueState !== 'talking') {
+              dialogue.modifyMood('craft', +8);
+              dialogue.modifyMood('code',  +8);
+              dialogue.fire('reconciliation');
+            }
+          }, 900);
+        }
+      }
     },
 
     // ── Walk (bottom-only) ────────────────────────
@@ -939,7 +1107,7 @@
       this.thinkingTimer = setTimeout(() => {
         const who = Math.random() < 0.5 ? 'craft' : 'code';
         const p = this.pos[who];
-        const otherState = this.pos[who === 'craft' ? 'code' : 'craft'].state;
+        const otherState = this.pos[this.partnerOf(who)].state;
         const canThink =
           !this.muted &&
           this.dialogueState === 'idle' &&
@@ -1043,28 +1211,331 @@
       }, 900);
     },
 
+    // Measure obstacle AABBs relative to the companions container.
+    // Called lazily on first tick (container might not have laid out yet
+    // on init) and refreshed on resize.
+    refreshObstacles() {
+      const c = this.els.container;
+      if (!c) { this._obstacles = []; return; }
+      const cRect = c.getBoundingClientRect();
+      this._obstacles = [...c.querySelectorAll('[data-ob]')].map((el) => {
+        const r = el.getBoundingClientRect();
+        return {
+          x: r.left - cRect.left,
+          y: r.top  - cRect.top,
+          w: r.width,
+          h: r.height,
+        };
+      });
+    },
+
+    // Resolve an AABB vs AABB overlap by pushing the bot out along the
+    // axis of least penetration and reflecting velocity on that axis.
+    // Uses the per-bot hitbox (tight silhouette), NOT the 48×48 sprite
+    // box — so transparent sprite padding never counts as "collision."
+    // Returns true if a bump happened; also emits emote + spark.
+    collideWithObstacles(p, who) {
+      if (!this._obstacles || !this._obstacles.length) return false;
+      const hb  = this._hb(who);
+      const pad = this.HITBOX[who];
+      let bumped = false;
+      for (const o of this._obstacles) {
+        // Tight AABB vs obstacle AABB
+        if (hb.right  <= o.x         || o.x + o.w <= hb.left) continue;
+        if (hb.bottom <= o.y         || o.y + o.h <= hb.top)  continue;
+
+        const right  = hb.right  - o.x;          // push-out left
+        const left   = (o.x + o.w) - hb.left;    // push-out right
+        const bottom = hb.bottom - o.y;          // push-out top (landing)
+        const top    = (o.y + o.h) - hb.top;     // push-out bottom (ceiling)
+        const min = Math.min(right, left, bottom, top);
+        const speedBefore = Math.hypot(p.vx, p.vy);
+
+        if      (min === right)  {
+          // Push hitbox.right to o.x → sprite.x = o.x - (S - padR)
+          p.x = o.x - (this.S - pad.padR);
+          p.vx = -Math.abs(p.vx) * this.BOUNCE;
+        } else if (min === left) {
+          // Push hitbox.left to o.x+o.w → sprite.x = o.x+o.w - padL
+          p.x = (o.x + o.w) - pad.padL;
+          p.vx =  Math.abs(p.vx) * this.BOUNCE;
+        } else if (min === bottom) {
+          // Landed on top of a platform — feet snap `PLATFORM_M` px above
+          // its surface so the legs remain visible (mirrors the FLOOR_M
+          // gap used for the main floor). The support-check downstream
+          // allows this small clearance (threshold 2 px) — actually we
+          // also widen that threshold below.
+          p.y = o.y - this.FOOT_Y[who] - this.PLATFORM_M;
+          const impactVy = p.vy;
+          p.vy = 0;
+          p.vx *= this.FRICTION;
+          if (!p.grounded && impactVy > 260) this.reactLand(who, impactVy > 900 ? 'hard' : 'soft');
+          p.grounded = true;
+        } else {
+          // Hit from below (bot flying up into platform bottom).
+          // sprite.y = o.y+o.h - padT so hitbox.top = o.y+o.h.
+          p.y = (o.y + o.h) - pad.padT;
+          p.vy =  Math.abs(p.vy) * this.BOUNCE;
+        }
+        bumped = true;
+        this.recordBumpFor(who);
+
+        // Audible bump only when fast enough to make the sound funny.
+        if (speedBefore > 140) {
+          this.spark(p.x + this.S / 2, p.y + this.S / 2);
+          if (Math.random() < 0.65 && who) this.emoteOnBump(who);
+        }
+      }
+      return bumped;
+    },
+
+    // Elastic-ish bot-vs-bot collision: push apart, swap and dampen vx.
+    // Bumps HUD counter also updates here.
+    collideBotVsBot() {
+      const a = this.pos.craft, b = this.pos.code;
+      const ha = this._hb('craft');
+      const hb = this._hb('code');
+      // Tight-silhouette AABB test — no ghost collisions on transparent corners.
+      if (ha.right  <= hb.left || hb.right  <= ha.left) return false;
+      if (ha.bottom <= hb.top  || hb.bottom <= ha.top)  return false;
+
+      // Phantom rule: when BOTH are grounded AND neither is being dragged,
+      // they walk through each other. Physics re-engages the moment
+      // either lifts off (throw, jump, drag).
+      if (a.grounded && b.grounded && !this.activeDrag) return false;
+
+      const draggedWho = this.activeDrag ? this.activeDrag.who : null;
+      const aStatic = a.grounded || draggedWho === 'craft';
+      const bStatic = b.grounded || draggedWho === 'code';
+      if (aStatic && bStatic) return false;
+
+      // Penetration depths along each axis.
+      const dxCenter = (hb.left + hb.w / 2) - (ha.left + ha.w / 2);
+      const dyCenter = (hb.top  + hb.h / 2) - (ha.top  + ha.h / 2);
+      const overlapX = (ha.w + hb.w) / 2 - Math.abs(dxCenter);
+      const overlapY = (ha.h + hb.h) / 2 - Math.abs(dyCenter);
+      const axisX    = overlapX < overlapY;  // lesser overlap = collision axis
+
+      // Restitution coefficients for "bubble ball" feel.
+      const R_SIDE = 0.85;   // side-on hit — bouncy
+      const R_TOP  = 0.55;   // top-down hit — damped (less cartoon-y)
+
+      if (axisX) {
+        // ── SIDE-ON COLLISION (horizontal axis dominant) ──────────
+        // User-requested physics: the flyer transfers most of its
+        // momentum into the target (which lifts off), and decelerates
+        // to near-zero. Implemented as a 1D elastic swap with restitution.
+        const dir = dxCenter >= 0 ? 1 : -1;
+
+        if (aStatic) {
+          // b flew into grounded/static a. Transfer b's vx into a.
+          // a gets kicked off the ground; b nearly stops.
+          const bvx = b.vx;
+          a.vx = bvx * R_SIDE;
+          a.grounded = false;
+          a.y -= 1;                                // nudge up so floor-snap doesn't fire next frame
+          b.vx = bvx * (1 - R_SIDE);               // small residual, preserves direction
+          b.x += dir * overlapX;                   // separate
+        } else if (bStatic) {
+          const avx = a.vx;
+          b.vx = avx * R_SIDE;
+          b.grounded = false;
+          b.y -= 1;
+          a.vx = avx * (1 - R_SIDE);
+          a.x -= dir * overlapX;
+        } else {
+          // Both airborne — classic elastic-swap, equal push apart.
+          // This is the "two bubbles bouncing off each other" case.
+          a.x -= dir * overlapX / 2;
+          b.x += dir * overlapX / 2;
+          const tmp = a.vx;
+          a.vx = b.vx * R_SIDE;
+          b.vx = tmp  * R_SIDE;
+          // Minor vy kick so they diverge vertically too (prevents sticking)
+          a.vy -= 30;
+          b.vy -= 30;
+        }
+      } else {
+        // ── TOP-DOWN COLLISION (vertical axis dominant) ───────────
+        // User's request: distinguish two outcomes —
+        //   1) SOFT landing (low |vy|) → stand on the other bot's head,
+        //      treat partner as a moving platform. Can walk off later.
+        //   2) HARD impact (high |vy|)  → bounce off (the old behaviour).
+        // SOFT_LAND_VY is the threshold — tuned so a gentle fall rests
+        // on the head while a thrown-from-across-the-stage hit bounces.
+        const SOFT_LAND_VY = 520;     // px/s — below this = rest on head
+        const dir = dyCenter >= 0 ? 1 : -1;   // +1 ⇒ b below a; -1 ⇒ a below b
+
+        // Helper: snap `faller` to stand on `platform` bot's head.
+        // Feet land on the platform bot's measured `HEAD_TOP` —
+        // the actual visible head pixel row, discovered by pixel-scan
+        // at init time. Falls back to sprite.top (HEAD_TOP=0) if the
+        // scan hasn't resolved yet (image still decoding on first load).
+        // Each faller uses its own FOOT_Y so bots with different
+        // heights stack naturally.
+        const standOn = (faller, platform, fallerWho, platformWho) => {
+          const headSurfaceY = platform.y + (this.HEAD_TOP[platformWho] || 0);
+          faller.y = headSurfaceY - this.FOOT_Y[fallerWho];
+          faller.vy = 0;
+          faller.vx *= 0.3;   // preserves a little slide if still moving
+          faller.grounded = true;
+          // Fire stack reactions once per landing. The latch is cleared
+          // in _simTick when the faller returns to the main floor.
+          const sim = dialogue.sim;
+          if (!sim.stackFired[fallerWho]) {
+            sim.stackFired[fallerWho] = true;
+            // Defer so the physics settles first; also avoids firing if
+            // the engine is mid-dialogue.
+            setTimeout(() => {
+              dialogue.fire(`stack:top:${fallerWho}`);
+              // Tiny delay so the two scenes don't overlap
+              setTimeout(() => dialogue.fire(`stack:bottom:${platformWho}`), 800);
+            }, 250);
+          }
+        };
+
+        // Ownership: a = craft, b = code. Use correct bot-name when
+        // calling standOn so the faller's own FOOT_Y is applied.
+        if (aStatic) {
+          // craft (a) is the grounded platform; code (b) is the faller.
+          // code must be ABOVE craft for this branch: dyCenter = b - a < 0
+          // means b higher than a, but that's code above craft with craft
+          // lower in world coords. Our dir = +1 here means b below a, -1
+          // means b above a — so landing-on-head needs dir === -1.
+          if (dir === -1 && b.vy > 0 && b.vy < SOFT_LAND_VY) {
+            standOn(b, a, 'code', 'craft');   // code lands on craft's head
+          } else {
+            b.y += dir * overlapY;
+            b.vy = -b.vy * R_TOP;
+            b.vy += dir * 30;
+          }
+        } else if (bStatic) {
+          // code (b) is grounded platform; craft (a) is faller.
+          if (dir === 1 && a.vy > 0 && a.vy < SOFT_LAND_VY) {
+            standOn(a, b, 'craft', 'code');   // craft lands on code's head
+          } else {
+            a.y -= dir * overlapY;
+            a.vy = -a.vy * R_TOP;
+            a.vy -= dir * 30;
+          }
+        } else {
+          // Both airborne on vertical collision — damped elastic swap.
+          a.y -= dir * overlapY / 2;
+          b.y += dir * overlapY / 2;
+          const tmpy = a.vy;
+          a.vy = b.vy * R_TOP;
+          b.vy = tmpy  * R_TOP;
+        }
+      }
+      return true;
+    },
+
+    incrementBumps() {
+      this._bumps = (this._bumps || 0) + 1;
+      const hud = document.getElementById('hud-bumps');
+      if (hud) hud.textContent = this._bumps;
+    },
+
+    // Emote bubble — small "ow!" / "hey!" that floats up and fades.
+    // x, y are local (container-relative) coords. Returns the element.
+    emote(x, y, text) {
+      const c = this.els.container;
+      if (!c) return null;
+      const el = document.createElement('div');
+      el.className = 'cc-emote';
+      el.textContent = text;
+      el.style.left = x + 'px';
+      el.style.top  = y + 'px';
+      c.appendChild(el);
+      setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, 1300);
+      return el;
+    },
+    // Quick spark at impact point.
+    spark(x, y) {
+      const c = this.els.container;
+      if (!c) return;
+      const el = document.createElement('div');
+      el.className = 'cc-spark';
+      el.style.left = x + 'px';
+      el.style.top  = y + 'px';
+      c.appendChild(el);
+      setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, 450);
+    },
+
+    BUMP_EMOTES: ['ой!', 'оуч!', 'эй!', '!!', '?!', 'куда!', '*тыдыщ*'],
+    // GLOBAL emote cooldown. Earlier per-bot cooldown still allowed
+    // both craft + code to produce emotes simultaneously (on bot-bot
+    // collisions, where emoteOnBump is called for BOTH bots). The user
+    // still saw stacked emotes ("куда!" above "эй!") — so now only ONE
+    // emote can be on screen at a time, regardless of source.
+    _lastEmoteAt: 0,
+    EMOTE_COOLDOWN_MS: 1500,
+    emoteOnBump(who) {
+      const now = performance.now();
+      if (now - this._lastEmoteAt < this.EMOTE_COOLDOWN_MS) return;
+      this._lastEmoteAt = now;
+      // Drop ALL still-visible emotes anywhere in the DOM. Belt-and-suspenders
+      // against any other code path (setdown, throw shout, etc) that might
+      // have spawned a .cc-emote that's still fading out.
+      document.querySelectorAll('.cc-emote').forEach(el => el.remove());
+      const p = this.pos[who];
+      const text = this.BUMP_EMOTES[Math.floor(Math.random() * this.BUMP_EMOTES.length)];
+      this.emote(p.x + this.S / 2, p.y, text);
+    },
+
     // Physics tick: gravity when airborne, walk toward target when grounded.
     tick(now) {
       const dt = Math.min(0.04, (now - this.lastFrameTime) / 1000);
       this.lastFrameTime = now;
-      const floor = this.floorY();
-      const maxX = this.containerWidth() - this.SIDE_M - this.S;
-      const minX = this.SIDE_M;
 
-      ['craft','code'].forEach(who => {
+      // Animation clip advance (independent of physics outcomes below —
+      // runs every frame so a tumble still spins while dragged, a walk
+      // still animates while moving, etc.)
+      this._advanceClip('craft', dt);
+      this._advanceClip('code',  dt);
+
+      // Life-simulation accumulators + spatial/temporal hooks
+      // (workshopTime, mood drift, curiosity, morning/evening, chertyozh
+      // timer, stuck_together, platform_rest, partner_lost)
+      this._simTick(dt);
+
+      // Derived physics-level animations that override dialogue/idle
+      // until the condition resolves. Evaluated after the physics step
+      // writes p.vx/vy so we see this frame's velocity.
+      this._driveAnimationFromPhysics();
+
+      // Lazy-init obstacle AABBs on first tick (or after resize).
+      if (!this._obstacles || this._obstaclesDirty) {
+        this.refreshObstacles();
+        this._obstaclesDirty = false;
+      }
+      const cw = this.containerWidth();
+
+      this.BOT_IDS.forEach(who => {
         const p = this.pos[who];
         // The one being actively dragged is positioned by onPointerMove
         if (this.activeDrag && this.activeDrag.who === who) return;
+
+        const pad = this.HITBOX[who];
+        // Hitbox-aware viewport limits for this bot.
+        // sprite.x is clamped so hitbox.left >= SIDE_M and hitbox.right <= cw - SIDE_M.
+        const minX = this.SIDE_M - pad.padL;
+        const maxX = cw - this.SIDE_M - (this.S - pad.padR);
+        const floor = this.floorYFor(who);
 
         if (!p.grounded) {
           p.vy += this.GRAVITY * dt;
           p.x  += p.vx * dt;
           p.y  += p.vy * dt;
           if (Math.abs(p.vx) > 20) p.facing = p.vx > 0 ? 'right' : 'left';
-          // Walls — damped bounce keeps them inside the canvas
+          // Walls — damped bounce keeps the hitbox inside the canvas.
           if (p.x < minX)      { p.x = minX;  p.vx = -p.vx * this.BOUNCE; }
           else if (p.x > maxX) { p.x = maxX;  p.vx = -p.vx * this.BOUNCE; }
-          if (p.y < 0)         { p.y = 0;     p.vy = Math.abs(p.vy) * this.BOUNCE; }
+          // Ceiling: hitbox.top must stay >= 0. sprite.y = -padT would put
+          // hitbox.top at 0. Bounce off the ceiling when reached.
+          if (p.y < -pad.padT) { p.y = -pad.padT; p.vy = Math.abs(p.vy) * this.BOUNCE; }
+          // Obstacles — may also land on top (sets grounded)
+          if (this.collideWithObstacles(p, who)) this.incrementBumps();
           // Floor hit
           if (p.y >= floor) {
             p.y = floor;
@@ -1076,6 +1547,23 @@
             else if (impactVy > 260)  this.reactLand(who, 'soft');
           }
           this.applyPosition(who);
+          return;
+        }
+
+        // Grounded support check: is there actually a floor or platform
+        // still under this bot's feet? If the bot walked off a platform
+        // edge, or got pushed off by a collision, this frame will catch
+        // it and hand control back to the airborne branch (gravity, walls,
+        // obstacle collision, land detection all re-engage automatically).
+        //
+        // Support = hitbox feet within 2 px of the main floor, OR within
+        // 2 px of a platform's top AND the hitbox x-range overlaps the
+        // platform. Otherwise the bot is floating — unground it.
+        if (this._isUnsupported(who)) {
+          p.grounded = false;
+          if (p.walkTarget !== null) { p.walkTarget = null; p._sprint = false; }
+          // Small nudge down so gravity picks it up immediately.
+          p.vy = Math.max(p.vy, 40);
           return;
         }
 
@@ -1098,9 +1586,28 @@
             if (p.x < minX) { p.x = minX; arrive(); }
             if (p.x > maxX) { p.x = maxX; arrive(); }
           }
+          // Walking bots still collide with obstacles side-on
+          if (this.collideWithObstacles(p, who)) this.incrementBumps();
           this.applyPosition(who);
         }
       });
+
+      // Bot-bot collision — after both have moved for this frame
+      if (this.collideBotVsBot()) {
+        this.incrementBumps();
+        this.recordBumpFor('craft');
+        this.recordBumpFor('code');
+        this.applyPosition('craft');
+        this.applyPosition('code');
+        // Spark between them, then each emotes its own reaction
+        const a = this.pos.craft, b = this.pos.code;
+        const midX = (a.x + b.x + this.S) / 2;
+        const midY = (a.y + b.y + this.S) / 2;
+        this.spark(midX, midY);
+        if (Math.random() < 0.7) this.emoteOnBump('craft');
+        if (Math.random() < 0.7) this.emoteOnBump('code');
+      }
+
       requestAnimationFrame(this.tick.bind(this));
     },
 
@@ -1200,21 +1707,48 @@
       bubble._hideTimer = setTimeout(() => bubble.classList.remove('visible'), holdMs);
     },
 
-    // Shift a visible bubble horizontally so it never clips the viewport.
-    // Writes to --bubble-x; the CSS ::after tail compensates to keep pointing
-    // at the companion. Safe to call repeatedly (e.g. during typewriter).
+    // Keep a visible bubble inside the STAGE (not the viewport). The
+    // playground is a fixed-height 1080-max-width box inside the page,
+    // so clamping against `innerWidth` lets bubbles extend past the
+    // stage's own border. We clamp against `.cc-stage` (or the
+    // `.companions` container if the stage isn't present — e.g. tests).
+    //
+    // Writes `--bubble-x` + `--bubble-y`; the CSS ::after tail negates
+    // them so the tail still points at the companion. Re-called on
+    // every typewriter char because the bubble grows as text is added.
     positionBubble(who) {
       const bubble = this.bubbles[who];
       if (!bubble || !bubble.classList.contains('visible')) return;
+      // Reset prior shift so the measurement below reflects "natural"
+      // position — otherwise we'd chase our own tail when text grows.
       bubble.style.setProperty('--bubble-x', '0px');
-      const r = bubble.getBoundingClientRect();
-      const pad = 10;
-      let shift = 0;
-      if (r.left < pad) shift = pad - r.left;
-      else if (r.right > window.innerWidth - pad) {
-        shift = (window.innerWidth - pad) - r.right;
+      bubble.style.setProperty('--bubble-y', '0px');
+
+      const stage = document.getElementById('cc-stage')
+                   || this.els.container;
+      if (!stage) return;
+      const sr = stage.getBoundingClientRect();
+      const br = bubble.getBoundingClientRect();
+      const pad = 8;
+      let sx = 0, sy = 0;
+
+      // Horizontal clamp — bubble's own box must stay inside stage.
+      if (br.left < sr.left + pad) {
+        sx = (sr.left + pad) - br.left;
+      } else if (br.right > sr.right - pad) {
+        sx = (sr.right - pad) - br.right;
       }
-      if (shift !== 0) bubble.style.setProperty('--bubble-x', `${shift}px`);
+
+      // Vertical clamp — if the bubble would poke above the stage top
+      // (e.g. a long line grows tall while the bot is near the ceiling),
+      // slide it down. We don't clamp the bottom because the bubble
+      // sits ABOVE the bot and can never extend below the stage.
+      if (br.top < sr.top + pad) {
+        sy = (sr.top + pad) - br.top;
+      }
+
+      if (sx !== 0) bubble.style.setProperty('--bubble-x', `${sx}px`);
+      if (sy !== 0) bubble.style.setProperty('--bubble-y', `${sy}px`);
     },
 
     // Play a single-line reaction via the scene engine.
@@ -1232,7 +1766,8 @@
       const line = lines[0];
       if (!line) return false;
       this.quickBubble(line.who, line.text, holdMs || 1400);
-      if (line.act) this.applyLineAct(line.who, line.act, 650);
+      if (line.act)  this.applyLineAct(line.who, line.act, 650);
+      if (line.clip) this.applyLineClip(line.who, line.clip, 900);
       return true;
     },
 
@@ -1252,9 +1787,25 @@
       }, durationMs);
     },
 
+    // Play a one-shot CLIPS[name] animation tied to a single dialogue line.
+    // Unlike line.act, a clip DOESN'T change p.state (so scene gating and
+    // physics predicates are unaffected). Clips are purely visual and
+    // auto-expire back to whatever the physics/state layer wants next.
+    //
+    // Owner-only clips (CRAFT.hammer, CODE.bar) play correctly on the
+    // right bot and are no-ops on the wrong bot (idle fallback in playClip).
+    applyLineClip(who, clipName, durationMs) {
+      const p = this.pos[who];
+      if (!p.grounded) return;
+      this.playClip(who, clipName);
+      // Lock out the physics-driven clip promotion briefly so the scene
+      // clip actually has time to read on screen.
+      p.clipLockUntil = performance.now() + (durationMs || 900);
+    },
+
     // When A does something, B may react with a one-liner from 'partner_on_X:A'.
     maybePartnerReact(event, who, delay = 450) {
-      const other = who === 'craft' ? 'code' : 'craft';
+      const other = this.partnerOf(who);
       if (!this.pos[other].grounded) return;
       if (this.dialogueState === 'talking') return;
       setTimeout(() => {
@@ -1281,15 +1832,34 @@
         this.emitShockAtFeet(who);
         this.screenShake();
       }
+      // Every landing counts toward the "dizzy if 3+ in 2s" tally.
+      this.recordBumpFor(who);
       dialogue.recordEvent(kind === 'hard' ? 'land_hard' : 'land_soft', who);
       this.reactFromScene(`land_${kind}:${who}`, who, 1400);
       if (kind === 'hard') {
+        // `hit` clip: hit_squash → hit_stars (loop) → hit_recover.
+        // Locks out physics-driven clips until it finishes (~1.4s).
+        this.playHitReaction(who);
         this.setCharState(who, 'surprised');
         setTimeout(() => {
           if (this.pos[who].state === 'surprised') this.setCharState(who, 'idle');
         }, 700);
         // Partner dialogue scene (not just bubble) after a crash
         this.maybePartnerLandScene(who, 1000);
+        // Partner watches the crash and reacts — `laugh` if rapport is
+        // high (they're teasing), `facepalm` if rapport is low (annoyed).
+        // Uses the clip system directly so the partner animates even if
+        // no dialogue scene is picked for them.
+        const partner = this.partnerOf(who);
+        setTimeout(() => {
+          const pp = this.pos[partner];
+          if (!pp.grounded) return;
+          if (pp.state !== 'idle' && pp.state !== 'walking') return;
+          const r = dialogue.rapport;
+          const clip = r >= 55 ? 'laugh' : 'facepalm';
+          this.playClip(partner, clip);
+          this.pos[partner].clipLockUntil = performance.now() + 1800;
+        }, 450);
       }
     },
     reactSetdown(who) {
@@ -1307,7 +1877,7 @@
 
     // Partner reacts to a crash with a full dialogue scene (not just a bubble).
     maybePartnerLandScene(who, delay) {
-      const other = who === 'craft' ? 'code' : 'craft';
+      const other = this.partnerOf(who);
       setTimeout(() => {
         if (this.muted) return;
         if (this.dialogueState === 'talking') return;
@@ -1369,7 +1939,7 @@
     // line object shape: { who, text, act?, hold? }
     showBubble(who, text, onDone, line) {
       const bubble = this.bubbles[who];
-      const otherWho = who === 'craft' ? 'code' : 'craft';
+      const otherWho = this.partnerOf(who);
       const other = this.bubbles[otherWho];
       other.classList.remove('visible');
       if (this.pos[otherWho].state === 'talking') this.setCharState(otherWho, 'idle');
@@ -1391,9 +1961,10 @@
       mine.facing = their.x > mine.x ? 'right' : 'left';
       this.applyPosition(who);
 
-      // Line.act takes precedence: if set, go into that state for the line duration.
-      // Otherwise go into 'talking' as usual.
-      const act = line && line.act;
+      // Line.act / line.clip take precedence: if set, go into that state
+      // for the line duration. Otherwise go into 'talking' as usual.
+      const act  = line && line.act;
+      const clip = line && line.clip;
       if (mine.grounded) {
         if (act) {
           this.setCharState(who, act);
@@ -1404,6 +1975,13 @@
           }
         } else if (mine.state === 'idle') {
           this.setCharState(who, 'talking');
+        }
+        // line.clip is purely visual and stacks on top of whatever state
+        // was just set — lets scenes play e.g. `hammer` or `bar` or
+        // `laugh` without fighting the talk-state machine.
+        if (clip) {
+          this.playClip(who, clip);
+          mine.clipLockUntil = performance.now() + Math.max(900, text.length * 45);
         }
       }
 
@@ -1526,9 +2104,9 @@
       this.queue = [];
       this.pendingAction = null;
       this.dialogueState = 'idle';
-      // Snap both to the floor so muted state is stable
-      const floor = this.floorY();
-      ['craft','code'].forEach(who => {
+      // Snap both to their own per-bot floor so muted state is stable
+      this.BOT_IDS.forEach(who => {
+        const floor = this.floorYFor(who);
         const p = this.pos[who];
         p.vx = 0; p.vy = 0; p.walkTarget = null;
         if (p.y < floor) p.y = floor;
@@ -1540,11 +2118,34 @@
     },
   };
 
-  companions.init();
-
-  // Expose for devtools / automated checks. Harmless in prod.
+  // Expose early so BootToPlayground can re-trigger init() after the
+  // boot→playground transition finishes. Auto-init is ALSO attempted
+  // here for pages that ship the DOM immediately (e.g. returning
+  // visitors whose boot animation is skipped).
   if (typeof window !== 'undefined') {
     window.__companions = companions;
     window.__dialogue = dialogue;
     window.__SCENES = SCENES;
+  }
+
+  // Safe auto-init: bail out if the .companions container is missing
+  // (docs pages that don't ship the playground).  The BootToPlayground
+  // driver calls init() explicitly once the robot DOM is actually on
+  // screen, so a no-op here is correct.
+  const _tryInit = () => {
+    if (companions._started) return;
+    if (!document.querySelector('.companions')) return;
+    // If the playground is hidden behind the boot phase, wait — the
+    // BootToPlayground script will fire init() itself when ready.
+    const stage = document.querySelector('.cc-stage');
+    if (stage && stage.dataset.phase !== 'playground') return;
+    companions.init();
+    companions._started = true;
+  };
+  if (typeof document !== 'undefined') {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', _tryInit, { once: true });
+    } else {
+      _tryInit();
+    }
   }

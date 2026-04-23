@@ -1,8 +1,7 @@
 ---
 title: Как использовать
 description: Добавить MouseInterceptorComponent и подписаться на делегаты мыши в Blueprint.
-sidebar:
-  order: 2
+order: 2
 ---
 
 ## Шаг 1 — Добавить компонент

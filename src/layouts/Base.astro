@@ -1,0 +1,86 @@
+---
+/**
+ * Base layout — applied to every route. Owns:
+ *   · <head> (meta, fonts, favicons, style bundle)
+ *   · Topbar
+ *   · <Companions /> (site-wide bots + terminal overlay)
+ *   · <main> slot
+ *   · scanlines overlay
+ *
+ * i18n: no per-locale URL — Topbar toggles `lang` on <html> via localStorage;
+ * src/i18n/i18n.ts (Phase 5) hydrates all `data-i18n="key"` nodes.
+ */
+import '~/styles/themes.css';
+import '~/styles/terminal.css';
+import '~/styles/companions.css';
+import '~/styles/site.css';
+
+import Topbar from '~/components/Topbar.astro';
+import Companions from '~/components/Companions.astro';
+import BootSplash from '~/components/BootSplash.astro';
+
+interface Props {
+  title: string;
+  description?: string;
+  lang?: 'en' | 'ru';
+  /** OG image absolute URL. */
+  image?: string;
+  /** Route-scoped CSS class for layout tweaks (e.g. 'is-home', 'is-plugin'). */
+  bodyClass?: string;
+}
+
+const {
+  title,
+  description = 'CraftCode — tools and toys for game developers.',
+  lang = 'ru',
+  image,
+  bodyClass,
+} = Astro.props as Props;
+
+const siteTitle = title === 'CRAFTCODE' ? title : `${title} // CRAFTCODE`;
+const ogImage = image ?? '/logo/craftcode_wide.png';
+---
+
+<!doctype html>
+<html lang={lang} data-theme="cyberpunk">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{siteTitle}</title>
+    <meta name="description" content={description} />
+
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&family=Press+Start+2P&family=VT323&display=swap"
+    />
+
+    <meta property="og:title" content={siteTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <slot name="head" />
+  </head>
+  <body class:list={[bodyClass]}>
+    <BootSplash />
+    <Topbar />
+
+    <main class="cc-main">
+      <slot />
+    </main>
+
+    <Companions />
+
+    <!-- Client-side i18n + lang toggle wiring. Imported here so every page
+         gets the behavior without having to opt in. -->
+    <script>
+      import { initI18n } from '~/i18n/i18n';
+      initI18n();
+    </script>
+  </body>
+</html>

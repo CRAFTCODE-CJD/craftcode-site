@@ -1,0 +1,52 @@
+---
+import Base from '~/layouts/Base.astro';
+---
+
+<Base title="404 // signal lost" description="Страница не найдена." bodyClass="is-404">
+  <section class="err404">
+    <pre class="err404__art" aria-hidden="true">
+      ___    ___    ___
+     /_  |  / _ \\  /_  |
+      | | | | | |  | |
+      | | | |_| |  | |
+      |_|  \\___/   |_|
+</pre>
+    <h1 class="err404__title glitch" data-text="// signal lost">// signal lost</h1>
+    <p class="err404__copy">Бот не нашёл эту страницу в реестре. Попробуй <a href="/">вернуться на главную</a> или открой <a href="/plugins/">каталог плагинов</a>.</p>
+    <p class="err404__hint">// нажми <kbd>/</kbd> чтобы открыть терминал</p>
+  </section>
+</Base>
+
+<style>
+  .err404 {
+    max-width: 640px;
+    margin: 64px auto;
+    padding: 32px 20px;
+    text-align: center;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+  }
+  .err404__art {
+    color: var(--accent);
+    font-size: 12px;
+    line-height: 1.2;
+    text-shadow: var(--glow-sm);
+    margin: 0 0 24px;
+  }
+  .err404__title {
+    font-family: 'Press Start 2P', monospace;
+    font-size: clamp(18px, 4vw, 28px);
+    text-shadow: 3px 3px 0 var(--accent-2), 6px 6px 0 var(--accent);
+    margin: 0 0 24px;
+  }
+  .err404__copy { color: var(--muted); line-height: 1.6; }
+  .err404__copy a { color: var(--accent-3); }
+  .err404__hint { margin-top: 28px; color: var(--faint); font-size: 12px; }
+  .err404__hint kbd {
+    font-family: inherit;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    padding: 2px 6px;
+    border-radius: 3px;
+    color: var(--accent);
+  }
+</style>

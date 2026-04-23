@@ -1,0 +1,38 @@
+---
+import Base from '~/layouts/Base.astro';
+import BootToPlayground from '~/components/BootToPlayground.astro';
+import FabCard from '~/components/FabCard.astro';
+import YoutubeCard from '~/components/YoutubeCard.astro';
+import BoostyCard from '~/components/BoostyCard.astro';
+import TemplatesTeaser from '~/components/TemplatesTeaser.astro';
+import DonateSection from '~/components/DonateSection.astro';
+import IdleEasterEgg from '~/components/IdleEasterEgg.astro';
+import LatestReleases from '~/components/LatestReleases.astro';
+---
+
+<Base title="CRAFTCODE" description="Рабочая мастерская двух роботов — плагины и игры для Unreal Engine." bodyClass="is-home">
+  <BootToPlayground />
+
+  <section class="home-wrap">
+    <LatestReleases />
+
+    <div class="community-grid">
+      <FabCard />
+      <YoutubeCard />
+      <BoostyCard />
+    </div>
+
+    <DonateSection />
+    <TemplatesTeaser />
+  </section>
+
+  <IdleEasterEgg />
+</Base>
+
+<style>
+  .home-wrap {
+    max-width: 1080px;
+    margin-inline: auto;
+    padding: 0 16px 48px;
+  }
+</style>

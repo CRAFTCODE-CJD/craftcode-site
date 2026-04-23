@@ -1,0 +1,82 @@
+---
+/**
+ * Code block with filename bar + copy button. Syntax highlighting is handled
+ * by Astro's built-in Shiki for plain fenced code in MDX; this component
+ * wraps pre-written blocks when you want a custom filename/header.
+ */
+interface Props {
+  lang?: string;
+  filename?: string;
+}
+const { lang = 'txt', filename } = Astro.props as Props;
+---
+
+<figure class="mdx-code">
+  <header class="mdx-code__head">
+    <span class="mdx-code__lang">{lang}</span>
+    {filename && <span class="mdx-code__file">// {filename}</span>}
+    <button type="button" class="mdx-code__copy" data-copy aria-label="Copy code">copy</button>
+  </header>
+  <pre class="mdx-code__pre"><code class:list={[`language-${lang}`]}><slot /></code></pre>
+</figure>
+
+<script>
+  document.addEventListener('click', (e) => {
+    const btn = (e.target as HTMLElement)?.closest<HTMLButtonElement>('[data-copy]');
+    if (!btn) return;
+    const fig = btn.closest('.mdx-code');
+    const code = fig?.querySelector('code')?.textContent ?? '';
+    navigator.clipboard?.writeText(code).then(() => {
+      const prev = btn.textContent;
+      btn.textContent = 'ok';
+      btn.classList.add('is-copied');
+      setTimeout(() => {
+        btn.textContent = prev;
+        btn.classList.remove('is-copied');
+      }, 1200);
+    });
+  });
+</script>
+
+<style>
+  .mdx-code {
+    margin: 20px 0;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--code-bg);
+    overflow: hidden;
+  }
+  .mdx-code__head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 12px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 11px;
+  }
+  .mdx-code__lang { color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; }
+  .mdx-code__file { color: var(--muted); flex: 1; }
+  .mdx-code__copy {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font: inherit;
+    padding: 2px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+  }
+  .mdx-code__copy:hover { color: var(--accent-3); border-color: var(--accent-3); }
+  .mdx-code__copy.is-copied { color: var(--accent-3); border-color: var(--accent-3); }
+  .mdx-code__pre {
+    margin: 0;
+    padding: 14px 16px;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--ink);
+  }
+</style>

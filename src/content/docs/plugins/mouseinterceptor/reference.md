@@ -1,8 +1,7 @@
 ---
 title: Справка
 description: API, делегаты и FAQ для Mouse Interceptor.
-sidebar:
-  order: 10
+order: 10
 ---
 
 ## Компонент

@@ -234,6 +234,24 @@ a.ds-card:hover .tag {
   color: var(--faint, color-mix(in oklab, var(--muted) 60%, var(--bg)));
 }
 
+/* Community/Social grid on home page */
+.community-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin: 40px 0;
+}
+@media (max-width: 900px) {
+  .community-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 600px) {
+  .community-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ══════════════════════════════════════════════════════
    Starlight docs sidebar — design-system override.
    Original styling was rendering the active page on a
@@ -266,18 +284,70 @@ a.ds-card:hover .tag {
   color: var(--ink) !important;
 }
 
-/* Individual nav items (a.large for standalone + a inside ul) */
-.sidebar-pane a {
-  font-family: 'Inter', system-ui, sans-serif !important;
-  font-size: 13px !important;
-  color: var(--muted) !important;
-  text-decoration: none;
-  padding: 5px 10px !important;
-  border-left: 2px solid transparent !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  transition: color 0.12s, border-color 0.12s, background 0.12s;
+/* ─── Markdown Content Styling (Cyberpunk/Terminal) ─── */
+.sl-markdown-content img {
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  box-shadow: 0 0 15px -5px var(--accent);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.sl-markdown-content img:hover {
+  transform: scale(1.02);
+  box-shadow: 0 0 25px -5px var(--accent);
+}
+
+.sl-markdown-content blockquote {
+  border: 1px solid var(--border) !important;
+  border-left: 4px solid var(--accent-2) !important;
+  background: var(--surface) !important;
+  padding: 1rem 1.5rem !important;
+  border-radius: 4px;
+  font-style: normal !important;
+  color: var(--ink) !important;
+  position: relative;
+  overflow: hidden;
+}
+.sl-markdown-content blockquote::before {
+  content: '// CALLOUT';
   display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--accent-2);
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.1em;
+  opacity: 0.8;
+}
+
+.sl-markdown-content table {
+  background: var(--surface);
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid var(--grid);
+  border-radius: 4px;
+  overflow: hidden;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+}
+.sl-markdown-content table th {
+  background: var(--grid);
+  color: var(--accent);
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  padding: 12px;
+  text-align: left;
+}
+.sl-markdown-content table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--grid);
+  color: var(--muted);
+}
+.sl-markdown-content table tr:last-child td {
+  border-bottom: none;
+}
+.sl-markdown-content table tr:hover td {
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--ink);
 }
 .sidebar-pane a:hover {
   color: var(--ink) !important;

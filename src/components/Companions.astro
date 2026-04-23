@@ -1,60 +1,41 @@
 ---
 /**
- * Companions — site-wide CRAFT + CODE sprites with dialogue engine, physics,
- * pointer-drag throwing, accent-change reactions, and FX overlays (dust,
- * sparkles, shock ring, screen shake).
+ * Companions — site-wide terminal mount + bot engine wiring.
  *
- * Mounted once in the root layout so both characters appear on every page.
- * All state is driven by src/scripts/companions.js — the scene-based
- * dialogue engine with rapport memory and partner reactions.
+ * Runtime is split across src/bots/:
+ *   · engine.legacy.js  — physics + scene playback
+ *   · bot.engine.ts     — typed facade + BotState machine
+ *   · bot.ai.ts         — simulated AI keyword dispatcher
+ *   · bot.terminal.ts   — fake terminal overlay (hotkey: `/`)
  *
- * The companions themselves need sprite sheets at /sprites/craft.png and
- * /sprites/code.png — 960×48 strips of 20 frames @ 48px each.
+ * On the home page BootToPlayground.astro renders the interactive
+ * playground (obstacles + HUD + live sprites). Everywhere else only the
+ * fake-terminal overlay is exposed — sprite positions were tuned for the
+ * home stage and would float over article content otherwise. The JS APIs
+ * (window.__companions / window.__bots) stay live on every page.
  */
 ---
 
-<div class="fx-layer" aria-hidden="true"></div>
-<div class="companions" aria-live="polite" aria-atomic="false">
-  <!-- Playground scenery: caption + HUD + obstacles.
-       Obstacles are measured by JS at init time so the physics tick can
-       bounce bots off them. Positions use px + responsive clamp so they
-       stay inside the stage across viewport widths. -->
-  <div class="companions-caption" aria-hidden="true">
-    // workshop · drag a robot and toss it · they bump into things
-  </div>
-  <div class="companions-hud" aria-hidden="true">
-    <span><span class="k">bots</span> <span class="v">2</span></span>
-    <span><span class="k">rapport</span> <span class="v" id="hud-rapport">50</span></span>
-    <span><span class="k">bumps</span> <span class="v" id="hud-bumps">0</span></span>
-  </div>
-
-  <!-- Platforms / obstacles. Positions match the ClaudeDesigner mockup
-       (320 px stage). `data-ob` flags them for the physics engine. -->
-  <div class="companions-obstacle" data-ob
-       style="left: 20%; top: 210px; width: 80px; height: 14px;">
-    <span class="obstacle-lbl">// crate_01</span>
-  </div>
-  <div class="companions-obstacle" data-ob
-       style="left: 50%; top: 140px; width: 14px; height: 80px;">
-    <span class="obstacle-lbl">// pillar_02</span>
-  </div>
-  <div class="companions-obstacle" data-ob
-       style="right: 14%; top: 230px; width: 110px; height: 12px;">
-    <span class="obstacle-lbl">// shelf_03</span>
-  </div>
-
-  <div class="companion" data-who="craft" role="button" tabindex="0"
-       aria-label="CRAFT — press Enter to talk.">
-    <div class="sprite"></div>
-    <div class="companion-bubble" id="bubble-craft"></div>
-  </div>
-  <div class="companion" data-who="code" role="button" tabindex="0"
-       aria-label="CODE — press Enter to talk.">
-    <div class="sprite"></div>
-    <div class="companion-bubble" id="bubble-code"></div>
-  </div>
+<div class="companions companions--bare" aria-hidden="true">
+  <div class="companions-terminal" data-terminal-mount></div>
 </div>
 
 <script>
-  import './../scripts/companions.js';
+  import '../bots/bot.engine';
+  import { bindGlobalTerminal } from '../bots/bot.terminal';
+  import { bindEasterEggs } from '../bots/bot.easter';
+  bindGlobalTerminal();
+  bindEasterEggs();
 </script>
+
+<style>
+  :global(.companions.companions--bare) {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 3;
+  }
+  :global(.companions.companions--bare .companions-terminal) {
+    pointer-events: auto;
+  }
+</style>

@@ -1,8 +1,7 @@
 ---
 title: Быстрый старт
 description: Первые шаги с Sprite Optimizer — установка и создание первого атласа.
-sidebar:
-  order: 2
+order: 2
 ---
 
 ## Установка

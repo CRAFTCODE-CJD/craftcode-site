@@ -1,0 +1,62 @@
+---
+interface Props {
+  text: string;
+  speed?: number;
+  delay?: number;
+  class?: string;
+}
+
+const { text, speed = 100, delay = 500, class: className } = Astro.props;
+---
+
+<span class:list={["typing-text", className]} data-text={text} data-speed={speed} data-delay={delay}></span>
+
+<script>
+  function initTyping() {
+    const elements = document.querySelectorAll('.typing-text');
+    
+    elements.forEach(el => {
+      if (el.hasAttribute('data-ready')) return;
+      el.setAttribute('data-ready', 'true');
+      
+      const text = el.getAttribute('data-text') || '';
+      const speed = parseInt(el.getAttribute('data-speed') || '100');
+      const delay = parseInt(el.getAttribute('data-delay') || '500');
+      
+      let currentText = '';
+      let index = 0;
+      
+      setTimeout(() => {
+        el.classList.add('typing-cursor');
+        
+        const timer = setInterval(() => {
+          if (index < text.length) {
+            currentText += text[index];
+            el.textContent = currentText;
+            index++;
+          } else {
+            clearInterval(timer);
+            el.classList.remove('typing-cursor');
+          }
+        }, speed);
+      }, delay);
+    });
+  }
+
+  // Init on load and after Starlight navigation
+  initTyping();
+  document.addEventListener('astro:page-load', initTyping);
+</script>
+
+<style>
+  .typing-cursor::after {
+    content: '_';
+    animation: blink 0.8s step-end infinite;
+    color: var(--accent);
+    margin-left: 2px;
+  }
+  @keyframes blink {
+    from, to { opacity: 1; }
+    50% { opacity: 0; }
+  }
+</style>

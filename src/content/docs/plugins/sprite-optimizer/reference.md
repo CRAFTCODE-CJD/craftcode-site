@@ -1,8 +1,7 @@
 ---
 title: Справка
 description: Горячие клавиши, настройки проекта и технические детали Sprite Optimizer.
-sidebar:
-  order: 10
+order: 10
 ---
 
 ## Горячие клавиши

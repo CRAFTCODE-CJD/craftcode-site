@@ -7,54 +7,47 @@
  *  - VT323 nav at 18 px with active-underline
  *  - language chip on the right
  */
-import LanguageSelect from '@astrojs/starlight/components/LanguageSelect.astro';
-import logoSrc from '../assets/logo.png';
-import { Image } from 'astro:assets';
-
-// Detect active locale by URL path, not Astro.currentLocale (which returns
-// 'ru' for root — doesn't distinguish prefixed vs root pages).
+// Single-locale routing — language is swapped client-side by src/i18n/i18n.ts
+// (Phase 5). No /en/ URL branch, no Starlight route data.
 const pathname = Astro.url.pathname;
-const isEn = pathname.startsWith('/en/') || pathname === '/en';
-const prefix = isEn ? '/en' : '';
 
-type NavLink = { href: string; label: string; external?: boolean; key: string };
+type NavLink = { href: string; labelKey: string; fallback: string; key: string };
 const navLinks: NavLink[] = [
-  // Explicit HOME link — logo alone isn't always read as "home" by users;
-  // a labeled link guarantees one-click access from any deep page.
-  { key: 'home',      href: `${prefix}/`,           label: isEn ? 'Home'      : 'Главная' },
-  { key: 'plugins',   href: `${prefix}/plugins/`,   label: isEn ? 'Plugins'   : 'Плагины' },
-  // "Games" renamed to "Templates" — the section showcases UE project
-  // templates that can be sold on FAB / shared through Boosty, not
-  // standalone playable games.
-  { key: 'templates', href: `${prefix}/templates/`, label: isEn ? 'Templates' : 'Шаблоны' },
-  { key: 'about',     href: `${prefix}/about/`,     label: isEn ? 'About'     : 'О нас' },
+  { key: 'home',      href: '/',           labelKey: 'nav.home',      fallback: 'Home' },
+  { key: 'plugins',   href: '/plugins/',   labelKey: 'nav.plugins',   fallback: 'Plugins' },
+  { key: 'templates', href: '/templates/', labelKey: 'nav.templates', fallback: 'Templates' },
+  { key: 'about',     href: '/about/',     labelKey: 'nav.about',     fallback: 'About' },
 ];
-// Home is "active" only when we're EXACTLY on root / /en (not on every page,
-// which would trigger because every path startsWith(`${prefix}/`)).
 const activeKey =
-  (pathname === prefix + '/' || pathname === (prefix || '/') || pathname === '/' || pathname === '/en' || pathname === '/en/')
+  pathname === '/'
     ? 'home'
     : navLinks.find(l => l.key !== 'home' && pathname.startsWith(l.href))?.key;
 ---
 
 <header class="cc-top">
   <div class="cc-top-row">
-    <a href={prefix + '/'} class="cc-brand" aria-label="CraftCode — home">
-      <Image src={logoSrc} alt="" width={52} height={52}
-             class="cc-brand-logo" loading="eager" aria-hidden="true" />
+    <a href="/" class="cc-brand" aria-label="CraftCode — home">
+      <img src="/logo/craftcode_icon.svg" alt="" width="52" height="52"
+           class="cc-brand-logo" loading="eager" aria-hidden="true" />
       <span class="cc-brand-word">
         <span class="pink">CRAFT</span><span class="yell">CODE</span>
       </span>
     </a>
     <nav class="cc-top-nav" aria-label="Primary">
       {navLinks.map(l => (
-        l.external
-          ? <a href={l.href} target="_blank" rel="noopener">{l.label}</a>
-          : <a href={l.href} class:list={[{ active: activeKey === l.key }]}>{l.label}</a>
+        <a
+          href={l.href}
+          data-i18n={l.labelKey}
+          class:list={[{ active: activeKey === l.key }]}
+        >{l.fallback}</a>
       ))}
     </nav>
     <div class="cc-top-right">
-      <div class="cc-lang"><LanguageSelect {...Astro.props} /></div>
+      <div class="cc-lang" role="group" aria-label="Language">
+        <button type="button" class="cc-lang-btn" data-lang="en">EN</button>
+        <span class="cc-lang-sep" aria-hidden="true">/</span>
+        <button type="button" class="cc-lang-btn" data-lang="ru">RU</button>
+      </div>
       <slot name="search" />
     </div>
   </div>

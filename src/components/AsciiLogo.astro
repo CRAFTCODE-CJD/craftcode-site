@@ -1,0 +1,40 @@
+---
+interface Props {
+  type: 'fab' | 'youtube' | 'boosty';
+  class?: string;
+}
+
+const { type, class: className } = Astro.props;
+
+const ascii = {
+  fab: `  #######
+  #     
+  ####  
+  #     
+  #     `,
+  youtube: `  _______
+ /      \\
+|   ►    |
+ \\______/`,
+  boosty: `  ###### 
+  #     #
+  ###### 
+  #     #
+  ###### `
+};
+
+const labels = {
+  fab: 'FAB',
+  youtube: 'YOUTUBE',
+  boosty: 'BOOSTY'
+};
+---
+
+<div class:list={["flex flex-col items-center group cursor-pointer", className]}>
+  <pre class:list={["ascii-logo mb-2 text-[10px] sm:text-[12px] font-mono leading-[1.1] glitch-hover", `ascii-${type}`]}>
+{ascii[type]}
+  </pre>
+  <span class:list={["text-[10px] tracking-widest font-mono uppercase opacity-60 group-hover:opacity-100 transition-opacity", `ascii-${type}`]}>
+    {labels[type]}
+  </span>
+</div>

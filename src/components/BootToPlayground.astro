@@ -1,23 +1,5 @@
 ---
-/**
- * Home-only hero: a single bordered stage that first displays a CRT-style
- * typewriter boot sequence, then smoothly morphs into an interactive
- * workshop playground with the two robots, obstacles, and HUD.
- *
- * The stage (border, background, grid, glow) is ONE box across both
- * phases — only the contents cross-fade + scale. That gives the user
- * the feeling that the terminal window "transforms" into the robot
- * window without layout jumping.
- *
- * Phase transition is triggered by a single-session typing animation
- * that fires once per tab (sessionStorage). Returning visitors see the
- * playground immediately.
- *
- * Companions physics (src/scripts/companions.js) auto-initialises on
- * DOMContentLoaded when it finds `.companions` in the DOM. This
- * component is the only place that renders `.companions`, so the
- * playground exists only on home. Other pages never load the physics.
- */
+import TypingText from '~/components/TypingText.astro';
 ---
 
 <section class="cc-stage" id="cc-stage" data-phase="boot" aria-label="Workshop boot">
@@ -43,24 +25,34 @@
          background sign the robots work under. Pointer-events: none so it
          doesn't intercept drags on the robots or obstacles. -->
     <div class="cc-stage-sign" aria-hidden="true">
-      <span class="cc-stage-sign-word"><span class="sign-pink">CRAFT</span><span class="sign-yell">CODE</span></span>
-      <span class="cc-stage-sign-tag">// мастерская двух роботов</span>
+      <span class="cc-stage-sign-word glitch-hover"><span class="sign-pink">CRAFT</span><span class="sign-yell">CODE</span></span>
+      <div class="cc-stage-sign-tag opacity-80">
+        <TypingText text="Инструменты и шаблоны для UE" speed={70} delay={1500} />
+      </div>
     </div>
 
     <!-- Obstacles live INSIDE .companions so the physics refreshObstacles()
          scan (which scopes to the companions container) can measure them. -->
     <div class="companions" aria-live="polite" aria-atomic="false">
-      <div class="companions-obstacle" data-ob
-           style="left: 20%; top: 210px; width: 80px; height: 14px;">
-        <span class="obstacle-lbl">// crate_01</span>
+      <!-- A low step -->
+      <div class="companions-obstacle" data-ob data-dynamic="hover"
+           style="left: 10%; top: 350px; width: 120px; height: 30px;">
+        <span class="obstacle-lbl">// step_01</span>
       </div>
-      <div class="companions-obstacle" data-ob
-           style="left: 50%; top: 140px; width: 14px; height: 80px;">
-        <span class="obstacle-lbl">// pillar_02</span>
+      <!-- A floating platform in the middle -->
+      <div class="companions-obstacle" data-ob data-dynamic="slide"
+           style="left: 40%; top: 260px; width: 140px; height: 16px;">
+        <span class="obstacle-lbl">// floating_02</span>
       </div>
+      <!-- A higher platform on the right -->
       <div class="companions-obstacle" data-ob
-           style="right: 14%; top: 230px; width: 110px; height: 12px;">
-        <span class="obstacle-lbl">// shelf_03</span>
+           style="right: 8%; top: 300px; width: 150px; height: 24px;">
+        <span class="obstacle-lbl">// crate_03</span>
+      </div>
+      
+      <!-- Interactive floor button -->
+      <div class="companions-button" id="cc-floor-btn"
+           style="position: absolute; left: 50%; bottom: 0; width: 40px; height: 10px; background: var(--accent); border-radius: 5px 5px 0 0; z-index: 1;">
       </div>
       <div class="companion" data-who="craft" role="button" tabindex="0"
            aria-label="CRAFT — press Enter to talk.">
@@ -137,51 +129,49 @@
      DOMContentLoaded; the boot-phase driver above re-calls init() once
      the stage transitions to the playground phase. Loaded only on home. -->
 <script>
-  import '~/scripts/companions.js';
+  import '~/bots/bot.engine';
 </script>
 
 <style>
   .cc-stage {
     position: relative;
-    /* Sit close to the topbar — user feedback was that the stage floated
-       far below the navigation with a lot of empty dark space above it.
-       Reduced top margin from 24px → 0; also tightened bottom margin. */
-    margin: 0 auto 32px;
-    width: calc(100% - 24px);
-    max-width: 1080px;
-    height: 320px;
-    border: 1px solid color-mix(in oklab, var(--accent) 45%, var(--border));
-    border-radius: var(--radius, 6px);
+    margin: 0 auto 40px;
+    width: 100%;
+    /* Increase height from 320px to 420px to give robots more room to fall/toss */
+    height: 420px;
+    border: 2px solid color-mix(in oklab, var(--accent) 55%, var(--border));
+    border-radius: 12px;
     overflow: hidden;
     background:
-      radial-gradient(ellipse 80% 60% at 50% 100%,
-        color-mix(in oklab, var(--accent-2) 10%, transparent), transparent 70%),
+      radial-gradient(ellipse 90% 70% at 50% 100%,
+        color-mix(in oklab, var(--accent-2) 15%, transparent), transparent 75%),
       repeating-linear-gradient(to right,
-        color-mix(in oklab, var(--accent-2) 4%, transparent) 0 1px,
+        color-mix(in oklab, var(--accent-2) 6%, transparent) 0 1px,
         transparent 1px 40px),
       repeating-linear-gradient(to bottom,
-        color-mix(in oklab, var(--accent) 4%, transparent) 0 1px,
+        color-mix(in oklab, var(--accent) 6%, transparent) 0 1px,
         transparent 1px 40px),
       linear-gradient(to bottom, var(--surface), var(--code-bg));
     box-shadow:
-      inset 0 0 60px rgba(0, 0, 0, 0.5),
-      0 0 32px color-mix(in oklab, var(--accent) 10%, transparent);
+      inset 0 0 80px rgba(0, 0, 0, 0.6),
+      0 0 40px color-mix(in oklab, var(--accent) 15%, transparent);
   }
 
-  /* Dashed floor line — stays across both phases for continuity. */
+  /* Deeper dashed floor line */
   .cc-stage::after {
     content: '';
     position: absolute;
     left: 0; right: 0; bottom: 0;
-    height: 2px;
+    height: 4px;
     background: repeating-linear-gradient(
       to right,
-      var(--accent) 0 8px,
-      transparent 8px 16px
+      var(--accent) 0 12px,
+      transparent 12px 24px
     );
-    opacity: 0.55;
+    opacity: 0.75;
     pointer-events: none;
     z-index: 1;
+    box-shadow: 0 -4px 20px color-mix(in oklab, var(--accent) 50%, transparent);
   }
 
   /* Both phase-layers fill the stage box. Opacity + scale cross-fade. */

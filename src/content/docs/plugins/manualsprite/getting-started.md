@@ -1,8 +1,7 @@
 ---
 title: Как использовать
 description: Пошаговое руководство по работе с Manual Sprite Editor Tools.
-sidebar:
-  order: 2
+order: 2
 ---
 
 ## Установка

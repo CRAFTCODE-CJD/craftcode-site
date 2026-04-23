@@ -1,0 +1,44 @@
+{
+  "nav.home": "Home",
+  "nav.plugins": "Plugins",
+  "nav.templates": "Templates",
+  "nav.about": "About",
+
+  "site.description": "CraftCode — tools and toys for game developers.",
+
+  "home.community.fab.title": "// FAB Marketplace",
+  "home.community.fab.cta": "Marketplace →",
+  "home.community.youtube.title": "// YouTube",
+  "home.community.youtube.cta": "Latest video →",
+  "home.community.boosty.title": "// Boosty",
+  "home.community.boosty.cta": "Subscribe →",
+
+  "latest.title": "// latest releases",
+  "latest.sub": "pulled live from github · manifest.json per repo",
+  "latest.empty": "no manifests available. network offline or registry empty.",
+  "latest.version": "v",
+  "latest.docs": "docs →",
+  "latest.updated": "updated",
+
+  "plugins.kicker": "// plugin registry",
+  "plugins.title": "Plugins",
+  "plugins.sub": "Tools for Unreal Engine. Data is pulled from GitHub at build time.",
+
+  "bot.greeting.1": ">>> online.",
+  "bot.greeting.2": "how can I help, developer?",
+  "bot.help.header": "available commands:",
+  "bot.help.plugin": "plugin        — list plugins",
+  "bot.help.help": "help          — this message",
+  "bot.help.docs": "docs <slug>   — open plugin docs",
+  "bot.help.about": "about         — who we are",
+  "bot.help.theme": "theme         — toggle visual noise",
+  "bot.plugin.intro": "registered plugins:",
+  "bot.plugin.empty": "plugin registry is empty. check back after the next release.",
+  "bot.about": "CRAFTCODE // tools and toys for game developers.",
+  "bot.theme": "theme is locked to cyberpunk. deal with it.",
+  "bot.unknown": "unknown command",
+  "bot.unknown.hint": "try `help`",
+  "bot.error": "parser error — signal lost",
+  "bot.terminal.online": "terminal online.",
+  "bot.terminal.hint": "type `help` for commands."
+}

@@ -1,0 +1,16 @@
+---
+/** Grid wrapper for <Card> children. */
+---
+
+<div class="mdx-cardgrid">
+  <slot />
+</div>
+
+<style>
+  .mdx-cardgrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 14px;
+    margin: 20px 0;
+  }
+</style>

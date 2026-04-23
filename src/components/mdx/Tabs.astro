@@ -1,0 +1,63 @@
+---
+/**
+ * Minimal tabs. Children should be <Tab label="...">…</Tab> elements.
+ * Behavior is progressively enhanced: without JS the first tab is visible.
+ */
+---
+
+<div class="mdx-tabs" data-tabs>
+  <slot />
+</div>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-tabs]').forEach((root) => {
+    const tabs = Array.from(root.querySelectorAll<HTMLElement>('[data-tab]'));
+    if (!tabs.length) return;
+    const header = document.createElement('div');
+    header.className = 'mdx-tabs__header';
+    tabs.forEach((tab, i) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.textContent = tab.dataset.label ?? `Tab ${i + 1}`;
+      btn.className = 'mdx-tabs__btn';
+      if (i === 0) btn.classList.add('active');
+      btn.addEventListener('click', () => {
+        tabs.forEach((t) => t.classList.remove('active'));
+        tab.classList.add('active');
+        header.querySelectorAll('.mdx-tabs__btn').forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+      });
+      header.appendChild(btn);
+      if (i === 0) tab.classList.add('active');
+    });
+    root.prepend(header);
+  });
+</script>
+
+<style>
+  .mdx-tabs { margin: 20px 0; border: 1px solid var(--border); border-radius: var(--radius); }
+  .mdx-tabs :global(.mdx-tabs__header) {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .mdx-tabs :global(.mdx-tabs__btn) {
+    background: transparent;
+    border: 0;
+    border-right: 1px solid var(--border);
+    color: var(--muted);
+    font: inherit;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 12px;
+    padding: 8px 14px;
+    cursor: pointer;
+  }
+  .mdx-tabs :global(.mdx-tabs__btn.active) {
+    color: var(--accent);
+    background: var(--code-bg);
+    box-shadow: inset 0 -2px 0 var(--accent);
+  }
+  .mdx-tabs :global([data-tab]) { display: none; padding: 14px 16px; }
+  .mdx-tabs :global([data-tab].active) { display: block; }
+</style>

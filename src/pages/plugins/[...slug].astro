@@ -1,0 +1,111 @@
+---
+/**
+ * Dynamic plugin pages — picks up every MDX/MD under
+ * src/content/docs/plugins/** and renders it through the shared Docs layout.
+ * URL: /plugins/<slug>/ (e.g. /plugins/sprite-optimizer/, /plugins/sprite-optimizer/reference/)
+ */
+import { getCollection, render, type CollectionEntry } from 'astro:content';
+import Base from '~/layouts/Base.astro';
+import PluginHero from '~/components/PluginHero.astro';
+import * as mdxComponents from '~/components/mdx';
+
+type DocEntry = CollectionEntry<'docs'>;
+
+export async function getStaticPaths() {
+  const entries = await getCollection('docs', ({ id }: DocEntry) => id.startsWith('plugins/'));
+  return entries.map((entry: DocEntry) => {
+    const rawSlug = entry.id.replace(/^plugins\//, '');
+    return { params: { slug: rawSlug || undefined }, props: { entry } };
+  });
+}
+
+interface Props { entry: DocEntry }
+const { entry } = Astro.props as Props;
+const { Content } = await render(entry);
+const data = entry.data;
+---
+
+<Base title={data.title} description={data.description} image={data.image}>
+  <article class="plugin-page" style={data.accent ? `--accent: ${data.accent}` : undefined}>
+    {data.plugin_page ? (
+      <PluginHero
+        kicker={data.kicker}
+        title={data.title}
+        version={data.version}
+        tagline={data.tagline ?? ''}
+        image={data.image}
+        accent={data.accent}
+        ctas={data.ctas}
+      />
+    ) : (
+      <header class="plugin-page__head">
+        {data.kicker && <p class="plugin-page__kicker">{data.kicker}</p>}
+        <h1 class="plugin-page__title">{data.title}</h1>
+        {data.tagline && <p class="plugin-page__tagline">{data.tagline}</p>}
+      </header>
+    )}
+
+    <div class="plugin-page__body">
+      <Content components={mdxComponents} />
+    </div>
+  </article>
+</Base>
+
+<style>
+  .plugin-page { max-width: 1080px; margin-inline: auto; padding: 24px 16px 64px; }
+  .plugin-page__head { margin: 8px 0 28px; }
+  .plugin-page__kicker {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 12px;
+    color: var(--muted);
+    margin: 0 0 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .plugin-page__title {
+    font-family: 'Press Start 2P', monospace;
+    font-size: clamp(20px, 4vw, 32px);
+    text-shadow: 3px 3px 0 var(--accent-2), 6px 6px 0 var(--accent);
+    margin: 0 0 10px;
+  }
+  .plugin-page__tagline { color: var(--muted); max-width: 60ch; }
+  .plugin-page__body :global(h2) {
+    font-family: 'VT323', monospace;
+    color: var(--accent-2);
+    text-transform: uppercase;
+    font-size: 28px;
+    letter-spacing: 0.02em;
+    margin: 32px 0 10px;
+  }
+  .plugin-page__body :global(h3) {
+    font-family: 'VT323', monospace;
+    color: var(--ink);
+    font-size: 22px;
+    text-transform: uppercase;
+    margin: 24px 0 8px;
+  }
+  .plugin-page__body :global(a) { color: var(--accent-3); }
+  .plugin-page__body :global(code) {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 0.92em;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    padding: 1px 6px;
+    border-radius: 3px;
+    color: var(--accent);
+  }
+  .plugin-page__body :global(pre) {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    padding: 14px 16px;
+    border-radius: var(--radius);
+    overflow-x: auto;
+    font-size: 13px;
+  }
+  .plugin-page__body :global(pre code) {
+    background: transparent;
+    border: 0;
+    padding: 0;
+    color: inherit;
+  }
+</style>

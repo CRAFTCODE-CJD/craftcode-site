@@ -1,0 +1,191 @@
+---
+/**
+ * LatestReleases — homepage block listing plugin versions pulled from
+ * github.com/CRAFTCODE-CJD manifests (Read.txt §3). Build-time fetch with
+ * local snapshot fallback, so CI still works when the plugin repo has no
+ * manifest.json yet.
+ *
+ * Language pick: reads the `lang` prop (default `ru`, per Read.txt §13 where
+ * the default locale is Russian). When Phase 5 wires client-side i18n the
+ * labels below will be keyed through t() — for now strings live inline.
+ */
+import { loadAllManifests, pick, sortByUpdated, type Lang } from '../lib/github/manifest';
+
+type Props = { lang?: Lang };
+const { lang = 'ru' } = Astro.props as Props;
+
+const manifests = sortByUpdated(await loadAllManifests());
+
+const LABELS = {
+  en: {
+    title: '// latest releases',
+    sub: 'pulled live from github · manifest.json per repo',
+    empty: 'no manifests available. network offline or registry empty.',
+    version: 'v',
+    docs: 'docs →',
+    updated: 'updated',
+  },
+  ru: {
+    title: '// последние релизы',
+    sub: 'данные из github · manifest.json в каждом репо',
+    empty: 'нет манифестов. сеть недоступна или реестр пуст.',
+    version: 'v',
+    docs: 'документация →',
+    updated: 'обновлено',
+  },
+} as const;
+
+const L = LABELS[lang];
+
+const fmtDate = (iso: string) => {
+  try {
+    return new Date(iso).toISOString().slice(0, 10);
+  } catch {
+    return iso;
+  }
+};
+---
+
+<section class="latest-releases" data-latest-releases>
+  <header class="latest-releases__head">
+    <h2 class="latest-releases__title" data-i18n="latest.title">{L.title}</h2>
+    <p class="latest-releases__sub" data-i18n="latest.sub">{L.sub}</p>
+  </header>
+
+  {manifests.length === 0 ? (
+    <p class="latest-releases__empty" data-i18n="latest.empty">{L.empty}</p>
+  ) : (
+    <ul class="latest-releases__grid">
+      {manifests.map((m) => (
+        <li
+          class="release-card neon-frame"
+          style={m.accent ? `--accent: ${m.accent}` : undefined}
+          data-name-en={pick(m.name, 'en')}
+          data-name-ru={pick(m.name, 'ru')}
+          data-desc-en={pick(m.description, 'en')}
+          data-desc-ru={pick(m.description, 'ru')}
+        >
+          <div class="release-card__header">
+            <span class="release-card__slug">/{m.slug}</span>
+            <span class="release-card__version">v{m.version}</span>
+          </div>
+          <h3 class="release-card__name" data-loc="name">{pick(m.name, lang)}</h3>
+          <p class="release-card__desc" data-loc="desc">{pick(m.description, lang)}</p>
+          <footer class="release-card__foot">
+            <time datetime={m.updated}>
+              <span data-i18n="latest.updated">{L.updated}</span> {fmtDate(m.updated)}
+            </time>
+            {m.docs && <a href={m.docs} class="release-card__link" rel="noopener noreferrer" target="_blank" data-i18n="latest.docs">{L.docs}</a>}
+          </footer>
+        </li>
+      ))}
+    </ul>
+  )}
+</section>
+
+<script>
+  /** Bilingual manifest fields are rendered per-language at build time
+   *  but both sets are stored on the card as data-name-* / data-desc-*.
+   *  Swap them live when the lang toggle fires. */
+  import { onLangChange, getLang } from '~/i18n/i18n';
+
+  const swap = (lang: 'en' | 'ru') => {
+    document.querySelectorAll<HTMLElement>('.release-card').forEach((card) => {
+      const n = card.querySelector<HTMLElement>('[data-loc="name"]');
+      const d = card.querySelector<HTMLElement>('[data-loc="desc"]');
+      const nv = card.dataset[`name${lang === 'ru' ? 'Ru' : 'En'}`];
+      const dv = card.dataset[`desc${lang === 'ru' ? 'Ru' : 'En'}`];
+      if (n && nv) n.textContent = nv;
+      if (d && dv) d.textContent = dv;
+    });
+  };
+  swap(getLang());
+  onLangChange(swap);
+</script>
+
+<style>
+  .latest-releases { padding: 32px 0; }
+  .latest-releases__head { margin-bottom: 20px; }
+  .latest-releases__title {
+    font-family: 'VT323', monospace;
+    font-size: 28px;
+    color: var(--accent-2);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin: 0;
+  }
+  .latest-releases__sub {
+    margin: 4px 0 0;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 12px;
+  }
+  .latest-releases__empty {
+    color: var(--muted);
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    border: 1px dashed var(--border);
+    padding: 20px;
+    border-radius: var(--radius);
+  }
+  .latest-releases__grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+  .release-card {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: var(--surface);
+    transition: transform 140ms ease, box-shadow 140ms ease;
+  }
+  .release-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--glow-lg);
+  }
+  .release-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 12px;
+  }
+  .release-card__slug { color: var(--muted); }
+  .release-card__version {
+    color: var(--accent);
+    font-weight: 600;
+    text-shadow: var(--glow-sm);
+  }
+  .release-card__name {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 14px;
+    color: var(--ink);
+    margin: 0;
+    line-height: 1.4;
+    text-shadow: 2px 2px 0 var(--accent);
+  }
+  .release-card__desc {
+    color: var(--muted);
+    font-size: 14px;
+    margin: 0;
+    line-height: 1.45;
+  }
+  .release-card__foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 11px;
+    color: var(--faint);
+    margin-top: auto;
+  }
+  .release-card__link {
+    color: var(--accent-3);
+    text-decoration: none;
+  }
+  .release-card__link:hover { text-decoration: underline; }
+</style>

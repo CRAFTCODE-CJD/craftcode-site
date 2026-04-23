@@ -49,31 +49,51 @@ const { title, stats } = Astro.props;
   .stats-grid[data-count='2'] { --stats-cols: 2; }
   .stats-grid[data-count='3'] { --stats-cols: 3; }
   .stats-cell {
-    padding: 12px 14px;
+    padding: 16px 20px;
     border: 1px solid var(--border);
-    background: var(--surface);
+    background: rgba(255, 255, 255, 0.02);
     border-radius: 4px;
-    transition: border-color 0.2s;
+    transition: all 0.25s;
+    position: relative;
+    overflow: hidden;
   }
-  .stats-cell:hover { border-color: var(--accent-2); }
+  .stats-cell:hover { 
+    border-color: var(--neon-mint); 
+    background: rgba(0, 243, 255, 0.05);
+    transform: translateY(-2px);
+  }
+  .stats-cell::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; width: 2px; height: 100%;
+    background: var(--neon-mint);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .stats-cell:hover::before { opacity: 1; }
   .stats-k {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10px;
+    font-family: var(--font-mono);
+    font-size: 11px;
     color: var(--muted);
     text-transform: uppercase;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.15em;
+    opacity: 0.8;
   }
   .stats-v {
-    font-family: 'VT323', monospace;
-    font-size: 22px;
-    color: var(--accent-2);
+    font-family: var(--font-mono);
+    font-size: 24px;
+    font-weight: 800;
+    color: #fff;
     margin-top: 4px;
-    line-height: 1.1;
+    line-height: 1;
+    text-shadow: 0 0 15px rgba(0, 243, 255, 0.5);
   }
   .stats-d {
-    color: var(--accent);
+    color: var(--color-neon-pink);
     font-size: 14px;
-    margin-left: 6px;
+    margin-left: 8px;
+    font-weight: bold;
+    font-family: var(--font-terminal);
   }
   @media (max-width: 760px) {
     .stats-grid { grid-template-columns: repeat(2, 1fr) !important; }

@@ -1,35 +1,32 @@
 ---
+import CompanionBot from './CompanionBot.astro';
 /**
  * Plugin showcase grid with real screenshots + accent-coloured per product.
- * Clicking a card goes to the plugin's docs index. Hover raises and tints
- * the card with the plugin's accent.
  */
 interface PluginCard {
   slug: string;
   title: string;
   pitch: string;
-  image: string;      // absolute URL starting at /images/plugins/...
-  accent: string;     // hex colour for hover / border
-  ue: string;         // supported engine range shown on the card, e.g. "4.27 → 5.7"
-  fabUrl?: string;
+  image: string;
+  accent: string;
+  ue: string;
 }
 
 const plugins: PluginCard[] = [
   {
     slug: 'sprite-optimizer',
     title: 'Sprite Optimizer',
-    pitch: 'Атласы, обрезка, оптимизация. Paper2D workflow в один клик.',
+    pitch: 'Атласы, обрезка, прямое редактирование спрайтов. Paper2D workflow в один клик. Профессиональный инструмент для оптимизации памяти и производительности.',
     image: '/images/plugins/sprite-optimizer/Atlas_02.png',
-    accent: '#EC4899',
+    accent: '#00F3FF',
     ue: '4.27 → 5.7',
-    fabUrl: 'https://www.fab.com/listings/d467cf90-8576-4aa9-b55d-285060a5d1bf',
   },
   {
     slug: 'manualsprite',
     title: 'ManualSprite',
     pitch: 'Ручная геометрия PaperSprite. Static/SkeletalMesh из 2D-арта.',
     image: 'https://raw.githubusercontent.com/CRAFTCODE-CJD/ManualSprite/main/Images/Screen_00.png',
-    accent: '#F472B6',
+    accent: '#FF00FF',
     ue: '5.0+',
   },
   {
@@ -37,32 +34,48 @@ const plugins: PluginCard[] = [
     title: 'MouseInterceptor',
     pitch: 'Глобальный перехват мыши. Двойной клик, Blueprint-делегаты.',
     image: 'https://raw.githubusercontent.com/CRAFTCODE-CJD/MouseInterceptor/main/Images/Image_01.png',
-    accent: '#38BDF8',
+    accent: '#F0E645',
     ue: '4.27+',
   },
 ];
 ---
 
 <section class="showcase" aria-label="Плагины">
-  <h2 class="showcase-title">// Плагины</h2>
+  <h2 class="showcase-title">// ГАЛЕРЕЯ_ИНСТРУМЕНТОВ</h2>
   <div class="showcase-grid">
-    {plugins.map((p) => (
+    {plugins.map((p, index) => (
       <a
-        class="showcase-card"
+        class:list={["showcase-card group", { "featured-card": index === 0 }]}
         href={`/plugins/${p.slug}/`}
         style={`--card-accent: ${p.accent};`}
       >
         <div class="showcase-thumb">
           <img src={p.image} alt={p.title} loading="lazy" />
           <span class="showcase-badge">{p.title.toUpperCase()}</span>
-          <span class="showcase-ue" title={`Supported Unreal Engine: ${p.ue}`}>
-            UE {p.ue}
-          </span>
+          <div class="showcase-ue-badge">
+            <span class="text-[9px] opacity-70">ENGINE</span>
+            <span class="font-bold">{p.ue}</span>
+          </div>
         </div>
         <div class="showcase-body">
-          <h3>{p.title}</h3>
-          <p>{p.pitch}</p>
-          <span class="showcase-cta">Открыть docs <span>→</span></span>
+          <div class="flex justify-between items-start gap-4">
+            <div class="flex flex-col">
+               <h3 class="glitch-hover">{p.title}</h3>
+               {index === 0 && <span class="text-neon-mint text-[10px] font-mono tracking-tighter opacity-60">FEATURED_RELEASE_2026</span>}
+            </div>
+            {index === 0 && <div class="bg-black/40 p-2 rounded border border-neon-mint/20"><CompanionBot bot="code" anim="typing" /></div>}
+          </div>
+          <p class="pitch-text">{p.pitch}</p>
+          <div class="flex items-center justify-between mt-auto">
+            <span class="showcase-cta group-hover:translate-x-1 transition-transform">
+              INIT_DOCS() <span class="ml-1">→</span>
+            </span>
+            <div class="flex gap-1">
+              <div class="w-1 h-3 bg-white/10"></div>
+              <div class="w-1 h-3 bg-white/20"></div>
+              <div class="w-1 h-3 bg-white/30"></div>
+            </div>
+          </div>
         </div>
       </a>
     ))}
@@ -71,132 +84,151 @@ const plugins: PluginCard[] = [
 
 <style>
   .showcase {
-    margin: 56px 0 24px;
+    margin: 64px 0;
   }
   .showcase-title {
-    font-family: 'JetBrains Mono', monospace !important;
-    font-size: 13px !important;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--muted) !important;
-    text-shadow: none !important;
-    margin: 0 0 20px !important;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    letter-spacing: 0.3em;
+    color: var(--muted);
+    margin-bottom: 24px;
+    padding-left: 12px;
+    border-left: 2px solid var(--accent);
   }
 
   .showcase-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 18px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+  }
+
+  @media (max-width: 900px) {
+    .showcase-grid { grid-template-columns: 1fr; }
+  }
+  
+  .featured-card {
+    grid-column: 1 / -1;
+    display: grid !important;
+    grid-template-columns: 1.4fr 1fr;
+    min-height: 480px;
+    border: 1px solid var(--neon-mint) !important;
+    background: linear-gradient(135deg, rgba(14, 14, 18, 0.9) 0%, rgba(5, 5, 7, 1) 100%);
+    box-shadow: 0 0 40px -20px var(--neon-mint);
   }
 
   .showcase-card {
-    --card-accent: var(--accent);
-    display: grid;
-    grid-template-rows: auto 1fr;
+    display: flex;
+    flex-direction: column;
     border: 1px solid var(--border);
-    border-radius: 6px;
     background: var(--surface);
     text-decoration: none;
     color: var(--ink);
     overflow: hidden;
-    transition: transform 0.18s, border-color 0.2s, box-shadow 0.25s;
+    transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+    position: relative;
   }
+
   .showcase-card:hover {
-    transform: translateY(-3px);
     border-color: var(--card-accent);
-    box-shadow: 0 14px 36px -14px var(--card-accent);
+    background: color-mix(in oklab, var(--card-accent) 5%, var(--surface));
+    box-shadow: 0 20px 40px -15px rgba(0,0,0,0.5);
   }
 
   .showcase-thumb {
     position: relative;
-    aspect-ratio: 16 / 9;
-    background: #06060a;
+    aspect-ratio: 16 / 10;
     overflow: hidden;
+    background: #000;
   }
+
+  .featured-card .showcase-thumb {
+    aspect-ratio: auto;
+    height: 100%;
+  }
+
   .showcase-thumb img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: center;
-    filter: saturate(0.9) contrast(1.05);
-    transition: transform 0.4s ease-out, filter 0.3s;
+    transition: transform 0.5s ease;
+    opacity: 0.8;
   }
+
   .showcase-card:hover .showcase-thumb img {
-    transform: scale(1.04);
-    filter: saturate(1.15) contrast(1.1);
+    transform: scale(1.05);
+    opacity: 1;
   }
-  .showcase-thumb::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(to top, color-mix(in oklab, var(--bg) 80%, transparent) 0%, transparent 60%);
-    pointer-events: none;
-  }
+
   .showcase-badge {
     position: absolute;
-    top: 10px; left: 10px;
-    font-family: 'Press Start 2P', monospace;
-    font-size: 9px;
-    padding: 4px 7px;
+    top: 16px; left: 16px;
+    font-family: var(--font-pixel);
+    font-size: 8px;
+    padding: 6px 10px;
+    background: rgba(0,0,0,0.8);
     border: 1px solid var(--card-accent);
     color: var(--card-accent);
-    background: color-mix(in oklab, var(--bg) 85%, transparent);
-    text-transform: uppercase;
-    z-index: 1;
+    z-index: 10;
   }
-  /* Supported-engine pill on the opposite side of the thumb. */
-  .showcase-ue {
+
+  .showcase-ue-badge {
     position: absolute;
-    top: 10px; right: 10px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    padding: 3px 8px;
+    bottom: 16px; right: 16px;
+    background: rgba(0,0,0,0.85);
     border: 1px solid var(--accent-2);
     color: var(--accent-2);
-    background: color-mix(in oklab, var(--bg) 85%, transparent);
-    border-radius: 2px;
-    z-index: 1;
-    white-space: nowrap;
+    padding: 4px 10px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1;
+    z-index: 10;
   }
 
   .showcase-body {
-    padding: 16px 18px 20px;
-    display: grid;
-    gap: 8px;
-    align-content: start;
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
   }
+
   .showcase-body h3 {
-    font-family: 'VT323', monospace !important;
-    font-size: 28px !important;
-    margin: 0 !important;
-    color: var(--ink) !important;
-    text-transform: none !important;
-    letter-spacing: 0 !important;
-  }
-  .showcase-body p {
+    font-family: var(--font-terminal);
+    font-size: 40px;
     margin: 0;
-    font-size: 14px;
+    line-height: 1;
+    color: var(--ink);
+  }
+
+  .featured-card .showcase-body h3 {
+    font-size: 64px;
+    color: var(--neon-mint);
+  }
+
+  .pitch-text {
+    margin: 20px 0;
+    font-size: 15px;
+    line-height: 1.6;
     color: var(--muted);
-    line-height: 1.5;
   }
+
   .showcase-cta {
-    margin-top: 6px;
-    font-family: 'JetBrains Mono', monospace;
+    font-family: var(--font-mono);
     font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
     color: var(--card-accent);
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
+    letter-spacing: 0.1em;
+    font-weight: bold;
+    text-transform: uppercase;
   }
-  .showcase-cta span {
-    transition: transform 0.2s;
-  }
-  .showcase-card:hover .showcase-cta span {
-    transform: translateX(4px);
+
+  @media (max-width: 1100px) {
+    .featured-card {
+      grid-template-columns: 1fr;
+    }
+    .featured-card .showcase-thumb {
+      height: 300px;
+    }
   }
 </style>

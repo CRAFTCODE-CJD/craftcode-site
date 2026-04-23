@@ -1,0 +1,62 @@
+---
+/**
+ * YouTube / Vimeo embed wrapper with neon frame + scanline overlay on hover.
+ * Accepts either a full URL or a YouTube video id via `id=`.
+ */
+interface Props {
+  id?: string;
+  src?: string;
+  title?: string;
+  provider?: 'youtube' | 'vimeo';
+}
+const { id, src, title = 'video', provider = 'youtube' } = Astro.props as Props;
+const url =
+  src ??
+  (provider === 'youtube'
+    ? `https://www.youtube-nocookie.com/embed/${id}`
+    : `https://player.vimeo.com/video/${id}`);
+---
+
+<figure class="mdx-video neon-frame">
+  <iframe
+    src={url}
+    title={title}
+    loading="lazy"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+    referrerpolicy="strict-origin-when-cross-origin"
+    allowfullscreen
+  ></iframe>
+  <div class="mdx-video__scan" aria-hidden="true"></div>
+</figure>
+
+<style>
+  .mdx-video {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    margin: 20px 0;
+    padding: 0;
+    overflow: hidden;
+  }
+  .mdx-video iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
+  .mdx-video__scan {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 2px,
+      rgba(255, 255, 255, 0.04) 2px,
+      rgba(255, 255, 255, 0.04) 3px
+    );
+    opacity: 0;
+    transition: opacity 160ms ease;
+  }
+  .mdx-video:hover .mdx-video__scan { opacity: 1; }
+</style>

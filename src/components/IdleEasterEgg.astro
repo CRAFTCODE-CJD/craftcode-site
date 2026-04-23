@@ -1,0 +1,36 @@
+---
+import CompanionBot from './CompanionBot.astro';
+---
+
+<div id="idle-bot-container" class="fixed bottom-4 right-4 pointer-events-none opacity-0 transition-opacity duration-500 z-[9999]">
+  <div class="flex flex-col items-center">
+    <div class="bg-black/80 border border-[var(--neon-pink)] p-2 rounded text-[10px] font-mono text-[var(--neon-pink)] mb-2">
+      Z-z-z... System idle.
+    </div>
+    <CompanionBot bot="code" anim="sleep" />
+  </div>
+</div>
+
+<script is:inline>
+  (() => {
+    let idleTime = 0;
+    const container = document.getElementById('idle-bot-container');
+    
+    const resetTimer = () => {
+      idleTime = 0;
+      if (container) container.classList.add('opacity-0');
+    };
+
+    document.addEventListener('mousemove', resetTimer);
+    document.addEventListener('keypress', resetTimer);
+    document.addEventListener('scroll', resetTimer);
+    document.addEventListener('touchstart', resetTimer);
+
+    setInterval(() => {
+      idleTime++;
+      if (idleTime >= 60) {
+        if (container) container.classList.remove('opacity-0');
+      }
+    }, 1000);
+  })();
+</script>

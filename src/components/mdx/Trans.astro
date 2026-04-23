@@ -1,0 +1,12 @@
+---
+/**
+ * <Trans id="..." /> — inline i18n anchor for MDX content. Emits a <span>
+ * with `data-i18n="<id>"`. The fallback child text is used if no translation
+ * is registered yet. src/i18n/i18n.ts (initI18n / apply) swaps textContent
+ * at runtime.
+ */
+interface Props { id: string; }
+const { id } = Astro.props as Props;
+---
+
+<span data-i18n={id}><slot /></span>

@@ -1,0 +1,44 @@
+{
+  "nav.home": "Главная",
+  "nav.plugins": "Плагины",
+  "nav.templates": "Шаблоны",
+  "nav.about": "О нас",
+
+  "site.description": "CraftCode — инструменты и игрушки для геймдева.",
+
+  "home.community.fab.title": "// FAB Marketplace",
+  "home.community.fab.cta": "Маркетплейс →",
+  "home.community.youtube.title": "// YouTube",
+  "home.community.youtube.cta": "Последнее видео →",
+  "home.community.boosty.title": "// Boosty",
+  "home.community.boosty.cta": "Подписаться →",
+
+  "latest.title": "// последние релизы",
+  "latest.sub": "данные из github · manifest.json в каждом репо",
+  "latest.empty": "нет манифестов. сеть недоступна или реестр пуст.",
+  "latest.version": "v",
+  "latest.docs": "документация →",
+  "latest.updated": "обновлено",
+
+  "plugins.kicker": "// plugin registry",
+  "plugins.title": "Плагины",
+  "plugins.sub": "Инструменты для Unreal Engine. Данные подтягиваются из GitHub при сборке.",
+
+  "bot.greeting.1": ">>> онлайн.",
+  "bot.greeting.2": "чем помочь, разработчик?",
+  "bot.help.header": "доступные команды:",
+  "bot.help.plugin": "plugin        — список плагинов",
+  "bot.help.help": "help          — эта справка",
+  "bot.help.docs": "docs <slug>   — открыть документацию плагина",
+  "bot.help.about": "about         — о нас",
+  "bot.help.theme": "theme         — переключить визуальный шум",
+  "bot.plugin.intro": "зарегистрированные плагины:",
+  "bot.plugin.empty": "реестр плагинов пуст. подождите следующего релиза.",
+  "bot.about": "CRAFTCODE // инструменты и игрушки для геймдева.",
+  "bot.theme": "тема зафиксирована на cyberpunk. живите с этим.",
+  "bot.unknown": "неизвестная команда",
+  "bot.unknown.hint": "попробуй `help`",
+  "bot.error": "ошибка парсера — сигнал потерян",
+  "bot.terminal.online": "терминал онлайн.",
+  "bot.terminal.hint": "введи `help` для списка команд."
+}

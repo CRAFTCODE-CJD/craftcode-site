@@ -1,0 +1,125 @@
+---
+/**
+ * Donation / Support section with QR code and link.
+ */
+---
+
+<section class="donate-section">
+  <div class="donate-container">
+    <div class="donate-text">
+       <span class="ds-label">// support</span>
+       <h2 class="donate-heading">Поддержать проект</h2>
+       <p class="donate-pitch">
+         Ваша поддержка помогает мне уделять больше времени разработке плагинов и созданию обучающего контента.
+       </p>
+       <a href="https://boosty.to/channel-jonathan-developer/donate" target="_blank" rel="noopener" class="btn primary">
+         Задонатить на Boosty ↗
+       </a>
+    </div>
+    
+    <div class="donate-qr-container">
+       <div class="qr-wrapper">
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://boosty.to/channel-jonathan-developer/donate" alt="QR Code for donation" class="qr-img" />
+          <div class="qr-scan-line"></div>
+       </div>
+       <span class="qr-label">SCAN TO DONATE</span>
+    </div>
+  </div>
+</section>
+
+<style>
+  .donate-section {
+    margin: 64px 0 120px;
+    padding: 48px;
+    background: linear-gradient(135deg, rgba(14, 14, 18, 0.4) 0%, rgba(5, 5, 7, 0.4) 100%);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(8px);
+  }
+  .donate-section::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--color-neon-orange), transparent);
+    opacity: 0.4;
+  }
+  .donate-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 48px;
+  }
+  .donate-heading {
+    margin: 0 0 16px;
+    font-family: var(--font-terminal);
+    font-size: 48px;
+    color: var(--ink);
+    line-height: 1;
+    text-shadow: 2px 2px 0 var(--bg);
+  }
+  .donate-pitch {
+    font-size: 16px;
+    color: var(--muted);
+    max-width: 48ch;
+    margin-bottom: 32px;
+    line-height: 1.6;
+  }
+  .donate-qr-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    background: rgba(0,0,0,0.5);
+    padding: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+  }
+  .qr-wrapper {
+    position: relative;
+    padding: 4px;
+    background: #000;
+    border: 1px solid var(--color-neon-mint);
+    border-radius: 2px;
+    box-shadow: 0 0 15px -3px var(--color-neon-mint);
+  }
+  .qr-img {
+    width: 80px;
+    height: 80px;
+    display: block;
+    filter: invert(1) brightness(1.2) contrast(1.1);
+  }
+  .qr-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--color-neon-mint);
+    letter-spacing: 0.2em;
+    opacity: 0.8;
+  }
+  
+  /* Scan line animation */
+  .qr-scan-line {
+    position: absolute;
+    top: 8px; left: 8px; right: 8px;
+    height: 1px;
+    background: var(--neon-mint);
+    box-shadow: 0 0 8px var(--neon-mint);
+    animation: qr-scan 2.5s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes qr-scan {
+    0%, 100% { transform: translateY(0); opacity: 0; }
+    10%, 90% { opacity: 1; }
+    50% { transform: translateY(100px); }
+  }
+
+  @media (max-width: 768px) {
+    .donate-container {
+      grid-template-columns: 1fr;
+      text-align: center;
+      justify-items: center;
+    }
+  }
+</style>

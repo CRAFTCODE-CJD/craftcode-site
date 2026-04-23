@@ -1,0 +1,41 @@
+---
+/** Ordered numbered list with connecting line. Children should be <Step>. */
+---
+
+<ol class="mdx-steps">
+  <slot />
+</ol>
+
+<style>
+  .mdx-steps {
+    list-style: none;
+    counter-reset: step;
+    padding: 0;
+    margin: 20px 0;
+    border-left: 1px dashed var(--border);
+  }
+  .mdx-steps :global(.mdx-step) {
+    counter-increment: step;
+    position: relative;
+    padding: 4px 0 18px 40px;
+    margin: 0;
+  }
+  .mdx-steps :global(.mdx-step::before) {
+    content: counter(step, decimal-leading-zero);
+    position: absolute;
+    left: -16px;
+    top: 2px;
+    width: 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 12px;
+    color: var(--accent-2);
+    background: var(--code-bg);
+    border: 1px solid var(--accent);
+    border-radius: 50%;
+    box-shadow: var(--glow-sm);
+  }
+  .mdx-steps :global(.mdx-step:last-child) { padding-bottom: 0; }
+</style>

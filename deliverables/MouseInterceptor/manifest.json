@@ -1,0 +1,18 @@
+{
+  "slug": "mouseinterceptor",
+  "repo": "MouseInterceptor",
+  "name": {
+    "en": "MouseInterceptor",
+    "ru": "MouseInterceptor"
+  },
+  "version": "0.0.0",
+  "description": {
+    "en": "Network cursor replication for Unreal multiplayer projects.",
+    "ru": "Сетевая репликация курсора для мультиплеерных проектов Unreal."
+  },
+  "image": "",
+  "video": "",
+  "docs": "https://github.com/CRAFTCODE-CJD/MouseInterceptor",
+  "updated": "2026-01-01T00:00:00Z",
+  "accent": "#38BDF8"
+}

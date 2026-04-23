@@ -1,0 +1,48 @@
+---
+interface Props {
+  src: string;
+  alt?: string;
+  caption?: string;
+  width?: number;
+  height?: number;
+}
+const { src, alt = '', caption, width, height } = Astro.props as Props;
+---
+
+<figure class="mdx-image">
+  <img
+    src={src}
+    alt={alt}
+    width={width}
+    height={height}
+    loading="lazy"
+    decoding="async"
+    class="mdx-image__img"
+  />
+  {caption && <figcaption class="mdx-image__caption">// {caption}</figcaption>}
+</figure>
+
+<style>
+  .mdx-image {
+    margin: 20px 0;
+    padding: 0;
+  }
+  .mdx-image__img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    transition: box-shadow 160ms ease, transform 160ms ease;
+  }
+  .mdx-image__img:hover {
+    box-shadow: var(--glow-md);
+    transform: translateY(-1px);
+  }
+  .mdx-image__caption {
+    margin-top: 6px;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 12px;
+    color: var(--muted);
+  }
+</style>

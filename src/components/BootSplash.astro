@@ -1,0 +1,141 @@
+---
+/**
+ * BootSplash — full-viewport CRT boot sequence (Read.txt §7).
+ * Plays once per session (sessionStorage guard), skippable with any keypress.
+ * Does not block interactions — pointer-events: none after the transition.
+ */
+---
+
+<div class="boot-splash" data-boot-splash>
+  <div class="boot-splash__inner">
+    <pre class="boot-splash__logo" aria-hidden="true">
+  ▄████▄   ██▀███   ▄▄▄        █████▒▄▄▄█████▓
+ ▒██▀ ▀█  ▓██ ▒ ██▒▒████▄    ▓██   ▒ ▓  ██▒ ▓▒
+ ▒▓█    ▄ ▓██ ░▄█ ▒▒██  ▀█▄  ▒████ ░ ▒ ▓██░ ▒░
+ ▒▓▓▄ ▄██▒▒██▀▀█▄  ░██▄▄▄▄██ ░▓█▒  ░ ░ ▓██▓ ░
+ ▒ ▓███▀ ░░██▓ ▒██▒ ▓█   ▓██▒░▒█░      ▒██▒ ░
+ ░ ░▒ ▒  ░░ ▒▓ ░▒▓░ ▒▒   ▓▒█░ ▒ ░      ▒ ░░
+   ░  ▒     ░▒ ░ ▒░  ▒   ▒▒ ░ ░          ░
+ ░          ░░   ░   ░   ▒    ░ ░      ░
+ ░ ░         ░           ░  ░</pre>
+    <div class="boot-splash__log" data-boot-log></div>
+    <p class="boot-splash__hint">&gt; press any key to skip</p>
+  </div>
+</div>
+
+<script>
+  const KEY = 'cc-boot-played';
+  const host = document.querySelector<HTMLElement>('[data-boot-splash]');
+  const log = document.querySelector<HTMLElement>('[data-boot-log]');
+  if (!host || !log) throw new Error('boot splash nodes missing');
+
+  if (sessionStorage.getItem(KEY) === '1') {
+    host.remove();
+  } else {
+    sessionStorage.setItem(KEY, '1');
+
+    const lines: Array<[string, string]> = [
+      ['init', 'loading cyberpunk://craftcode'],
+      ['ok',   'theme=cyberpunk  ........ ok'],
+      ['ok',   'companions://craft+code .. online'],
+      ['ok',   'i18n://en+ru ............. ready'],
+      ['ok',   'manifest://github ........ synced'],
+      ['warn', 'scanlines .................. on'],
+      ['ok',   'boot complete. welcome.'],
+    ];
+
+    const print = (kind: string, text: string) => {
+      const el = document.createElement('div');
+      el.className = `boot-line ${kind === 'ok' ? 'ok' : kind === 'warn' ? 'warn' : ''}`;
+      el.textContent = `[ ${kind.padEnd(4)} ] ${text}`;
+      log.appendChild(el);
+    };
+
+    const close = () => {
+      host.classList.add('is-out');
+      setTimeout(() => host.remove(), 500);
+    };
+
+    const skip = () => close();
+    window.addEventListener('keydown', skip, { once: true });
+    host.addEventListener('pointerdown', skip, { once: true });
+
+    let i = 0;
+    const tick = () => {
+      if (i >= lines.length) {
+        setTimeout(close, 450);
+        return;
+      }
+      const [kind, text] = lines[i++];
+      print(kind, text);
+      setTimeout(tick, 180);
+    };
+    tick();
+  }
+</script>
+
+<style>
+  .boot-splash {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: var(--bg);
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    transition: opacity 420ms ease;
+  }
+  .boot-splash.is-out {
+    opacity: 0;
+    pointer-events: none;
+  }
+  .boot-splash::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 2px,
+      rgba(255, 255, 255, 0.03) 2px,
+      rgba(255, 255, 255, 0.03) 3px
+    );
+  }
+  .boot-splash__inner {
+    position: relative;
+    max-width: 720px;
+    width: 100%;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    color: var(--accent-3);
+  }
+  .boot-splash__logo {
+    color: var(--accent);
+    text-shadow: var(--glow-md);
+    font-size: 11px;
+    line-height: 1.2;
+    margin: 0 0 16px;
+    white-space: pre;
+    overflow-x: auto;
+    animation: boot-flicker 2.2s steps(6) infinite;
+  }
+  .boot-splash__log {
+    font-size: 13px;
+    line-height: 1.6;
+    min-height: 180px;
+  }
+  .boot-splash__hint {
+    margin-top: 18px;
+    color: var(--faint);
+    font-size: 12px;
+    opacity: 0.8;
+  }
+  @keyframes boot-flicker {
+    0%, 95%, 100% { opacity: 1; }
+    96%           { opacity: 0.7; }
+    98%           { opacity: 0.9; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .boot-splash__logo { animation: none; }
+  }
+</style>

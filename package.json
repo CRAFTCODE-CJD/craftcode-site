@@ -5,17 +5,27 @@
   "private": true,
   "description": "CraftCode — docs + info hub for CRAFT+CODE plugins and games.",
   "scripts": {
-    "dev": "astro dev --host 127.0.0.1",
+    "dev": "astro dev --host 0.0.0.0 --port 3000",
     "start": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "i18n:extract": "node scripts/extract-i18n.mjs",
+    "i18n:write": "node scripts/extract-i18n.mjs --write"
   },
   "dependencies": {
-    "@astrojs/mdx": "^5.0.3",
-    "@astrojs/starlight": "^0.30.0",
+    "@astrojs/check": "^0.9.8",
+    "@astrojs/mdx": "^4.0.0",
+    "@astrojs/react": "^4.4.2",
     "astro": "^5.0.0",
+    "framer-motion": "^12.38.0",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
     "sharp": "^0.33.5",
+    "typescript": "^6.0.3",
     "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0"
   }
 }

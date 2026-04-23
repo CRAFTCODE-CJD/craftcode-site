@@ -1,0 +1,27 @@
+---
+import { getEntry, render } from 'astro:content';
+import Base from '~/layouts/Base.astro';
+import * as mdxComponents from '~/components/mdx';
+
+const entry = await getEntry('docs', 'templates');
+if (!entry) throw new Error('templates entry not found');
+const { Content } = await render(entry);
+---
+
+<Base title={entry.data.title} description={entry.data.description}>
+  <article class="mdx-article">
+    <h1 class="mdx-article__title">{entry.data.title}</h1>
+    <Content components={mdxComponents} />
+  </article>
+</Base>
+
+<style>
+  .mdx-article { max-width: 780px; margin-inline: auto; padding: 24px 16px 64px; }
+  .mdx-article__title {
+    font-family: 'Press Start 2P', monospace;
+    font-size: clamp(22px, 4vw, 34px);
+    text-shadow: 3px 3px 0 var(--accent-2), 6px 6px 0 var(--accent);
+    margin: 0 0 24px;
+  }
+  .mdx-article :global(a) { color: var(--accent-3); }
+</style>

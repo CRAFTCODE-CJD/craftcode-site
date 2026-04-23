@@ -1,108 +1,129 @@
 ---
+import CompanionBot from './CompanionBot.astro';
 /**
  * "Templates — soon" teaser card for the home page.
- *
- * Kept minimal on purpose — the page doesn't exist yet as content, but
- * the home page has space and this sets up the expectation that future
- * products will live under /templates/. No fake screenshots.
  */
 ---
 
-<section class="tmpl-teaser" aria-label="Шаблоны — скоро">
+<section class="tmpl-teaser group" aria-label="Шаблоны — скоро">
   <div class="tmpl-grid">
-    <div>
-      <span class="ds-label">// templates · скоро</span>
+    <div class="flex flex-col gap-3">
+      <span class="text-neon-yellow font-mono text-[10px] tracking-[0.2em] uppercase opacity-70">// TERMINAL::TEMPLATES_SOON</span>
       <h3 class="tmpl-heading">Шаблоны проектов и геймплея</h3>
       <p class="tmpl-pitch">
         UE-шаблоны с готовой архитектурой: спрайтовый рогалик, top-down
         стрелялка, инвентарь, диалоговая система. Распаковал — работает.
       </p>
-      <a class="btn ghost" href="/templates/">Раздел →</a>
+      <a class="btn ghost self-start group-hover:border-neon-yellow transition-colors" href="/templates/">
+        INITIALIZE_TEMPLATES() <span class="ml-1">→</span>
+      </a>
     </div>
 
     <div class="tmpl-status" aria-hidden="true">
-      <span class="tmpl-status-label">status</span>
-      <span class="tmpl-status-value">прототипы</span>
-      <span class="tmpl-status-dots">
-        <span class="dot on"></span>
-        <span class="dot on"></span>
-        <span class="dot"></span>
-        <span class="dot"></span>
-      </span>
-      <span class="tmpl-status-hint">~50% · черновые механики в работе</span>
+      <div class="tmpl-bot-box">
+        <CompanionBot bot="craft" anim="hammer" />
+      </div>
+      <div class="flex flex-col gap-1 border-t border-white/5 pt-4">
+        <span class="tmpl-status-label">SYS_STATUS</span>
+        <span class="tmpl-status-value uppercase font-bold tracking-widest text-neon-yellow">ПРОТОТИПЫ_V0.7</span>
+        <div class="tmpl-progress-bar">
+          <span class="p-on">■</span>
+          <span class="p-on">■</span>
+          <span class="p-on opacity-50">■</span>
+          <span class="p-off">□</span>
+          <span class="p-off text-[8px] opacity-20">NULL</span>
+        </div>
+        <div class="flex justify-between items-center mt-2 group-hover:scale-x-105 origin-left transition-transform">
+          <span class="tmpl-status-hint">~65% COMPLETED</span>
+          <div class="w-1.5 h-1.5 bg-neon-yellow animate-pulse rounded-full shadow-[0_0_8px_var(--color-neon-yellow)]"></div>
+        </div>
+      </div>
     </div>
   </div>
 </section>
 
 <style>
   .tmpl-teaser {
-    margin: 22px 0;
-    padding: 20px 24px;
+    margin: 40px 0;
+    padding: 32px;
     background: var(--surface);
-    border: 1px dashed var(--border);
-    border-radius: 4px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+  }
+  .tmpl-teaser::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; width: 4px; height: 100%;
+    background: var(--neon-yellow);
+    opacity: 0.3;
   }
   .tmpl-grid {
     display: grid;
     grid-template-columns: 1.4fr 1fr;
-    gap: 28px;
+    gap: 40px;
     align-items: center;
   }
   .tmpl-heading {
-    margin: 4px 0 6px;
-    font-family: 'VT323', monospace;
-    font-size: 26px;
+    margin: 0;
+    font-family: var(--font-terminal);
+    font-size: 32px;
     color: var(--ink);
-    line-height: 1.15;
+    line-height: 1;
   }
   .tmpl-pitch {
-    margin: 0 0 12px;
-    font-size: 13px;
+    margin: 0;
+    font-size: 14px;
     color: var(--muted);
-    line-height: 1.55;
-    max-width: 56ch;
+    line-height: 1.6;
+    max-width: 50ch;
   }
 
   .tmpl-status {
     display: grid;
-    gap: 4px;
-    padding: 12px 14px;
-    background: var(--code-bg);
-    border: 1px solid var(--border);
-    border-radius: 3px;
-    font-family: 'JetBrains Mono', monospace;
+    padding: 24px;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(240, 230, 69, 0.1);
+    border-radius: 4px;
+    font-family: var(--font-mono);
   }
   .tmpl-status-label {
     font-size: 10px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
+    letter-spacing: 0.1em;
     color: var(--muted);
+    opacity: 0.6;
   }
   .tmpl-status-value {
-    font-size: 16px;
-    color: var(--accent-2);
+    font-size: 18px;
   }
-  .tmpl-status-dots {
+  .tmpl-progress-bar {
     display: flex;
-    gap: 4px;
-    margin-top: 6px;
+    gap: 6px;
+    margin-top: 8px;
+    font-size: 20px;
+    line-height: 1;
   }
-  .tmpl-status-dots .dot {
-    width: 10px; height: 10px;
-    border-radius: 2px;
-    background: color-mix(in oklab, var(--muted) 30%, transparent);
+  .p-on {
+    color: var(--neon-yellow);
+    text-shadow: 0 0 12px var(--neon-yellow);
   }
-  .tmpl-status-dots .dot.on {
-    background: var(--accent-2);
-    box-shadow: 0 0 8px -2px var(--accent-2);
+  .p-off {
+    color: var(--faint);
+  }
+  .tmpl-bot-box {
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: flex-end;
   }
   .tmpl-status-hint {
-    margin-top: 6px;
     font-size: 11px;
     color: var(--muted);
+    letter-spacing: 0.05em;
   }
 
-  @media (max-width: 640px) {
-    .tmpl-grid { grid-template-columns: 1fr; gap: 16px; }
+  @media (max-width: 900px) {
+    .tmpl-grid { grid-template-columns: 1fr; gap: 32px; }
+    .tmpl-teaser { padding: 24px; }
   }
 </style>

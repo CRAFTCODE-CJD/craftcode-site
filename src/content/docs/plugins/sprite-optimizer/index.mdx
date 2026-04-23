@@ -1,54 +1,78 @@
 ---
 title: Sprite Optimizer
 description: Профессиональный плагин пакинга и оптимизации спрайтов для Unreal Engine 4.27–5.7.
-sidebar:
-  label: Обзор
-  order: 1
-head:
-  - tag: style
-    content: |
-      /* Suppress Starlight's auto-h1 — PluginHero renders its own title. */
-      .content-panel > .sl-markdown-content > h1:first-child { display: none; }
+plugin_page: true
+kicker: "// plugin · paper2d"
+version: "v2.1"
+tagline: "Обрезка прозрачных краёв, пакинг в атласы, Material Instances и реверс-инжиниринг атласов — всё в одном редакторе с 50-уровневым undo/redo."
+image: "/images/plugins/sprite-optimizer/Atlas_02.png"
+accent: "#EC4899"
+ctas:
+  - label: "FAB Marketplace"
+    href: "https://www.fab.com/listings/d467cf90-8576-4aa9-b55d-285060a5d1bf"
+    variant: "primary"
+    external: true
+  - label: "Быстрый старт →"
+    href: "/plugins/sprite-optimizer/getting-started/"
+meta:
+  - k: "version"
+    v: "2.1.0"
+  - k: "engine"
+    v: "UE 4.27 — 5.7"
+  - k: "scope"
+    v: "Editor-only"
+  - k: "license"
+    v: "FAB Standard"
+pipeline:
+  title: "Пайплайн · 4 шага"
+  steps:
+    - n: "STEP 01"
+      title: "Import"
+      text: "Drag PNG из Content Browser. Alpha сохраняется как есть."
+    - n: "STEP 02"
+      title: "Optimize"
+      text: "Обрезка прозрачных краёв. Пивот не сдвигается."
+    - n: "STEP 03"
+      title: "Pack"
+      text: "Max Rects · Bin · Grid · Tile. Мультистраничный."
+    - n: "STEP 04"
+      title: "Export"
+      text: "BC7 + Material Instance, UMG-ready за клик."
+gallery:
+  title: "Галерея"
+  shots:
+    - n: "01"
+      src: "/images/plugins/sprite-optimizer/Atlas_02.png"
+      caption: "Atlas Editor · 4K preview"
+    - n: "02"
+      src: "/images/plugins/sprite-optimizer/Atlas_Page.png"
+      caption: "Мультистраничный атлас"
+    - n: "03"
+      src: "/images/plugins/sprite-optimizer/Atlas_03.png"
+      caption: "Drag & drop композиция"
+    - n: "04"
+      src: "/images/plugins/sprite-optimizer/Collision_01.png"
+      caption: "Collision preview"
+    - n: "05"
+      src: "/images/plugins/sprite-optimizer/AtlasToolBar_01.png"
+      caption: "Toolbar + режимы"
+stats:
+  title: "Результаты"
+  stats:
+    - label: "// atlas size"
+      value: "5.6 MB"
+      delta: "−42%"
+    - label: "// draw calls"
+      value: "1"
+      delta: "−97%"
+    - label: "// load time"
+      value: "0.18s"
+      delta: "−60%"
+    - label: "// memory"
+      value: "24 MB"
+      delta: "−31%"
+order: 1
 ---
-
-import { Card, CardGrid } from '@astrojs/starlight/components';
-import PluginHero from '~/components/PluginHero.astro';
-import Pipeline from '~/components/Pipeline.astro';
-import GalleryGrid from '~/components/GalleryGrid.astro';
-import StatsStrip from '~/components/StatsStrip.astro';
-import PluginMeta from '~/components/PluginMeta.astro';
-
-<PluginHero
-  kicker="// plugin · paper2d"
-  title="Sprite Optimizer"
-  version="v2.1"
-  tagline="Обрезка прозрачных краёв, пакинг в атласы, Material Instances и реверс-инжиниринг атласов — всё в одном редакторе с 50-уровневым undo/redo."
-  image="/images/plugins/sprite-optimizer/Atlas_02.png"
-  accent="#EC4899"
-  ctas={[
-    { label: 'FAB Marketplace', href: 'https://www.fab.com/listings/d467cf90-8576-4aa9-b55d-285060a5d1bf', variant: 'primary', external: true },
-    { label: 'Быстрый старт →', href: '/plugins/sprite-optimizer/getting-started/' },
-  ]}
-/>
-
-<PluginMeta
-  rows={[
-    { k: 'version',  v: '2.1.0' },
-    { k: 'engine',   v: 'UE 4.27 — 5.7' },
-    { k: 'scope',    v: 'Editor-only' },
-    { k: 'license',  v: 'FAB Standard' },
-  ]}
-/>
-
-<Pipeline
-  title="Пайплайн · 4 шага"
-  steps={[
-    { n: 'STEP 01', title: 'Import',   text: 'Drag PNG из Content Browser. Alpha сохраняется как есть.' },
-    { n: 'STEP 02', title: 'Optimize', text: 'Обрезка прозрачных краёв. Пивот не сдвигается.' },
-    { n: 'STEP 03', title: 'Pack',     text: 'Max Rects · Bin · Grid · Tile. Мультистраничный.' },
-    { n: 'STEP 04', title: 'Export',   text: 'BC7 + Material Instance, UMG-ready за клик.' },
-  ]}
-/>
 
 ## Ключевые возможности
 
@@ -66,27 +90,6 @@ import PluginMeta from '~/components/PluginMeta.astro';
     Сохрани сессию как **Project-ассет**, открой двойным кликом — всё восстановится с точностью до байта.
   </Card>
 </CardGrid>
-
-<GalleryGrid
-  title="Галерея"
-  shots={[
-    { n: '01', src: '/images/plugins/sprite-optimizer/Atlas_02.png',   caption: 'Atlas Editor · 4K preview' },
-    { n: '02', src: '/images/plugins/sprite-optimizer/Atlas_Page.png', caption: 'Мультистраничный атлас' },
-    { n: '03', src: '/images/plugins/sprite-optimizer/Atlas_03.png',   caption: 'Drag & drop композиция' },
-    { n: '04', src: '/images/plugins/sprite-optimizer/Collision_01.png', caption: 'Collision preview' },
-    { n: '05', src: '/images/plugins/sprite-optimizer/AtlasToolBar_01.png', caption: 'Toolbar + режимы' },
-  ]}
-/>
-
-<StatsStrip
-  title="Результаты"
-  stats={[
-    { label: '// atlas size',  value: '5.6 MB', delta: '−42%' },
-    { label: '// draw calls',  value: '1',      delta: '−97%' },
-    { label: '// load time',   value: '0.18s',  delta: '−60%' },
-    { label: '// memory',      value: '24 MB',  delta: '−31%' },
-  ]}
-/>
 
 ---
 
@@ -115,3 +118,4 @@ import PluginMeta from '~/components/PluginMeta.astro';
 - [Sprite Optimizer Project](/plugins/sprite-optimizer/features/project-asset/) — возобновляемые сессии
 - [Import Atlas](/plugins/sprite-optimizer/features/import-atlas/) — реверс-инжиниринг
 - [Справка](/plugins/sprite-optimizer/reference/) — горячие клавиши, настройки проекта
+

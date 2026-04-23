@@ -158,7 +158,7 @@
   directly, so each robot's clip progresses independently.
 
   See public/sprites/ANIMATIONS.md for the full index → name → semantics
-  catalog and src/scripts/companions.js → CLIPS for the named clips.
+  catalog and src/bots/engine.legacy.js → CLIPS for the named clips.
 */
 .companion .sprite {
   position: relative;
@@ -206,7 +206,7 @@
 
 /* ── FX overlays (dust, sparkle, shock, camera shake) ── */
 .fx-layer {
-  position: fixed;
+  position: absolute;
   inset: 0;
   pointer-events: none;
   z-index: 24;

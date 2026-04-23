@@ -1,0 +1,57 @@
+---
+interface Props {
+  title: string;
+  kicker?: string;
+  version?: string;
+  tagline?: string;
+  accent?: string;
+}
+const { title, kicker, version, tagline, accent } = Astro.props as Props;
+---
+
+<section class="mdx-hero neon-frame" style={accent ? `--accent: ${accent}` : undefined}>
+  {kicker && <p class="mdx-hero__kicker">{kicker}</p>}
+  <h1 class="mdx-hero__title glitch" data-text={title}>{title}</h1>
+  {tagline && <p class="mdx-hero__tagline">{tagline}</p>}
+  {version && <span class="mdx-hero__version">v{version}</span>}
+</section>
+
+<style>
+  .mdx-hero {
+    padding: 28px 24px 32px;
+    margin: 24px 0;
+    position: relative;
+    overflow: hidden;
+  }
+  .mdx-hero__kicker {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 12px;
+    color: var(--muted);
+    margin: 0 0 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .mdx-hero__title {
+    font-family: 'Press Start 2P', monospace;
+    font-size: clamp(20px, 4vw, 36px);
+    line-height: 1.35;
+    margin: 0;
+    color: var(--ink);
+    text-shadow: 3px 3px 0 var(--accent-2), 6px 6px 0 var(--accent);
+  }
+  .mdx-hero__tagline {
+    margin: 14px 0 0;
+    color: var(--muted);
+    font-size: 15px;
+    max-width: 60ch;
+  }
+  .mdx-hero__version {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 11px;
+    color: var(--accent-3);
+    text-shadow: var(--glow-sm);
+  }
+</style>

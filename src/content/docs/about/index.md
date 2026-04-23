@@ -9,6 +9,6 @@ CRAFT и CODE — это пара роботов-ассистентов. Они 
 
 ## Где меня найти
 
-- [YouTube — туториалы и devlog](https://www.youtube.com/@jonathandeveloper6723)
-- [Boosty — эксклюзивный контент для подписчиков](https://boosty.to/channel-jonathan-developer)
-- [FAB Marketplace — плагины](https://www.fab.com/sellers/CRAFTCODE)
+- [YouTube](https://www.youtube.com/@jonathandeveloper6723)
+- [Boosty](https://boosty.to/channel-jonathan-developer)
+- [FAB Marketplace](https://www.fab.com/sellers/CRAFTCODE)

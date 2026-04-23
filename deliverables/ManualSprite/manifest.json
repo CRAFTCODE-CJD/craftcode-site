@@ -1,0 +1,18 @@
+{
+  "slug": "manualsprite",
+  "repo": "ManualSprite",
+  "name": {
+    "en": "ManualSprite",
+    "ru": "ManualSprite"
+  },
+  "version": "0.0.0",
+  "description": {
+    "en": "Hand-crafted sprite workflow for Unreal Engine.",
+    "ru": "Ручная работа со спрайтами в Unreal Engine."
+  },
+  "image": "",
+  "video": "",
+  "docs": "https://github.com/CRAFTCODE-CJD/ManualSprite",
+  "updated": "2026-01-01T00:00:00Z",
+  "accent": "#10B981"
+}

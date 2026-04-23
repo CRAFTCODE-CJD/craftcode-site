@@ -1,0 +1,24 @@
+---
+interface Props { title: string; icon?: string; }
+const { title } = Astro.props as Props;
+---
+
+<div class="mdx-card neon-frame">
+  <h3 class="mdx-card__title">{title}</h3>
+  <div class="mdx-card__body"><slot /></div>
+</div>
+
+<style>
+  .mdx-card { padding: 14px 16px; background: var(--surface); }
+  .mdx-card__title {
+    font-family: 'VT323', monospace;
+    font-size: 20px;
+    color: var(--accent-2);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    margin: 0 0 6px;
+  }
+  .mdx-card__body { color: var(--muted); line-height: 1.55; font-size: 14px; }
+  .mdx-card__body :global(p) { margin: 0; }
+  .mdx-card__body :global(strong) { color: var(--ink); }
+</style>

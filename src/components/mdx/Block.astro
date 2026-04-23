@@ -1,0 +1,60 @@
+---
+type BlockType = 'info' | 'warning' | 'error' | 'ok';
+interface Props {
+  type?: BlockType;
+  title?: string;
+}
+const { type = 'info', title } = Astro.props as Props;
+const icons: Record<BlockType, string> = {
+  info: '>>',
+  warning: '!!',
+  error: 'XX',
+  ok: 'OK',
+};
+---
+
+<aside class:list={['mdx-block', `mdx-block--${type}`]} role={type === 'error' ? 'alert' : 'note'}>
+  <header class="mdx-block__head">
+    <span class="mdx-block__icon" aria-hidden="true">{icons[type]}</span>
+    {title && <span class="mdx-block__title">{title}</span>}
+  </header>
+  <div class="mdx-block__body"><slot /></div>
+</aside>
+
+<style>
+  .mdx-block {
+    --block-accent: var(--accent-4);
+    border-left: 3px solid var(--block-accent);
+    background: color-mix(in oklab, var(--block-accent) 8%, var(--surface));
+    padding: 14px 18px;
+    margin: 18px 0;
+    border-radius: 0 var(--radius) var(--radius) 0;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  .mdx-block--warning { --block-accent: var(--accent-2); }
+  .mdx-block--error   { --block-accent: var(--accent-err); }
+  .mdx-block--ok      { --block-accent: var(--accent-3); }
+
+  .mdx-block__head {
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+    margin-bottom: 6px;
+  }
+  .mdx-block__icon {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    color: var(--block-accent);
+    font-weight: 700;
+    font-size: 12px;
+  }
+  .mdx-block__title {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--block-accent);
+  }
+  .mdx-block__body :global(p) { margin: 6px 0; }
+  .mdx-block__body :global(p:first-child) { margin-top: 0; }
+  .mdx-block__body :global(p:last-child) { margin-bottom: 0; }
+</style>

@@ -1,8 +1,7 @@
 ---
 title: Справка
 description: Тулбар, горячие клавиши и Project Settings для ManualSprite Editor Tools.
-sidebar:
-  order: 10
+order: 10
 ---
 
 ## Тулбар

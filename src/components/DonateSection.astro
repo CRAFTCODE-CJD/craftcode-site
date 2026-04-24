@@ -2,11 +2,15 @@
 /**
  * Donation / Support section with QR code and link.
  */
+import CompanionBot from './CompanionBot.astro';
 ---
 
 <section class="donate-section">
   <div class="donate-container">
     <div class="donate-text">
+       <div class="donate-bot" aria-hidden="true">
+         <CompanionBot bot="craft" anim="think" size={48} />
+       </div>
        <span class="ds-label">// support</span>
        <h2 class="donate-heading">Поддержать проект</h2>
        <p class="donate-pitch">
@@ -42,7 +46,7 @@
     content: '';
     position: absolute;
     top: 0; left: 0; width: 100%; height: 1px;
-    background: linear-gradient(90deg, transparent, var(--color-neon-orange), transparent);
+    background: linear-gradient(90deg, transparent, var(--accent-2), transparent);
     opacity: 0.4;
   }
   .donate-container {
@@ -51,10 +55,11 @@
     align-items: center;
     gap: 48px;
   }
+  .donate-bot { margin-bottom: 12px; }
   .donate-heading {
     margin: 0 0 16px;
-    font-family: var(--font-terminal);
-    font-size: 48px;
+    font-family: 'Press Start 2P', 'Rubik Pixels', monospace;
+    font-size: clamp(22px, 4vw, 34px);
     color: var(--ink);
     line-height: 1;
     text-shadow: 2px 2px 0 var(--bg);
@@ -80,9 +85,9 @@
     position: relative;
     padding: 4px;
     background: #000;
-    border: 1px solid var(--color-neon-mint);
+    border: 1px solid var(--accent-3);
     border-radius: 2px;
-    box-shadow: 0 0 15px -3px var(--color-neon-mint);
+    box-shadow: 0 0 15px -3px var(--accent-3);
   }
   .qr-img {
     width: 80px;
@@ -91,10 +96,10 @@
     filter: invert(1) brightness(1.2) contrast(1.1);
   }
   .qr-label {
-    font-family: var(--font-mono);
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
     font-size: 10px;
     font-weight: 700;
-    color: var(--color-neon-mint);
+    color: var(--accent-3);
     letter-spacing: 0.2em;
     opacity: 0.8;
   }
@@ -104,8 +109,8 @@
     position: absolute;
     top: 8px; left: 8px; right: 8px;
     height: 1px;
-    background: var(--neon-mint);
-    box-shadow: 0 0 8px var(--neon-mint);
+    background: var(--accent-3);
+    box-shadow: 0 0 8px var(--accent-3);
     animation: qr-scan 2.5s ease-in-out infinite;
     pointer-events: none;
   }
@@ -116,10 +121,13 @@
   }
 
   @media (max-width: 768px) {
+    .donate-section { padding: 28px 20px; margin: 40px 0 64px; }
     .donate-container {
-      grid-template-columns: 1fr;
+      flex-direction: column;
+      align-items: center;
       text-align: center;
-      justify-items: center;
+      gap: 28px;
     }
+    .donate-pitch { margin-inline: auto; }
   }
 </style>

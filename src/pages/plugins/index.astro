@@ -1,5 +1,6 @@
 ---
 import Base from '~/layouts/Base.astro';
+import CompanionBot from '~/components/CompanionBot.astro';
 import { loadAllManifests, sortByUpdated, pick } from '~/lib/github/manifest';
 
 const manifests = sortByUpdated(await loadAllManifests());
@@ -7,9 +8,16 @@ const manifests = sortByUpdated(await loadAllManifests());
 
 <Base title="Плагины // CRAFTCODE" description="Каталог плагинов CRAFTCODE." bodyClass="is-plugins">
   <section class="plugins-head">
-    <p class="plugins-kicker" data-i18n="plugins.kicker">// plugin registry</p>
-    <h1 class="plugins-title" data-i18n="plugins.title">Плагины</h1>
-    <p class="plugins-sub" data-i18n="plugins.sub">Инструменты для Unreal Engine. Данные подтягиваются из GitHub при сборке.</p>
+    <div class="plugins-head__row">
+      <div>
+        <p class="plugins-kicker" data-i18n="plugins.kicker">// plugin registry</p>
+        <h1 class="plugins-title" data-i18n="plugins.title">Плагины</h1>
+        <p class="plugins-sub" data-i18n="plugins.sub">Инструменты для Unreal Engine. Данные подтягиваются из GitHub при сборке.</p>
+      </div>
+      <div class="plugins-head__bot" aria-hidden="true">
+        <CompanionBot bot="craft" anim="hammer" size={72} />
+      </div>
+    </div>
   </section>
 
   <section class="plugins-grid-section">
@@ -86,6 +94,14 @@ const manifests = sortByUpdated(await loadAllManifests());
     margin: 0 0 10px;
   }
   .plugins-sub { color: var(--muted); max-width: 60ch; }
+  .plugins-head__row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .plugins-head__bot { flex-shrink: 0; }
 
   .plugins-grid-section { max-width: 1080px; margin: 0 auto; padding: 0 16px; }
   .plugins-grid {

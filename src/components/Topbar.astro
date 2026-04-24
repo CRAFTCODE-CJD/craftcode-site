@@ -12,11 +12,14 @@
 const pathname = Astro.url.pathname;
 
 type NavLink = { href: string; labelKey: string; fallback: string; key: string };
+// Default SSR language is 'ru' (see Base.astro). Use Russian fallbacks so
+// the Russian-default audience doesn't see an English flash before the
+// client-side i18n hydrator rewrites labels.
 const navLinks: NavLink[] = [
-  { key: 'home',      href: '/',           labelKey: 'nav.home',      fallback: 'Home' },
-  { key: 'plugins',   href: '/plugins/',   labelKey: 'nav.plugins',   fallback: 'Plugins' },
-  { key: 'templates', href: '/templates/', labelKey: 'nav.templates', fallback: 'Templates' },
-  { key: 'about',     href: '/about/',     labelKey: 'nav.about',     fallback: 'About' },
+  { key: 'home',      href: '/',           labelKey: 'nav.home',      fallback: 'Главная' },
+  { key: 'plugins',   href: '/plugins/',   labelKey: 'nav.plugins',   fallback: 'Плагины' },
+  { key: 'templates', href: '/templates/', labelKey: 'nav.templates', fallback: 'Шаблоны' },
+  { key: 'about',     href: '/about/',     labelKey: 'nav.about',     fallback: 'О нас' },
 ];
 const activeKey =
   pathname === '/'
@@ -93,6 +96,14 @@ const activeKey =
     // Close on Escape
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && btn.getAttribute('aria-expanded') === 'true') set(false);
+    });
+    // Close on outside click (tap outside drawer + burger)
+    document.addEventListener('click', (e) => {
+      if (btn.getAttribute('aria-expanded') !== 'true') return;
+      const t = e.target as Node | null;
+      if (!t) return;
+      if (btn.contains(t) || nav.contains(t)) return;
+      set(false);
     });
   }
 </script>

@@ -1,15 +1,20 @@
 ---
 import Base from '~/layouts/Base.astro';
+import CompanionBot from '~/components/CompanionBot.astro';
 ---
 
 <Base title="404 // signal lost" description="Страница не найдена." bodyClass="is-404">
   <section class="err404">
+    <div class="err404__bots" aria-hidden="true">
+      <CompanionBot bot="code" anim="think" size={72} />
+      <CompanionBot bot="craft" anim="sleep" size={56} />
+    </div>
     <pre class="err404__art" aria-hidden="true">
-      ___    ___    ___
-     /_  |  / _ \\  /_  |
-      | | | | | |  | |
-      | | | |_| |  | |
-      |_|  \\___/   |_|
+ _  _    ___   _  _
+| || |  / _ \ | || |
+| || |_| | | || || |_
+|__   _| |_| ||__   _|
+   |_|  \___/    |_|
 </pre>
     <h1 class="err404__title glitch" data-text="// signal lost">// signal lost</h1>
     <p class="err404__copy">Бот не нашёл эту страницу в реестре. Попробуй <a href="/">вернуться на главную</a> или открой <a href="/plugins/">каталог плагинов</a>.</p>
@@ -24,6 +29,13 @@ import Base from '~/layouts/Base.astro';
     padding: 32px 20px;
     text-align: center;
     font-family: 'JetBrains Mono', ui-monospace, monospace;
+  }
+  .err404__bots {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 18px;
+    margin-bottom: 18px;
   }
   .err404__art {
     color: var(--accent);

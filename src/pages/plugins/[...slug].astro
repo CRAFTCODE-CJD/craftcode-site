@@ -12,6 +12,7 @@
 import { getCollection, render, type CollectionEntry } from 'astro:content';
 import Base from '~/layouts/Base.astro';
 import PluginHero from '~/components/PluginHero.astro';
+import CompanionBot from '~/components/CompanionBot.astro';
 import * as mdxComponents from '~/components/mdx';
 
 type DocEntry = CollectionEntry<'docs'>;
@@ -121,6 +122,9 @@ const isPluginIndex = entry.id === `plugins/${pluginSlug}`;
       {siblings.length > 1 && (
         <aside class="plugin-sidebar" aria-label="Plugin pages">
           <p class="plugin-sidebar__kicker">// {pluginSlug}</p>
+          <div class="plugin-sidebar__bot" aria-hidden="true">
+            <CompanionBot bot="code" anim="typing" size={40} />
+          </div>
           <ul>
             {siblings.map((s) => (
               <li class:list={[{ active: s.active, nested: !!s.subgroup }]}>
@@ -198,6 +202,12 @@ const isPluginIndex = entry.id === `plugins/${pluginSlug}`;
     margin: 0 0 10px;
     text-transform: lowercase;
     letter-spacing: 0.05em;
+  }
+  .plugin-sidebar__bot {
+    display: flex;
+    justify-content: flex-start;
+    margin: 0 0 10px;
+    opacity: 0.85;
   }
   .plugin-sidebar ul { list-style: none; margin: 0; padding: 0; }
   .plugin-sidebar li { margin: 2px 0; }

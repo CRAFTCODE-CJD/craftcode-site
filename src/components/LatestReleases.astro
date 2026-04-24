@@ -10,6 +10,7 @@
  * labels below will be keyed through t() — for now strings live inline.
  */
 import { loadAllManifests, pick, sortByUpdated, type Lang } from '../lib/github/manifest';
+import CompanionBot from './CompanionBot.astro';
 
 type Props = { lang?: Lang };
 const { lang = 'ru' } = Astro.props as Props;
@@ -48,8 +49,13 @@ const fmtDate = (iso: string) => {
 
 <section class="latest-releases" data-latest-releases>
   <header class="latest-releases__head">
-    <h2 class="latest-releases__title" data-i18n="latest.title">{L.title}</h2>
-    <p class="latest-releases__sub" data-i18n="latest.sub">{L.sub}</p>
+    <div class="latest-releases__head-bot" aria-hidden="true">
+      <CompanionBot bot="code" anim="wave" size={40} />
+    </div>
+    <div>
+      <h2 class="latest-releases__title" data-i18n="latest.title">{L.title}</h2>
+      <p class="latest-releases__sub" data-i18n="latest.sub">{L.sub}</p>
+    </div>
   </header>
 
   {manifests.length === 0 ? (
@@ -105,7 +111,13 @@ const fmtDate = (iso: string) => {
 
 <style>
   .latest-releases { padding: 32px 0; }
-  .latest-releases__head { margin-bottom: 20px; }
+  .latest-releases__head {
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .latest-releases__head-bot { flex-shrink: 0; }
   .latest-releases__title {
     font-family: 'VT323', 'Russo One', monospace;
     font-size: 28px;

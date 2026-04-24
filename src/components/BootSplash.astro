@@ -4,6 +4,7 @@
  * Plays once per session (sessionStorage guard), skippable with any keypress.
  * Does not block interactions — pointer-events: none after the transition.
  */
+import CompanionBot from './CompanionBot.astro';
 ---
 
 <div class="boot-splash" data-boot-splash>
@@ -19,6 +20,10 @@
  ░          ░░   ░   ░   ▒    ░ ░      ░
  ░ ░         ░           ░  ░</pre>
     <div class="boot-splash__log" data-boot-log></div>
+    <div class="boot-splash__bots" aria-hidden="true">
+      <CompanionBot bot="craft" anim="progress" size={48} />
+      <CompanionBot bot="code" anim="typing" size={48} />
+    </div>
     <p class="boot-splash__hint">&gt; press any key to skip</p>
   </div>
 </div>
@@ -123,6 +128,12 @@
     font-size: 13px;
     line-height: 1.6;
     min-height: 180px;
+  }
+  .boot-splash__bots {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+    align-items: center;
   }
   .boot-splash__hint {
     margin-top: 18px;

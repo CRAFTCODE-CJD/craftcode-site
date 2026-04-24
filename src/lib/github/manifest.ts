@@ -60,12 +60,20 @@ const RAW_BASE = `https://raw.githubusercontent.com/${ORG}`;
 
 async function fetchRemote(repo: string): Promise<PluginManifest | null> {
   const url = `${RAW_BASE}/${repo}/main/manifest.json`;
+  // Hard 4s cap so a slow GitHub CDN can't stall static builds.
+  const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  const timer = ctrl ? setTimeout(() => ctrl.abort(), 4000) : null;
   try {
-    const res = await fetch(url, { headers: { 'cache-control': 'no-cache' } });
+    const res = await fetch(url, {
+      headers: { 'cache-control': 'no-cache' },
+      signal: ctrl?.signal,
+    });
     if (!res.ok) return null;
     return (await res.json()) as PluginManifest;
   } catch {
     return null;
+  } finally {
+    if (timer) clearTimeout(timer);
   }
 }
 

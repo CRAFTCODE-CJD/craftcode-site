@@ -20,6 +20,25 @@
    · `prefers-reduced-motion` removes the smooth transition
      but still positions the transform (so mobile users keep
      bots in-frame — it's not decorative).
+
+   Calm-mode tuning (2026-04):
+     · Larger deadzones (18px / 0.07) — sub-pixel wiggle stops
+       producing any work.
+     · Exponential smoothing on the target (α≈0.16) — large
+       jumps become an asymptotic glide instead of a snap.
+     · Hysteresis on the "close-together" zoom-in and the
+       "spread-apart" zoom-out — entering a zoom state takes
+       a stronger trigger than leaving it, so bots hovering
+       near the threshold don't rattle between modes.
+     · No-reframe window — if the bbox center hasn't shifted
+       >40px across the last 400ms of samples, the camera just
+       rests. Idle micro-motion never reaches the transform.
+     · Per-tick clamps — even on a big jump, scale changes at
+       most 0.03 and translate at most 60px per tick, so the
+       loop feels like inertia rather than teleport.
+     · Tick interval 180ms — the CSS transition (750ms) does
+       the visual work; we just don't need to recompute that
+       often.
 */
 
 type CameraState = {
@@ -28,14 +47,48 @@ type CameraState = {
   ty: number;
 };
 
-const DEADZONE_PX = 8;
-const DEADZONE_SCALE = 0.04;
+// ─── Calm tuning constants ────────────────────────────────
+// Deadzone: raised from 8px / 0.04 so idle micro-drift is
+// completely absorbed. Anything below these thresholds skips
+// the transform entirely.
+const DEADZONE_PX = 18;
+const DEADZONE_SCALE = 0.07;
 const MIN_SCALE = 0.7;
 const MAX_SCALE = 1.5;
-const TICK_MS = 120;
+// Tick ceiling: we recompute at ~5.5 Hz instead of 8.3 Hz.
+// The 750ms CSS transition is what the eye actually sees;
+// ticking faster just spends CPU.
+const TICK_MS = 180;
+// Exponential smoothing factor applied to the *target* each
+// tick. α=0.16 ≈ 6-tick time constant (~1.1s @ 180ms) — big
+// intentional moves still catch up in ~1s, but small twitches
+// decay before they ever reach the transform.
+const TARGET_ALPHA = 0.16;
+// Per-tick clamps: even if the smoothed target demands more,
+// we only step this far per tick. Prevents any remaining
+// visual snap on state reset / resize.
+const MAX_DSCALE_PER_TICK = 0.03;
+const MAX_DTRANSLATE_PER_TICK = 60;
+// Hysteresis — entry is harder than exit by ~30–35%.
+const ZOOM_IN_BBOX_W = 120;   // enter "close" mode below this
+const ZOOM_IN_BBOX_H = 180;
+const ZOOM_OUT_BBOX_W = 160;  // leave "close" mode above this
+const ZOOM_OUT_BBOX_H = 230;
+const WIDE_ENTER_RATIO = 0.70; // enter "spread" mode above this * stageW
+const WIDE_EXIT_RATIO = 0.60;  // leave "spread" mode below this * stageW
+// No-reframe window: if bbox center hasn't drifted this far
+// over the last N ms, skip recomputation entirely.
+const IDLE_WINDOW_MS = 400;
+const IDLE_MOTION_PX = 40;
 
 function clamp(v: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, v));
+}
+
+function approach(current: number, target: number, maxStep: number): number {
+  const d = target - current;
+  if (Math.abs(d) <= maxStep) return target;
+  return current + Math.sign(d) * maxStep;
 }
 
 export function initCamera(): () => void {
@@ -50,6 +103,20 @@ export function initCamera(): () => void {
   if (companions.length === 0) return () => {};
 
   const state: CameraState = { scale: 1, tx: 0, ty: 0 };
+  // Smoothed target — what we're lerping state toward. We
+  // update this from the raw computed target each tick via
+  // exponential smoothing, then step `state` toward it under
+  // the per-tick clamps.
+  const target: CameraState = { scale: 1, tx: 0, ty: 0 };
+  // Hysteresis flags — persisted across ticks so the mode
+  // thresholds apply asymmetrically.
+  let inCloseMode = false;
+  let inWideMode = false;
+  // Idle-window tracking: history of recent bbox-center
+  // samples, used to decide whether anything moved enough to
+  // warrant recomputing target at all.
+  type Sample = { t: number; cx: number; cy: number };
+  const history: Sample[] = [];
   let dragging = false;
   let paused = false;
   let rafId: number | null = null;
@@ -65,7 +132,7 @@ export function initCamera(): () => void {
     cam.dataset.ccCamTy = state.ty.toFixed(1);
   };
 
-  const computeTarget = (): CameraState | null => {
+  const computeTarget = (): { cam: CameraState; bboxCx: number; bboxCy: number } | null => {
     const playRect = play.getBoundingClientRect();
     if (playRect.width < 20 || playRect.height < 20) return null;
 
@@ -80,13 +147,6 @@ export function initCamera(): () => void {
     for (const el of targets) {
       const r = el.getBoundingClientRect();
       if (r.width === 0 && r.height === 0) continue;
-      // getBoundingClientRect is already post-transform (visual). To get
-      // the "world" rect we must undo the current camera transform.
-      // Inverse: worldX = (clientX - playLeft - tx) / scale + playLeft ...
-      // Simpler: compute target in *post-transform* space, then use the
-      // same transform math (target recomputed next tick will converge).
-      // We keep it post-transform for simplicity; the feedback loop
-      // converges within 2-3 ticks.
       const cx = r.left - playRect.left;
       const cy = r.top - playRect.top;
       minX = Math.min(minX, cx);
@@ -124,10 +184,33 @@ export function initCamera(): () => void {
     const fitH = (stageH / Math.max(bboxH + 160, 1)) * 0.95;
     let targetScale = clamp(Math.min(fitW, fitH), 0.85, MAX_SCALE);
 
-    // Close-together → zoom in. Far-apart → zoom out past the base.
-    if (bboxW < 120 && bboxH < 180) {
+    // Hysteresis: close-together zoom-in.
+    // Enter when bbox is clearly small; only exit once it has
+    // grown comfortably past the exit threshold. Prevents the
+    // mode from flipping when bots hover near the boundary.
+    if (inCloseMode) {
+      if (bboxW > ZOOM_OUT_BBOX_W || bboxH > ZOOM_OUT_BBOX_H) {
+        inCloseMode = false;
+      }
+    } else {
+      if (bboxW < ZOOM_IN_BBOX_W && bboxH < ZOOM_IN_BBOX_H) {
+        inCloseMode = true;
+      }
+    }
+    // Hysteresis: spread-apart zoom-out.
+    if (inWideMode) {
+      if (bboxW < stageW * WIDE_EXIT_RATIO) {
+        inWideMode = false;
+      }
+    } else {
+      if (bboxW > stageW * WIDE_ENTER_RATIO) {
+        inWideMode = true;
+      }
+    }
+
+    if (inCloseMode) {
       targetScale = Math.min(MAX_SCALE, Math.max(targetScale, 1.35));
-    } else if (bboxW > stageW * 0.7) {
+    } else if (inWideMode) {
       targetScale = Math.min(targetScale, 0.9);
     }
     targetScale = clamp(targetScale, MIN_SCALE, MAX_SCALE);
@@ -138,31 +221,68 @@ export function initCamera(): () => void {
     const tx = (stageCx - bboxCx) * targetScale;
     const ty = (stageCy - bboxCy) * targetScale;
 
-    return { scale: targetScale, tx, ty };
+    return { cam: { scale: targetScale, tx, ty }, bboxCx, bboxCy };
   };
 
   const tick = () => {
     if (paused || dragging) return;
     if (play.dataset.camera === 'off') {
       // Reset visual transform so bots appear at identity.
+      // Clear smoothing + history so we start fresh on resume.
       if (state.scale !== 1 || state.tx !== 0 || state.ty !== 0) {
         state.scale = 1; state.tx = 0; state.ty = 0;
+        target.scale = 1; target.tx = 0; target.ty = 0;
+        history.length = 0;
         applyTransform();
       }
       return;
     }
-    const target = computeTarget();
-    if (!target) return;
+    const computed = computeTarget();
+    if (!computed) return;
 
-    // Deadzone — ignore tiny deltas to prevent micro-jitter.
+    // No-reframe window: if bbox center drift stays within
+    // IDLE_MOTION_PX over IDLE_WINDOW_MS, don't update target.
+    // The camera simply holds where it last settled. Idle
+    // micro-motion never triggers any work.
+    const now = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+    history.push({ t: now, cx: computed.bboxCx, cy: computed.bboxCy });
+    while (history.length > 0 && now - history[0].t > IDLE_WINDOW_MS) {
+      history.shift();
+    }
+    let isIdle = false;
+    if (history.length >= 2) {
+      let minCx = Infinity, maxCx = -Infinity, minCy = Infinity, maxCy = -Infinity;
+      for (const s of history) {
+        if (s.cx < minCx) minCx = s.cx;
+        if (s.cx > maxCx) maxCx = s.cx;
+        if (s.cy < minCy) minCy = s.cy;
+        if (s.cy > maxCy) maxCy = s.cy;
+      }
+      const spread = Math.max(maxCx - minCx, maxCy - minCy);
+      if (spread < IDLE_MOTION_PX) isIdle = true;
+    }
+
+    // Exponential smoothing of the *target*. When idle, we
+    // freeze target drift (α=0) so even tiny computed wobble
+    // doesn't accumulate into a visible nudge.
+    const alpha = isIdle ? 0 : TARGET_ALPHA;
+    target.scale += (computed.cam.scale - target.scale) * alpha;
+    target.tx += (computed.cam.tx - target.tx) * alpha;
+    target.ty += (computed.cam.ty - target.ty) * alpha;
+
+    // Deadzone — ignore tiny deltas between current state and
+    // smoothed target. This is the final micro-jitter guard.
     const dScale = Math.abs(target.scale - state.scale);
     const dTx = Math.abs(target.tx - state.tx);
     const dTy = Math.abs(target.ty - state.ty);
     if (dScale < DEADZONE_SCALE && dTx < DEADZONE_PX && dTy < DEADZONE_PX) return;
 
-    state.scale = target.scale;
-    state.tx = target.tx;
-    state.ty = target.ty;
+    // Per-tick clamp: step toward target under caps. Keeps
+    // large jumps (resize, terminal close) smooth rather than
+    // jarring.
+    state.scale = approach(state.scale, target.scale, MAX_DSCALE_PER_TICK);
+    state.tx = approach(state.tx, target.tx, MAX_DTRANSLATE_PER_TICK);
+    state.ty = approach(state.ty, target.ty, MAX_DTRANSLATE_PER_TICK);
     applyTransform();
   };
 
@@ -207,6 +327,10 @@ export function initCamera(): () => void {
     dragging = false;
     // Restore smooth transition (reduced-motion users opt out via CSS).
     cam.style.transition = '';
+    // Post-drag, bot positions may have changed a lot — reset
+    // the idle history so the camera can re-frame without the
+    // window vetoing it.
+    history.length = 0;
   };
   document.addEventListener('pointerdown', onPointerDown, { capture: true });
   document.addEventListener('pointerup', onPointerUp, { capture: true });
@@ -231,7 +355,9 @@ export function initCamera(): () => void {
   document.addEventListener('visibilitychange', onVisibility);
 
   // Resize → recompute immediately so mobile rotation doesn't leave bots OOB.
-  const onResize = () => { tick(); };
+  // Also flush history so the idle window doesn't suppress the
+  // legitimately-large post-resize reframe.
+  const onResize = () => { history.length = 0; tick(); };
   window.addEventListener('resize', onResize);
 
   // Kick off — do a synchronous first tick so bots are framed on first paint.

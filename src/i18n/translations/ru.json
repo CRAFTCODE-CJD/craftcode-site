@@ -6,6 +6,9 @@
 
   "site.description": "CraftCode — инструменты и игрушки для геймдева.",
 
+  "home.social.kicker": "// каналы",
+  "home.social.title": "Где меня найти",
+
   "home.community.fab.title": "// FAB Marketplace",
   "home.community.fab.cta": "Маркетплейс →",
   "home.community.youtube.title": "// YouTube",

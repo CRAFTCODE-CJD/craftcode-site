@@ -14,8 +14,11 @@ CRAFT и CODE — это пара роботов-ассистентов. Они 
 - **Boosty** — [channel-jonathan-developer](https://boosty.to/channel-jonathan-developer) — эксклюзивный контент для подписчиков
 - **YouTube** — [jonathandeveloper6723](https://www.youtube.com/@jonathandeveloper6723) — футажи проделанной работы и демо шаблонов
 
-## Пасхалки сайта
+<details class="easter-eggs">
+<summary>// easter_eggs.dat (3 entries)</summary>
 
 - Нажми <kbd>/</kbd> — откроется терминал. Попробуй команды `help`, `plugin`, `docs <slug>`, `about`.
 - Коды разработчика давно используются в играх. Попробуй <kbd>↑↑↓↓←→←→BA</kbd> где угодно на сайте.
 - Боты двигаются, сталкиваются, иногда спят. Не трогай их слишком часто — ломаются.
+
+</details>

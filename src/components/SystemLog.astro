@@ -1,0 +1,129 @@
+---
+/**
+ * SystemLog — fake "live" terminal stream that seeds the home page with
+ * a bit of motion without being distracting. Each row fades in in
+ * sequence via animation-delay; the last row gets a trailing cursor.
+ *
+ * Purely decorative — no real data, no network.
+ */
+const rows = [
+  { t: '06:14', tone: 'ok',   text: 'manifest::sprite-optimizer @ v2.1 fetched' },
+  { t: '06:14', tone: 'hum',  text: 'manifest::manualsprite @ v1.3 fetched' },
+  { t: '06:15', tone: 'bar',  text: '▓▓▓▓▓▓▓▓░░ 80% packing atlas / 512kb' },
+  { t: '06:15', tone: 'ok',   text: 'cache::sprite_sheets warmed (92 frames × 2)' },
+  { t: '06:16', tone: 'warn', text: 'bots::rapport drift +4 (CRAFT caught CODE)' },
+  { t: '06:17', tone: 'ok',   text: 'link::fab.com verified' },
+  { t: '06:18', tone: 'cur',  text: 'awaiting input_' },
+];
+---
+
+<section class="sys-log" aria-hidden="true" data-cc-log>
+  <header class="sys-log__head">
+    <span class="sys-log__dot" data-dot="r"></span>
+    <span class="sys-log__dot" data-dot="y"></span>
+    <span class="sys-log__dot" data-dot="g"></span>
+    <span class="sys-log__label">// workshop.log · live</span>
+  </header>
+  <div class="sys-log__body">
+    {rows.map((r, i) => (
+      <div class="sys-log__row" data-tone={r.tone} style={`animation-delay: ${220 + i * 260}ms`}>
+        <span class="sys-log__t">[{r.t}]</span>
+        <span class="sys-log__arrow">→</span>
+        <span class="sys-log__msg">{r.text}</span>
+      </div>
+    ))}
+  </div>
+</section>
+
+<style>
+  .sys-log {
+    margin: 0 0 36px;
+    padding: 0;
+    background: color-mix(in oklab, var(--code-bg) 94%, black);
+    border: 1px solid color-mix(in oklab, var(--accent) 25%, var(--border));
+    border-radius: 8px;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    box-shadow:
+      inset 0 0 40px color-mix(in oklab, var(--accent) 6%, transparent),
+      0 0 24px color-mix(in oklab, var(--accent) 10%, transparent);
+    overflow: hidden;
+  }
+  .sys-log__head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: color-mix(in oklab, var(--grid) 60%, transparent);
+    border-bottom: 1px solid color-mix(in oklab, var(--accent) 20%, var(--border));
+  }
+  .sys-log__dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    box-shadow: 0 0 6px currentColor;
+  }
+  .sys-log__dot[data-dot='r'] { color: #ef4444; background: currentColor; }
+  .sys-log__dot[data-dot='y'] { color: #eab308; background: currentColor; }
+  .sys-log__dot[data-dot='g'] { color: #22c55e; background: currentColor; }
+  .sys-log__label {
+    margin-left: 8px;
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: lowercase;
+    color: var(--muted);
+  }
+
+  .sys-log__body {
+    padding: 12px 16px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 12px;
+    line-height: 1.55;
+  }
+  .sys-log__row {
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+    opacity: 0;
+    transform: translateX(-6px);
+    animation: sl-in 420ms ease-out forwards;
+  }
+  .sys-log__t {
+    color: var(--muted);
+    opacity: 0.75;
+    font-variant-numeric: tabular-nums;
+  }
+  .sys-log__arrow { color: var(--accent-3); }
+  .sys-log__msg { color: var(--ink); }
+
+  .sys-log__row[data-tone='ok']   .sys-log__arrow { color: var(--accent-3); }
+  .sys-log__row[data-tone='warn'] .sys-log__arrow { color: var(--accent-2); }
+  .sys-log__row[data-tone='warn'] .sys-log__msg   { color: color-mix(in oklab, var(--accent-2) 80%, var(--ink)); }
+  .sys-log__row[data-tone='bar']  .sys-log__msg   { color: var(--accent); letter-spacing: 0.02em; }
+  .sys-log__row[data-tone='hum']  .sys-log__msg   { color: color-mix(in oklab, var(--ink) 75%, var(--muted)); }
+
+  /* Cursor on the last "awaiting input" row */
+  .sys-log__row[data-tone='cur'] .sys-log__msg::after {
+    content: '▮';
+    margin-left: 2px;
+    color: var(--accent);
+    animation: sl-blink 0.9s steps(2) infinite;
+  }
+  .sys-log__row[data-tone='cur'] .sys-log__msg { color: var(--accent); }
+
+  @keyframes sl-in {
+    to { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes sl-blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+  }
+
+  @media (max-width: 600px) {
+    .sys-log__body { font-size: 10.5px; padding: 10px 12px; }
+    .sys-log__label { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .sys-log__row { animation: none; opacity: 1; transform: none; }
+    .sys-log__row[data-tone='cur'] .sys-log__msg::after { animation: none; }
+  }
+</style>

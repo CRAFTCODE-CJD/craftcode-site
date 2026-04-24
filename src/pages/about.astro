@@ -11,7 +11,20 @@ const { Content } = await render(entry);
 <Base title={entry.data.title} description={entry.data.description}>
   <article class="mdx-article">
     <h1 class="mdx-article__title">{entry.data.title}</h1>
+
+    <aside class="sys-card" aria-hidden="true">
+      <div class="sys-card__row"><span class="sys-card__prompt">$</span><span class="sys-card__cmd">whoami</span><span class="sys-card__out">jonathan.developer</span></div>
+      <div class="sys-card__row"><span class="sys-card__prompt">$</span><span class="sys-card__cmd">uname -a</span><span class="sys-card__out">CRAFTCODE v2.1 · unreal-engine · paper2d</span></div>
+      <div class="sys-card__row"><span class="sys-card__prompt">$</span><span class="sys-card__cmd">status</span><span class="sys-card__out"><span class="sys-card__led"></span>online · coding</span></div>
+    </aside>
+
     <Content components={mdxComponents} />
+
+    <a class="sys-sign" href="mailto:channeljonathandeveloper@gmail.com">
+      <span class="sys-sign__tag">[SIGN]</span>
+      <span class="sys-sign__arrow">→</span>
+      <span class="sys-sign__mail">channeljonathandeveloper@gmail.com</span>
+    </a>
   </article>
 </Base>
 
@@ -26,5 +39,98 @@ const { Content } = await render(entry);
     font-size: clamp(22px, 4vw, 34px);
     text-shadow: 3px 3px 0 var(--accent-2), 6px 6px 0 var(--accent);
     margin: 0 0 24px;
+  }
+
+  .sys-card {
+    margin: 0 0 28px;
+    padding: 14px 18px;
+    background: color-mix(in oklab, var(--code-bg) 94%, black);
+    border: 1px solid color-mix(in oklab, var(--accent) 30%, var(--border));
+    border-radius: 8px;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 13px;
+    box-shadow:
+      inset 0 0 32px color-mix(in oklab, var(--accent) 6%, transparent),
+      0 0 16px color-mix(in oklab, var(--accent) 8%, transparent);
+  }
+  .sys-card__row {
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+    padding: 3px 0;
+    line-height: 1.5;
+  }
+  .sys-card__prompt { color: var(--accent-3); }
+  .sys-card__cmd    { color: var(--accent-2); min-width: 92px; }
+  .sys-card__out    { color: var(--ink); display: inline-flex; align-items: center; gap: 6px; }
+  .sys-card__led {
+    display: inline-block;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent-3);
+    box-shadow: 0 0 8px var(--accent-3);
+    animation: sys-led 2s ease-in-out infinite;
+  }
+  @keyframes sys-led {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%      { opacity: 0.55; transform: scale(0.85); }
+  }
+
+  .sys-sign {
+    margin: 36px 0 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    background: var(--surface);
+    border: 1px solid color-mix(in oklab, var(--accent) 40%, var(--border));
+    border-radius: 6px;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 13px;
+    text-decoration: none;
+    color: var(--ink);
+    transition: border-color 150ms, box-shadow 150ms, transform 150ms;
+  }
+  .sys-sign:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 18px color-mix(in oklab, var(--accent) 40%, transparent);
+    transform: translateY(-1px);
+  }
+  .sys-sign__tag { color: var(--accent-2); letter-spacing: 0.1em; }
+  .sys-sign__arrow { color: var(--accent); }
+  .sys-sign__mail { color: var(--ink); }
+
+  /* Easter-eggs collapsible in MDX body */
+  .mdx-article :global(details.easter-eggs) {
+    margin: 24px 0;
+    padding: 8px 14px;
+    background: color-mix(in oklab, var(--code-bg) 92%, black);
+    border: 1px dashed color-mix(in oklab, var(--accent-2) 45%, var(--border));
+    border-radius: 6px;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+  }
+  .mdx-article :global(details.easter-eggs > summary) {
+    cursor: pointer;
+    padding: 4px 0;
+    color: var(--accent-2);
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    list-style: none;
+  }
+  .mdx-article :global(details.easter-eggs > summary::marker),
+  .mdx-article :global(details.easter-eggs > summary::-webkit-details-marker) {
+    display: none;
+  }
+  .mdx-article :global(details.easter-eggs > summary::before) {
+    content: '▸ ';
+    color: var(--accent);
+    transition: transform 150ms;
+    display: inline-block;
+  }
+  .mdx-article :global(details.easter-eggs[open] > summary::before) {
+    transform: rotate(90deg);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sys-card__led { animation: none; }
   }
 </style>

@@ -11,14 +11,12 @@ interface Props {
   version?: string;
   tagline: string;
   image?: string;
-  /** YouTube video ID — if set, hero media is an embed instead of <img>. */
-  video?: string;
   ctas?: CTA[];
   accent?: string;
 }
 const {
   kicker, title, version, tagline,
-  image, video, ctas = [], accent,
+  image, ctas = [], accent,
 } = Astro.props;
 ---
 
@@ -47,19 +45,7 @@ const {
     )}
   </div>
 
-  {video ? (
-    <div class="plugin-hero-media plugin-hero-media--video">
-      <iframe
-        src={`https://www.youtube-nocookie.com/embed/${video}?rel=0&modestbranding=1`}
-        title={title}
-        loading="lazy"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        referrerpolicy="strict-origin-when-cross-origin"
-        allowfullscreen
-      ></iframe>
-      <div class="media-badge">DEMO_01</div>
-    </div>
-  ) : image ? (
+  {image ? (
     <div class="plugin-hero-media">
       <div class="media-overlay"></div>
       <img src={image} alt={title} loading="eager" />

@@ -3,10 +3,6 @@
  * CompanionBot — static mini-preview of the CRAFT/CODE sprite with a
  * looping sub-clip of frames. Renders the real sprite sheet so the
  * robot looks alive even outside the interactive playground.
- *
- * `anim` picks a set of frame indices to loop through (values match the
- * catalog in public/sprites/ANIMATIONS.md). Frames are advanced with a
- * pure CSS step-animation on the --cc-frame custom property.
  */
 interface Props {
   bot?: 'craft' | 'code';
@@ -16,36 +12,32 @@ interface Props {
 }
 const { bot = 'code', anim = 'idle', size = 56, class: className } = Astro.props;
 
-// Frame ranges — must match the sprite sheets (92 frames, see
-// public/sprites/ANIMATIONS.md + src/bots/frames.data.js).
+// Frame indices map 1:1 to src/bots/frames.data.js FRAME_ORDER.
 const CLIP: Record<string, { from: number; to: number; ms: number }> = {
-  idle:     { from: 0,  to: 2,  ms: 900 },
-  wave:     { from: 11, to: 12, ms: 320 },
-  typing:   { from: 13, to: 14, ms: 220 },
-  hammer:   { from: 15, to: 15, ms: 600 }, // "excited" pose as placeholder for hammer
-  think:    { from: 16, to: 17, ms: 520 },
-  progress: { from: 18, to: 19, ms: 480 },
-  sleep:    { from: 10, to: 10, ms: 2000 },
+  idle:     { from: 0,  to: 1,  ms: 900 },   // idle_a, idle_b
+  wave:     { from: 43, to: 44, ms: 320 },   // wave_a, wave_b
+  typing:   { from: 46, to: 47, ms: 220 },   // typing_a, typing_b
+  hammer:   { from: 52, to: 54, ms: 280 },   // hammer_up, _mid, _strike
+  think:    { from: 62, to: 63, ms: 520 },   // think_a, think_b
+  progress: { from: 55, to: 59, ms: 480 },   // bar_0..bar_check
+  sleep:    { from: 89, to: 91, ms: 900 },   // sleep, sleep_1z, sleep_3z
 };
 const c = CLIP[anim] ?? CLIP.idle;
 const frames = c.to - c.from + 1;
-const animName = `cb-${bot}-${anim}-${c.from}-${c.to}`;
 ---
 
 <div
   class:list={['cb-bot', className]}
-  style={`--cb-size: ${size}px; --cb-from: ${c.from}; --cb-to: ${c.to}; --cb-ms: ${c.ms}ms; --cb-frames: ${frames}; animation-name: ${animName};`}
+  style={`--cb-size: ${size}px; --cb-from: ${c.from}; --cb-to: ${c.to};`}
   data-who={bot}
   aria-hidden="true"
 >
-  <span class="cb-sprite"></span>
+  <span
+    class="cb-sprite"
+    style={`animation: cb-sheet ${c.ms}ms steps(${frames}) infinite;`}
+  ></span>
   <span class="cb-scan"></span>
 </div>
-
-<style is:global define:vars={{}}>
-  /* Keyframes are generated per-clip so the sprite shows only the
-     requested frame range and loops. */
-</style>
 
 <style>
   .cb-bot {
@@ -71,15 +63,22 @@ const animName = `cb-${bot}-${anim}-${c.from}-${c.to}`;
     image-rendering: pixelated;
     image-rendering: crisp-edges;
     background-repeat: no-repeat;
+    /* Sheet is 92 frames × 48px = 4416px */
     background-size: 4416px 48px;
-    /* Frame 0 on initial paint; keyframes override this. */
     background-position-x: calc(var(--cb-from, 0) * -48px);
-    animation: cb-frames var(--cb-ms, 800ms) steps(1) infinite;
   }
   .cb-bot[data-who='craft'] .cb-sprite { background-image: url('/sprites/craft.png'); }
   .cb-bot[data-who='code']  .cb-sprite { background-image: url('/sprites/code.png'); }
 
-  /* Scanline overlay for CRT feel */
+  /* Single shared keyframe — animates background-position-x from the
+     first frame of the clip (inclusive) to one-past-last (exclusive).
+     Combined with `steps(N)` on the element, this shows each of the
+     N frames discretely without sub-pixel bleed. */
+  @keyframes cb-sheet {
+    from { background-position-x: calc(var(--cb-from, 0) * -48px); }
+    to   { background-position-x: calc((var(--cb-to, 0) + 1) * -48px); }
+  }
+
   .cb-scan {
     position: absolute;
     inset: 0;
@@ -90,19 +89,6 @@ const animName = `cb-${bot}-${anim}-${c.from}-${c.to}`;
     mix-blend-mode: screen;
     opacity: 0.6;
   }
-
-  /* Generic single-frame loop; for multi-frame clips we interpolate
-     through integer frames 0..N-1 and write the offset as
-     `calc((from + step-N) * -48px)` by driving background-position-x
-     with steps(). Implemented by keyframes below. */
-  @keyframes cb-frames {
-    0%   { background-position-x: calc(var(--cb-from, 0) * -48px); }
-    25%  { background-position-x: calc((var(--cb-from, 0) + 1) * -48px); }
-    50%  { background-position-x: calc(var(--cb-to, 0) * -48px); }
-    75%  { background-position-x: calc((var(--cb-from, 0) + 1) * -48px); }
-    100% { background-position-x: calc(var(--cb-from, 0) * -48px); }
-  }
-
   @keyframes cb-scan {
     from { background-position: 0 100%; }
     to   { background-position: 0 -100%; }

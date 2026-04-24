@@ -6,12 +6,14 @@ import TemplatesTeaser from '~/components/TemplatesTeaser.astro';
 import DonateSection from '~/components/DonateSection.astro';
 import IdleEasterEgg from '~/components/IdleEasterEgg.astro';
 import LatestReleases from '~/components/LatestReleases.astro';
+import SystemLog from '~/components/SystemLog.astro';
 ---
 
 <Base title="CRAFTCODE" description="Рабочая мастерская двух роботов — плагины и игры для Unreal Engine." bodyClass="is-home">
   <BootToPlayground />
 
   <section class="home-wrap">
+    <SystemLog />
     <LatestReleases />
 
     <section class="home-social" aria-label="CRAFTCODE caналы">
@@ -85,5 +87,49 @@ import LatestReleases from '~/components/LatestReleases.astro';
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     gap: 18px;
+  }
+
+  /* ASCII-corner decoration for the "где меня найти" block */
+  .home-social {
+    position: relative;
+    padding: 20px 8px 8px;
+  }
+  .home-social::before,
+  .home-social::after {
+    content: '';
+    position: absolute;
+    width: 28px; height: 28px;
+    border-color: color-mix(in oklab, var(--accent) 45%, transparent);
+    opacity: 0.55;
+    pointer-events: none;
+  }
+  .home-social::before {
+    top: 0; left: -4px;
+    border-top: 2px solid; border-left: 2px solid;
+  }
+  .home-social::after {
+    bottom: 0; right: -4px;
+    border-bottom: 2px solid; border-right: 2px solid;
+  }
+
+  /* Gentle glitch on release-card hover — duplicates the card's accent
+     glow with a clipped offset flash, then snaps back. Light-touch so
+     the cards still feel approachable, not seizure-inducing. */
+  :global(.release-card) {
+    transition: transform 180ms ease, box-shadow 180ms ease;
+    will-change: transform;
+  }
+  :global(.release-card:hover) {
+    transform: translateY(-2px);
+    animation: home-glitch 420ms steps(2) 1;
+  }
+  @keyframes home-glitch {
+    0%   { clip-path: inset(0 0 0 0); }
+    25%  { clip-path: inset(10% 0 60% 0); transform: translate(2px, -2px); }
+    50%  { clip-path: inset(60% 0 10% 0); transform: translate(-2px, -2px); }
+    100% { clip-path: inset(0 0 0 0); transform: translateY(-2px); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    :global(.release-card:hover) { animation: none; transform: none; }
   }
 </style>

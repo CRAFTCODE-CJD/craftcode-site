@@ -588,8 +588,12 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
     const cy = (craft.pos.y + code.pos.y) / 2;
 
     // Target zoom first so we can clamp translate using the right scale.
+    // Lower bound is 1.0 — anything less would let the camera reveal the
+    // void beyond the canvas bottom (the stage height is finite, so a
+    // zoomed-out view would show empty space below the floor hatch).
+    // Upper bound 1.15 for the gentle close-in when bots are near.
     const dist = craft.pos.dist(code.pos);
-    const targetScale = Math.max(0.85, Math.min(1.15, 220 / Math.max(120, dist)));
+    const targetScale = Math.max(1.0, Math.min(1.15, 220 / Math.max(120, dist)));
     const curScale = k.getCamScale().x;
     const nextScale = k.lerp(curScale, targetScale, 0.04);
     k.setCamScale(nextScale);

@@ -141,8 +141,11 @@ async function processFile(file, en, ru) {
   const hits = walk(tree, fileKey);
 
   for (const h of hits) {
-    if (en[h.key] === undefined) en[h.key] = h.text;
-    if (ru[h.key] === undefined) ru[h.key] = '';
+    // MDX content is authored in Russian, so the extracted text is the
+    // RU source of truth. EN starts empty and is filled by hand or by
+    // an LLM translate pass.
+    if (ru[h.key] === undefined) ru[h.key] = h.text;
+    if (en[h.key] === undefined) en[h.key] = '';
   }
   return hits;
 }

@@ -41,6 +41,16 @@ import TypingText from '~/components/TypingText.astro';
     <!-- Obstacles live INSIDE .companions so the physics refreshObstacles()
          scan (which scopes to the companions container) can measure them. -->
     <div class="companions" aria-live="polite" aria-atomic="false">
+      <!-- FLOOR — full-width landing platform inside .companions. It
+           transforms with the camera, so the neon surface and the
+           bots' feet never drift apart at any zoom. The slab extends
+           below the stage (overflow:hidden clips it) so the visible
+           cushion reads as thick ground rather than a thin line. The
+           ::after pseudo draws the neon top edge 2 px above the box
+           top to compensate for PLATFORM_M — feet land exactly on
+           the lit line. -->
+      <div class="cc-floor" data-ob aria-hidden="true"
+           style="left: 0; right: 0; bottom: -40px; width: 100%; height: 50px;"></div>
       <!-- A low step on the left — reachable via a normal jump from ground.
            Stage is 420px tall; ground line ≈ 419. A jump clears ~60 px, so
            a step_01 top at 360 keeps it trivially stepable. -->
@@ -172,44 +182,9 @@ import TypingText from '~/components/TypingText.astro';
       0 0 40px color-mix(in oklab, var(--accent) 15%, transparent);
   }
 
-  /* ── Workshop FLOOR ────────────────────────────────────────────────
-     Visual floor must line up with the physics floor. Engine floorY is
-     stageH - FLOOR_M (1px margin), so the bots' feet sit exactly at the
-     stage bottom edge. The floor is a single 2px neon band flush with
-     that edge, plus a soft glow lift above it — no tall hatch pad and
-     no vertical offset to desync with the bots.
-     pointer-events: none; below companions (z=10).                      */
-  .cc-stage::before {
-    content: '';
-    position: absolute;
-    left: 0; right: 0; bottom: 0;
-    height: 2px;
-    background: var(--accent);
-    pointer-events: none;
-    z-index: 1;
-    box-shadow:
-      0 0 6px  color-mix(in oklab, var(--accent) 80%, transparent),
-      0 -2px 14px color-mix(in oklab, var(--accent) 55%, transparent),
-      0 -8px 36px color-mix(in oklab, var(--accent) 18%, transparent),
-      0 2px 4px  color-mix(in oklab, var(--accent-2) 40%, transparent);
-  }
-  /* Dashed accent line 1px above the neon band — keeps the legacy
-     workshop-stripe read without building a heavy floor pad. */
-  .cc-stage::after {
-    content: '';
-    position: absolute;
-    left: 0; right: 0;
-    bottom: 3px;
-    height: 1px;
-    background: repeating-linear-gradient(
-      to right,
-      color-mix(in oklab, var(--accent-2) 70%, transparent) 0 10px,
-      transparent 10px 20px
-    );
-    opacity: 0.55;
-    pointer-events: none;
-    z-index: 1;
-  }
+  /* The floor is a real platform inside .companions (see .cc-floor in
+     companions.css). It transforms with the camera so physics and
+     visual can't desync. No ::before/::after needed on .cc-stage. */
 
   /* Both phase-layers fill the stage box. Opacity + scale cross-fade. */
   .cc-stage-log,

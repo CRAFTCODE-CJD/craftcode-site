@@ -121,6 +121,45 @@
   z-index: 2;
   pointer-events: none;
 }
+/* FLOOR — full-width landing platform inside .companions. It uses
+   [data-ob] so refreshObstacles() picks it up; physics lands feet on
+   `floor.top - PLATFORM_M`. To align the NEON SURFACE (what the eye
+   reads) with the feet, the ::after pseudo draws the bright top edge
+   at -2 px — exactly compensating PLATFORM_M. */
+.cc-floor {
+  position: absolute;
+  background:
+    /* Light diagonal shop-floor hatch — milder than the small
+       platforms so it reads as "ground", not "another workbench". */
+    repeating-linear-gradient(
+      45deg,
+      color-mix(in oklab, var(--accent) 10%, transparent) 0 3px,
+      transparent 3px 12px
+    ),
+    linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--accent) 22%, var(--code-bg)) 0%,
+      color-mix(in oklab, var(--accent) 4%, var(--code-bg)) 100%
+    );
+  box-shadow:
+    0 -6px 22px color-mix(in oklab, var(--accent) 30%, transparent),
+    0 -12px 40px color-mix(in oklab, var(--accent) 14%, transparent);
+  pointer-events: none;
+  /* Below the small step/crate platforms so their labels stay on top. */
+  z-index: 1;
+}
+.cc-floor::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0;
+  top: -2px;
+  height: 2px;
+  background: var(--accent);
+  box-shadow:
+    0 0 6px color-mix(in oklab, var(--accent) 85%, transparent),
+    0 -2px 10px color-mix(in oklab, var(--accent) 50%, transparent),
+    0 2px 4px color-mix(in oklab, var(--accent-2) 40%, transparent);
+}
 /* Soft shadow beneath each platform so it visually grounds into the stage
    instead of floating flatly. Positioned as a pseudo below the bar. */
 .companions-obstacle::before {

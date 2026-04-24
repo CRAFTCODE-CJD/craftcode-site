@@ -51,7 +51,8 @@ type CameraState = {
 // Deadzone: raised from 8px / 0.04 so idle micro-drift is
 // completely absorbed. Anything below these thresholds skips
 // the transform entirely.
-const DEADZONE_PX = 18;
+// Bumped 18 → 22px: final micro-jitter guard.
+const DEADZONE_PX = 22;
 const DEADZONE_SCALE = 0.07;
 const MIN_SCALE = 0.7;
 const MAX_SCALE = 1.5;
@@ -63,7 +64,9 @@ const TICK_MS = 180;
 // tick. α=0.16 ≈ 6-tick time constant (~1.1s @ 180ms) — big
 // intentional moves still catch up in ~1s, but small twitches
 // decay before they ever reach the transform.
-const TARGET_ALPHA = 0.16;
+// Lowered 0.16 → 0.12: slightly longer time constant (~9-tick,
+// ~1.6s @ 180ms). Makes the target glide even calmer.
+const TARGET_ALPHA = 0.12;
 // Per-tick clamps: even if the smoothed target demands more,
 // we only step this far per tick. Prevents any remaining
 // visual snap on state reset / resize.
@@ -79,7 +82,20 @@ const WIDE_EXIT_RATIO = 0.60;  // leave "spread" mode below this * stageW
 // No-reframe window: if bbox center hasn't drifted this far
 // over the last N ms, skip recomputation entirely.
 const IDLE_WINDOW_MS = 400;
-const IDLE_MOTION_PX = 40;
+// Bumped 40 → 60px: in resting state the minor bobbing from
+// idle-frame flips was still sneaking past the old threshold.
+const IDLE_MOTION_PX = 60;
+// Ignore-window after a known "instant" event (spawn item /
+// platform_appear) — we don't want the camera to lunge toward
+// the freshly-appeared element immediately. Instead the usual
+// idle window kicks back in after this delay.
+const EVENT_IGNORE_MS = 2000;
+// Foot-anchor bias: companion sprites are visually floor-anchored
+// at ~75% of their height (see engine.legacy.js FOOT_Y constants).
+// Biasing bbox center toward the feet keeps the camera framing
+// the "stance" of the bots rather than the geometric middle of
+// the sprite frame, which looks more stable during idle bobbing.
+const FOOT_ANCHOR_RATIO = 0.75;
 
 function clamp(v: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, v));
@@ -119,6 +135,10 @@ export function initCamera(): () => void {
   const history: Sample[] = [];
   let dragging = false;
   let paused = false;
+  // Timestamp until which we ignore "appear"-type dynamic
+  // elements in the bbox calc. Set whenever bot.events fires a
+  // spawn — see `cc:event-spawn` listener below.
+  let ignoreEventsUntil = 0;
   let rafId: number | null = null;
   let intervalId: number | null = null;
   let lastTick = 0;
@@ -137,9 +157,13 @@ export function initCamera(): () => void {
     if (playRect.width < 20 || playRect.height < 20) return null;
 
     // Collect bounding boxes — companions + any dynamic "appear" events.
-    const dynamicEls = Array.from(
-      document.querySelectorAll<HTMLElement>('[data-dynamic="appear"]'),
-    );
+    // Within the post-event ignore window we only frame the companions
+    // themselves, so a freshly spawned item doesn't yank the camera.
+    const now = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+    const includeDynamic = now >= ignoreEventsUntil;
+    const dynamicEls = includeDynamic
+      ? Array.from(document.querySelectorAll<HTMLElement>('[data-dynamic="appear"]'))
+      : [];
     const targets = [...companions, ...dynamicEls];
 
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
@@ -174,7 +198,11 @@ export function initCamera(): () => void {
     const bboxW = Math.max(1, wMaxX - wMinX);
     const bboxH = Math.max(1, wMaxY - wMinY);
     const bboxCx = (wMinX + wMaxX) / 2;
-    const bboxCy = (wMinY + wMaxY) / 2;
+    // Vertical anchor biased toward the feet (~75% down the bbox)
+    // instead of the geometric middle. Keeps framing visually
+    // stable during the idle-frame bobbing because the feet are
+    // the only truly floor-pinned pixels on the sprite.
+    const bboxCy = wMinY + bboxH * FOOT_ANCHOR_RATIO;
 
     const stageW = playRect.width;
     const stageH = playRect.height;
@@ -336,6 +364,14 @@ export function initCamera(): () => void {
   document.addEventListener('pointerup', onPointerUp, { capture: true });
   document.addEventListener('pointercancel', onPointerUp, { capture: true });
 
+  // bot.events → camera: brief ignore-window after a spawn so the
+  // camera doesn't jerk toward a freshly materialised item / platform.
+  const onEventSpawn = () => {
+    const t = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+    ignoreEventsUntil = t + EVENT_IGNORE_MS;
+  };
+  document.addEventListener('cc:event-spawn', onEventSpawn);
+
   // Terminal integration — switch camera off while the user is typing.
   const onTermOpen = () => { play.dataset.camera = 'off'; };
   const onTermClose = () => { play.dataset.camera = 'follow'; };
@@ -369,6 +405,7 @@ export function initCamera(): () => void {
     document.removeEventListener('pointerdown', onPointerDown, { capture: true } as any);
     document.removeEventListener('pointerup', onPointerUp, { capture: true } as any);
     document.removeEventListener('pointercancel', onPointerUp, { capture: true } as any);
+    document.removeEventListener('cc:event-spawn', onEventSpawn);
     document.removeEventListener('cc:terminal-open', onTermOpen);
     document.removeEventListener('cc:terminal-close', onTermClose);
     document.removeEventListener('visibilitychange', onVisibility);

@@ -295,7 +295,8 @@ const isPluginIndex = entry.id === `plugins/${pluginSlug}`;
   }
 
   /* Plain-markdown images in MDX: constrain size + centre so they don't
-     dominate the column. Click zoom is only on <Image> component for now. */
+     dominate the column. Click opens the global Lightbox (delegated
+     handler lives in src/components/Lightbox.astro). */
   .plugin-page__body :global(img) {
     max-width: 680px;
     width: 100%;
@@ -304,6 +305,12 @@ const isPluginIndex = entry.id === `plugins/${pluginSlug}`;
     margin: 20px auto;
     border: 1px solid var(--border);
     border-radius: 6px;
+    cursor: zoom-in;
+    transition: box-shadow 160ms ease, transform 160ms ease;
+  }
+  .plugin-page__body :global(img:hover) {
+    box-shadow: var(--glow-md);
+    transform: translateY(-1px);
   }
 
   /* Plain-markdown tables: explicit frame + background so reference pages

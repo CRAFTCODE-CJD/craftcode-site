@@ -365,11 +365,20 @@ function spawnPlatform(): boolean {
 
 function triggerOne(forced?: EventType): boolean {
   const type: EventType = forced ?? (pick(['item_spawn', 'obstacle_move', 'platform_appear']) as EventType);
+  let ok = false;
   switch (type) {
-    case 'item_spawn':      return spawnItem();
-    case 'obstacle_move':   return moveObstacle();
-    case 'platform_appear': return spawnPlatform();
+    case 'item_spawn':      ok = spawnItem(); break;
+    case 'obstacle_move':   ok = moveObstacle(); break;
+    case 'platform_appear': ok = spawnPlatform(); break;
   }
+  // Notify the camera (and anyone else listening) about the instant
+  // appearance — used to suppress a camera lunge toward the new el.
+  if (ok && typeof document !== 'undefined') {
+    try {
+      document.dispatchEvent(new CustomEvent('cc:event-spawn', { detail: { type } }));
+    } catch (_) { /* old browsers — ignore */ }
+  }
+  return ok;
 }
 
 // ── Scheduler ────────────────────────────────────────────

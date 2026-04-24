@@ -23,7 +23,7 @@
   inset: 0;
   transform-origin: 50% 50%;
   transform: translate(0, 0) scale(1);
-  transition: transform 750ms cubic-bezier(.25, .1, .25, 1);
+  transition: transform 1100ms cubic-bezier(.25, .1, .25, 1);
   will-change: transform;
 }
 .cc-stage-play[data-camera="off"] .cc-stage-camera {

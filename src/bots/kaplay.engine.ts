@@ -36,6 +36,9 @@ export interface KaplayHandle {
   hideBubbles(): void;
   pause(): void;
   resume(): void;
+  /** Lazily render (if needed) a full-size event-platform hatch
+   *  sprite for the given dimensions and return its sprite name. */
+  ensureEventHatchSprite(w: number, h: number): string;
   /** KAPLAY context — exposed so companion modules (events, etc.) can add objects. */
   k: KAPLAYCtx;
   /** Live references to the two bot GameObjs. Consumers use `bot.play(clip)`
@@ -118,45 +121,74 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
     anims: ANIMS,
   });
 
-  // ── Pre-rendered hatch tiles ──────────────────────────
-  // Build once per init using an offscreen Canvas2D, then load into
-  // KAPLAY as sprites that can be tiled across platform rects.
-  // Three variants:
-  //   hatch-plat  — dark purple base + pink hatch (static platforms)
-  //   hatch-event — same base, stronger pink tint (event-spawned)
-  //   hatch-floor — even darker base + subtle pink hatch (floor)
-  const makeHatchTile = (
-    size: number,
+  // ── Pre-rendered hatch textures ───────────────────────
+  // Build FULL-SIZE rasters at init instead of tileable 24-px tiles.
+  // Single-image sprites have no internal tile boundaries, so any
+  // camera scale (fractional included) renders cleanly — no seam
+  // shimmer even when we interpolate through scale values.
+  const makeHatchFull = (
+    w: number, h: number,
     baseColor: string,
     strokeColor: string,
     stride: number,
     lineWidth: number,
   ): string => {
     const c = document.createElement('canvas');
-    c.width = size; c.height = size;
+    c.width = w; c.height = h;
     const ctx = c.getContext('2d')!;
     ctx.fillStyle = baseColor;
-    ctx.fillRect(0, 0, size, size);
+    ctx.fillRect(0, 0, w, h);
     ctx.strokeStyle = strokeColor;
     ctx.lineWidth = lineWidth;
     ctx.lineCap = 'square';
     ctx.beginPath();
-    // Diagonal stripes — draw well beyond the tile so the pattern is
-    // seamless when it wraps. Angle is 45° because dx==dy==size.
-    for (let i = -size; i < size * 2; i += stride) {
+    // One long diagonal-stripe pass across the entire rect. 45° so
+    // dx == dy. Start well before 0 and end well past w so the stripes
+    // reach the corners.
+    const len = w + h;
+    for (let i = -h; i < len; i += stride) {
       ctx.moveTo(i, 0);
-      ctx.lineTo(i + size, size);
+      ctx.lineTo(i + h, h);
     }
     ctx.stroke();
     return c.toDataURL();
   };
 
-  // Non-blocking loadSprite — KAPLAY queues the asset internally.
+  // Full-width floor raster (3× stage width × floor band height).
+  const FLOOR_VIS_H = LOGICAL_H - FLOOR_TOP_Y;
+  // Small-platform rasters — separate per declared size so each sprite
+  // is pixel-exact for its platform (no tiling → no seam at any zoom).
+  const PLAT_SPECS = [
+    { label: 'step_01',     w: 130, h: 28 },
+    { label: 'floating_02', w: 150, h: 14 },
+    { label: 'crate_03',    w: 150, h: 22 },
+  ];
   try {
-    k.loadSprite('hatch-plat',  makeHatchTile(32, 'rgb(38,22,38)', 'rgba(236,72,153,0.35)', 8, 2));
-    k.loadSprite('hatch-event', makeHatchTile(32, 'rgb(38,22,38)', 'rgba(236,72,153,0.55)', 8, 2));
-    k.loadSprite('hatch-floor', makeHatchTile(24, 'rgb(28,18,28)', 'rgba(236,72,153,0.22)', 12, 2));
+    k.loadSprite(
+      'hatch-floor',
+      makeHatchFull(LOGICAL_W * 3, FLOOR_VIS_H, 'rgb(28,18,28)', 'rgba(236,72,153,0.22)', 12, 2),
+    );
+    for (const p of PLAT_SPECS) {
+      k.loadSprite(
+        `hatch-plat-${p.label}`,
+        makeHatchFull(p.w, p.h, 'rgb(38,22,38)', 'rgba(236,72,153,0.35)', 8, 2),
+      );
+    }
   } catch (_) { /* SSR / no-DOM safeguard */ }
+
+  // Dynamic (event-spawned) platforms get their sprite generated lazily
+  // the first time a given w×h combo appears. Cache so re-spawns reuse.
+  const eventHatchCache = new Map<string, string>();
+  const ensureEventHatch = (w: number, h: number): string => {
+    const key = `hatch-event-${w}x${h}`;
+    if (!eventHatchCache.has(key)) {
+      try {
+        k.loadSprite(key, makeHatchFull(w, h, 'rgb(38,22,38)', 'rgba(236,72,153,0.55)', 8, 2));
+        eventHatchCache.set(key, key);
+      } catch (_) { /* no-DOM */ }
+    }
+    return key;
+  };
 
   // ── Floor ─────────────────────────────────────────────
   // Physics body spans 3× logical width so the horizontal screen-wrap
@@ -174,12 +206,11 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
     'platform',
     'floor',
   ]);
-  // Visual-only floor tile — extends from FLOOR_TOP_Y all the way down
-  // to the canvas bottom so the whole region beneath the bots reads as
-  // continuous ground. 3× width keeps the hatch covering the wrap zone.
-  const FLOOR_VIS_H = LOGICAL_H - FLOOR_TOP_Y; // fills to canvas bottom
+  // Visual-only floor — one full-width sprite spanning the same 3×
+  // range as the physics body. Single raster = no tile boundaries,
+  // so any camera scale renders without a seam.
   k.add([
-    k.sprite('hatch-floor', { tiled: true, width: LOGICAL_W * 3, height: FLOOR_VIS_H }),
+    k.sprite('hatch-floor'),
     k.pos(-LOGICAL_W, FLOOR_TOP_Y),
     'floor-visual',
     { _kind: 'floor' as const },
@@ -210,10 +241,11 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
     label: 'crate_03',
   };
   [step_01, floating_02, crate_03].forEach((p) => {
-    // Tiled hatch sprite renders the fill; a shared onDraw below paints
-    // the neon top edge, corner ticks, and label above each box.
+    // Per-platform pre-rendered sprite (no tiling) so fractional
+    // camera scales can't reveal tile seams. A shared onDraw below
+    // still paints the neon top edge, corner ticks, and label above.
     k.add([
-      k.sprite('hatch-plat', { tiled: true, width: p.w, height: p.h }),
+      k.sprite(`hatch-plat-${p.label}`),
       k.pos(p.x, p.y),
       k.area({ shape: new k.Rect(k.vec2(0), p.w, p.h) }),
       k.body({ isStatic: true }),
@@ -593,22 +625,18 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
     const cx = (craft.pos.x + code.pos.x) / 2;
     const cy = (craft.pos.y + code.pos.y) / 2;
 
-    // Discrete, tile-safe zoom. Only integer × tile (24) and × sprite
-    // (48) ratios render without shimmer, so we switch the scale in
-    // steps instead of lerping through fractional values.
-    //   < 180 px apart → 2.0×   (bots close, read big)
-    //   < 360 px apart → 1.75×  (middle)
-    //   otherwise      → 1.5×   (distant, more of the stage visible)
-    // 20-px hysteresis band around each threshold keeps the scale
-    // from flipping when bots pace right on the boundary.
+    // Smooth continuous zoom. The floor / platforms are now rendered as
+    // single full-size sprites (no tile boundaries inside them), so any
+    // fractional scale renders cleanly — we can lerp through without
+    // the shimmer that plagued the tile-based version.
+    //   dist ≤ 120 → 2.0×
+    //   dist ≥ 520 → 1.5×
+    //   in between → linearly interpolated target, lerped over time.
     const dist = craft.pos.dist(code.pos);
+    const d01  = Math.min(1, Math.max(0, (dist - 120) / (520 - 120)));
+    const targetScale = 2.0 - d01 * 0.5; // 2.0 → 1.5
     const curS = k.getCamScale().x;
-    const wasClose = curS >= 1.95;
-    const wasMid = curS >= 1.7 && curS < 1.95;
-    let nextScale: number;
-    if (wasClose)      nextScale = dist > 200 ? 1.75 : 2.0;
-    else if (wasMid)   nextScale = dist < 160 ? 2.0 : (dist > 380 ? 1.5 : 1.75);
-    else               nextScale = dist < 340 ? 1.75 : 1.5;
+    const nextScale = k.lerp(curS, targetScale, 0.06);
     k.setCamScale(nextScale);
 
     // Visible extents at the upcoming scale (in world units). When the
@@ -628,10 +656,9 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
     const cyT = visH >= LOGICAL_H
       ? LOGICAL_H / 2
       : Math.max(visH / 2, Math.min(LOGICAL_H - visH / 2, rawY));
-    // Snap to whole pixels — sub-pixel camera translates cause visible
-    // seams in tiled sprites (floor hatch showed a vertical shimmer at
-    // tile boundaries). Integer pos + stable scale = clean render.
-    k.setCamPos(Math.round(cxT), Math.round(cyT));
+    // Full-size hatch sprites mean sub-pixel positions no longer cause
+    // tile seams; let the camera translate smoothly.
+    k.setCamPos(cxT, cyT);
   });
 
   // ── §6 Bubble bridge (DOM overlay above canvas) ───────
@@ -708,6 +735,7 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
     },
     showBubble,
     hideBubbles,
+    ensureEventHatchSprite: ensureEventHatch,
     pause() {
       if (paused) return;
       paused = true;

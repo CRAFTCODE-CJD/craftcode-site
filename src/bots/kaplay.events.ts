@@ -200,8 +200,11 @@ export function initKaplayEvents(
     const left = p.x - platW / 2;
     const top  = p.y - platH / 2;
 
+    // Lazy-rendered full-size sprite for this exact w×h combo — no
+    // tiling → no seam at any camera zoom. Cached inside the engine.
+    const spriteName = handle.ensureEventHatchSprite(platW, platH);
     k.add([
-      k.sprite('hatch-event', { tiled: true, width: platW, height: platH }),
+      k.sprite(spriteName),
       k.pos(left, top),
       k.area({ shape: new k.Rect(k.vec2(0), platW, platH) }),
       k.body({ isStatic: true }),

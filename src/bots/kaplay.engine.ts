@@ -89,6 +89,12 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
     canvas,
     width: LOGICAL_W,
     height: LOGICAL_H,
+    // stretch=true + letterbox=true → KAPLAY sizes the canvas to the
+    // parent via CSS instead of pinning 1200×480 inline. Internal
+    // drawing stays at the logical resolution; the element just scales
+    // down on mobile while preserving the 1200:480 aspect.
+    stretch: true,
+    letterbox: true,
     crisp: true,
     debug: false,
     background: [0, 0, 0, 0], // transparent — DOM overlay provides visuals

@@ -133,7 +133,12 @@ import TypingText from '~/components/TypingText.astro';
     position: relative;
     margin: 0 auto 40px;
     width: 100%;
-    height: 480px;
+    /* Lock aspect to the internal KAPLAY resolution (1200×480). Stage
+       scales down proportionally on narrow viewports so bots and the
+       hatch floor never get squished horizontally. Max-width keeps
+       the stage from blowing up on ultrawide monitors. */
+    aspect-ratio: 1200 / 480;
+    max-width: 1200px;
     border: 2px solid color-mix(in oklab, var(--accent) 55%, var(--border));
     border-radius: 12px;
     overflow: hidden;
@@ -246,17 +251,22 @@ import TypingText from '~/components/TypingText.astro';
   .kc-canvas-wrap {
     position: absolute;
     inset: 0;
-    display: grid;
-    place-items: center;
     z-index: 3;
     pointer-events: none; /* canvas itself re-enables — overlay stays see-through */
   }
   #cc-canvas {
     display: block;
+    /* Absolute-fill the wrap. The wrap carries the stage aspect,
+       so inset:0 keeps the canvas at the right proportions on any
+       viewport. Canvas elements have an intrinsic size from the
+       width/height attributes, so explicit width:100%/height:100%
+       without absolute positioning lets the intrinsic size bleed
+       through on flex/grid parents — absolute + inset:0 is the
+       one layout mode that forces the DOM size we actually want. */
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
-    max-width: 100%;
-    max-height: 100%;
     image-rendering: pixelated;
     image-rendering: crisp-edges;
     pointer-events: auto; /* KAPLAY drag/throw */
@@ -401,14 +411,14 @@ import TypingText from '~/components/TypingText.astro';
   }
 
   @media (max-width: 760px) {
-    .kc-stage { height: 380px; margin-top: 16px; }
+    /* height derives from aspect-ratio — don't override it. */
+    .kc-stage { margin-top: 16px; }
     #boot-log { font-size: 11px; }
     .kc-stage-sign { top: 20px; }
     .kc-stage-sign-word { font-size: clamp(22px, 8vw, 32px); }
     .kc-stage-sign-tag { font-size: 10px; }
   }
   @media (max-width: 480px) {
-    .kc-stage { height: 340px; }
     .companions-hud { font-size: 9px; gap: 8px; bottom: 6px; right: 8px; }
     .companions-caption { font-size: 10px; top: 6px; left: 8px; right: 8px; }
   }

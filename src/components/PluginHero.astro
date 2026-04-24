@@ -14,10 +14,14 @@ interface Props {
   image?: string;
   ctas?: CTA[];
   accent?: string;
+  /** Optional i18n keys — when set, text nodes get data-i18n attrs so the
+   *  runtime swapper (src/i18n/i18n.ts) can replace them on lang change. */
+  i18nKeys?: { title?: string; tagline?: string; kicker?: string };
 }
 const {
   kicker, title, version, tagline,
   image, ctas = [], accent,
+  i18nKeys = {},
 } = Astro.props;
 ---
 
@@ -26,12 +30,12 @@ const {
     <CompanionBot bot="code" anim="wave" size={44} />
   </div>
   <div class="plugin-hero-text">
-    {kicker && <div class="plugin-hero-kicker">{kicker}</div>}
+    {kicker && <div class="plugin-hero-kicker" data-i18n={i18nKeys.kicker}>{kicker}</div>}
     <h1 class="plugin-hero-title">
-      {title}
+      <span data-i18n={i18nKeys.title}>{title}</span>
       {version && <span class="plugin-hero-version">{version}</span>}
     </h1>
-    <p class="plugin-hero-tag">{tagline}</p>
+    <p class="plugin-hero-tag" data-i18n={i18nKeys.tagline}>{tagline}</p>
 
     {ctas.length > 0 && (
       <div class="plugin-hero-cta">

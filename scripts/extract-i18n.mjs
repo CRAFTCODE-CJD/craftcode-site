@@ -1,9 +1,20 @@
-// CRAFTCODE — MDX to i18n extractor (Read.txt §14).
-// Walks src/content/docs/**, harvests human text from prose + named attrs,
-// generates stable keys and merges them into i18n/translations/{en,ru}.json.
+// CRAFTCODE — MDX i18n extractor + in-place rewriter (Read.txt §14).
 //
-//   npm run i18n:extract          # dry-run, just reports
-//   npm run i18n:write             # actually write en.json / ru.json
+//   npm run i18n:extract   — dry-run: parse + report, no file changes
+//   npm run i18n:write     — write en.json / ru.json AND rewrite MDX sources
+//                            to wrap prose in <Trans id="…"> components.
+//
+// Rewrite strategy (source-level surgical splice — preserves formatting):
+//   · Heading `## Text`  → `## <Trans id="KEY">Text</Trans>`
+//       Keeps markdown heading prefix so MDX still parses it as a heading.
+//   · Paragraph of plain prose → wrap the whole node in <Trans>…</Trans>.
+//   · Paragraph that contains a table (multi-line with pipes) → skip.
+//       Table markdown inside a JSX element is not parsed by MDX.
+//   · Paragraphs inside JSX blocks (Block/Card/Step) → wrap normally.
+//   · Already-wrapped nodes → skip (idempotent).
+//
+// Frontmatter (`title`, `description`, `tagline`, `kicker`) is mirrored into
+// `plugin.<slug>.<field>` / `site.<name>.<field>` keys.
 
 import { readFile, writeFile } from 'node:fs/promises';
 import { glob } from 'node:fs/promises';
@@ -23,7 +34,7 @@ const RU_FILE = path.join(ROOT, 'src/i18n/translations/ru.json');
 const WRITE = process.argv.includes('--write');
 
 const TRANSLATABLE_ATTRS = new Set(['title', 'tagline', 'kicker', 'caption', 'label', 'alt']);
-const PROSE_TAGS = new Set(['Hero', 'Block', 'Step', 'Card', 'Trans']);
+const PROSE_TAGS = new Set(['Hero', 'Block', 'Step', 'Card']);
 
 function slugify(s) {
   return s
@@ -33,7 +44,20 @@ function slugify(s) {
     .slice(0, 48);
 }
 
-function keyForFile(file) {
+function fileKeyFor(file) {
+  const rel = path.relative(CONTENT_ROOT, file).replace(/\\/g, '/');
+  const parts = rel.replace(/\.(md|mdx)$/, '').split('/');
+  if (parts[0] === 'plugins' && parts[1]) {
+    const slug = parts[1].replace(/[-_](\w)/g, (_, c) => c.toUpperCase());
+    const tail = parts.slice(2).filter((p) => p !== 'index').join('.');
+    return tail ? `plugin.${slug}.${tail}` : `plugin.${slug}`;
+  }
+  if (parts[0] === 'about') return 'site.about';
+  if (parts[0] === 'templates') return 'site.templates';
+  return parts.join('.');
+}
+
+function frontmatterBaseFor(file) {
   const rel = path.relative(CONTENT_ROOT, file).replace(/\\/g, '/');
   const parts = rel.replace(/\.(md|mdx)$/, '').split('/');
   if (parts[0] === 'plugins' && parts[1]) {
@@ -56,32 +80,81 @@ function flattenText(node) {
   return out.join('').replace(/\s+/g, ' ').trim();
 }
 
-function walk(tree, fileKey) {
+/** True if a node tree already contains a <Trans> JSX element — skip wrap. */
+function containsTrans(node) {
+  let found = false;
+  visit(node, (n) => {
+    if ((n.type === 'mdxJsxFlowElement' || n.type === 'mdxJsxTextElement') && n.name === 'Trans') {
+      found = true;
+      return false;
+    }
+  });
+  return found;
+}
+
+/** Parse the leading YAML frontmatter for string scalars we care about. */
+function parseFrontmatter(src) {
+  const m = src.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
+  if (!m) return { data: {}, bodyStart: 0 };
+  const yaml = m[1];
+  const data = {};
+  for (const line of yaml.split(/\r?\n/)) {
+    const mm = line.match(/^([a-zA-Z_]+):\s*(.*)$/);
+    if (!mm) continue;
+    let v = mm[2].trim();
+    if (!v) continue;
+    if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) {
+      v = v.slice(1, -1);
+    }
+    data[mm[1]] = v;
+  }
+  return { data, bodyStart: m[0].length };
+}
+
+/** Heuristic: a "table paragraph" is a paragraph whose source contains '\n|'
+ *  — i.e. multiple piped lines. Markdown tables in remark without GFM get
+ *  collapsed into a single paragraph node. Don't wrap these. */
+function looksLikeTable(src, node) {
+  if (!node.position) return false;
+  const s = src.slice(node.position.start.offset, node.position.end.offset);
+  return /\n\s*\|/.test(s) || s.startsWith('|');
+}
+
+function collectHits(body, tree, fileKey) {
   const hits = [];
   let section = 'body';
   const counter = {};
+  const wraps = []; // { kind: 'heading'|'paragraph', node, key }
 
-  visit(tree, (node) => {
-    if (node.type === 'code' || node.type === 'inlineCode') return SKIP;
+  function paragraphKey() {
+    counter[section] = (counter[section] ?? 0) + 1;
+    return `${fileKey}.${section}.p${counter[section]}`;
+  }
 
+  for (const node of tree.children ?? []) {
     if (node.type === 'heading') {
       const txt = flattenText(node);
+      if (!txt) continue;
       section = slugify(txt) || 'body';
       counter[section] = 0;
-      hits.push({ key: `${fileKey}.h.${section}`, text: txt, source: 'heading' });
-      return;
+      const key = `${fileKey}.h.${section}`;
+      hits.push({ key, text: txt, source: 'heading' });
+      if (!containsTrans(node)) wraps.push({ kind: 'heading', node, key });
+      continue;
     }
 
     if (node.type === 'paragraph') {
       const txt = flattenText(node).trim();
-      if (!txt) return;
-      counter[section] = (counter[section] ?? 0) + 1;
-      const n = counter[section];
-      hits.push({ key: `${fileKey}.${section}.p${n}`, text: txt, source: 'paragraph' });
-      return;
+      if (!txt) continue;
+      const key = paragraphKey();
+      hits.push({ key, text: txt, source: 'paragraph' });
+      if (!containsTrans(node) && !looksLikeTable(body, node)) {
+        wraps.push({ kind: 'paragraph', node, key });
+      }
+      continue;
     }
 
-    if (node.type === 'mdxJsxFlowElement' || node.type === 'mdxJsxTextElement') {
+    if (node.type === 'mdxJsxFlowElement') {
       const name = node.name ?? '';
       for (const attr of node.attributes ?? []) {
         if (attr.type !== 'mdxJsxAttribute') continue;
@@ -96,20 +169,56 @@ function walk(tree, fileKey) {
         });
       }
       if (PROSE_TAGS.has(name)) {
-        const txt = flattenText(node).trim();
-        if (txt) {
-          hits.push({
-            key: `${fileKey}.${slugify(name)}.body`,
-            text: txt,
-            source: `<${name}>`,
-          });
-        }
-        return SKIP;
+        // Wrap paragraphs nested inside the component too.
+        let pIdx = 0;
+        visit(node, (n) => {
+          if (n === node) return;
+          if (n.type === 'paragraph') {
+            pIdx += 1;
+            const txt = flattenText(n).trim();
+            if (!txt) return;
+            const key = `${fileKey}.${slugify(name)}.p${pIdx}`;
+            hits.push({ key, text: txt, source: `<${name}> p${pIdx}` });
+            if (!containsTrans(n) && !looksLikeTable(body, n)) {
+              wraps.push({ kind: 'paragraph', node: n, key });
+            }
+          }
+        });
       }
     }
-  });
+  }
 
-  return hits;
+  return { hits, wraps };
+}
+
+/** Splice wrappers into source right-to-left to preserve offsets. */
+function applyWraps(src, wraps) {
+  const valid = wraps
+    .filter((w) => w.node.position && typeof w.node.position.start.offset === 'number')
+    .sort((a, b) => b.node.position.start.offset - a.node.position.start.offset);
+  let out = src;
+  let count = 0;
+  for (const w of valid) {
+    const s = w.node.position.start.offset;
+    const e = w.node.position.end.offset;
+    const slice = out.slice(s, e);
+    if (/<Trans\b/.test(slice)) continue; // already wrapped
+
+    let replaced;
+    if (w.kind === 'heading') {
+      // Match optional `#+ ` prefix and wrap only the text after it.
+      const m = slice.match(/^(\s*#+\s+)([\s\S]*)$/);
+      if (!m) continue;
+      replaced = `${m[1]}<Trans id="${w.key}">${m[2]}</Trans>`;
+    } else {
+      // Paragraph — wrap the whole slice. MDX will parse inline markdown
+      // (bold, code, links) inside <Trans> since it's a text-element.
+      replaced = `<Trans id="${w.key}">${slice}</Trans>`;
+    }
+    out = out.slice(0, s) + replaced + out.slice(e);
+    count++;
+  }
+  return { out, count };
 }
 
 async function listMdx() {
@@ -128,32 +237,90 @@ async function readJson(file) {
   }
 }
 
-function stripFrontmatter(src) {
-  const m = src.match(/^---\n([\s\S]*?)\n---\n?/);
-  return m ? src.slice(m[0].length) : src;
-}
-
-async function processFile(file, en, ru) {
-  const src = await readFile(file, 'utf8');
-  const body = stripFrontmatter(src);
-  const tree = unified().use(remarkParse).use(remarkMdx).parse(body);
-  const fileKey = keyForFile(file);
-  const hits = walk(tree, fileKey);
-
-  for (const h of hits) {
-    // MDX content is authored in Russian, so the extracted text is the
-    // RU source of truth. EN starts empty and is filled by hand or by
-    // an LLM translate pass.
-    if (ru[h.key] === undefined) ru[h.key] = h.text;
-    if (en[h.key] === undefined) en[h.key] = '';
-  }
-  return hits;
-}
-
 function sortObj(obj) {
   const out = {};
   for (const k of Object.keys(obj).sort()) out[k] = obj[k];
   return out;
+}
+
+// Minimal EN translations for frontmatter fields. Plugin names stay EN.
+const FRONTMATTER_EN = {
+  'plugin.spriteOptimizer.title': 'Sprite Optimizer',
+  'plugin.spriteOptimizer.description': 'Professional sprite packing & optimization plugin for Unreal Engine 4.27–5.7.',
+  'plugin.spriteOptimizer.tagline': 'Atlas packing, alpha trimming, auto-generated Material Instances, and reverse-engineering existing atlases — one editor for the entire 2D pipeline in Unreal.',
+  'plugin.spriteOptimizer.kicker': '// plugin · paper2d',
+
+  'plugin.manualsprite.title': 'ManualSprite Editor Tools',
+  'plugin.manualsprite.description': 'Manual 2D geometry editor for PaperSprite — build pixel-perfect collisions and generate StaticMesh / SkeletalMesh straight from 2D art.',
+  'plugin.manualsprite.tagline': 'Fills the gap in stock Paper2D: place vertices by hand, assemble triangles, generate StaticMesh and SkeletalMesh directly from 2D art — with materials, skeleton, and pivot control.',
+  'plugin.manualsprite.kicker': '// plugin · paper2d · geometry',
+
+  'plugin.mouseinterceptor.title': 'Mouse Interceptor',
+  'plugin.mouseinterceptor.description': 'Global mouse event interception for Unreal Engine — no ticks, Blueprint delegates, configurable double-click.',
+  'plugin.mouseinterceptor.tagline': 'Lightweight Unreal Engine plugin for global mouse interception. OnMousePressed / OnMouseReleased delegates, configurable double-click threshold, no ticks.',
+  'plugin.mouseinterceptor.kicker': '// plugin · input · runtime',
+
+  'plugin.spriteOptimizer.getting-started.title': 'Getting started',
+  'plugin.spriteOptimizer.getting-started.description': 'First steps with Sprite Optimizer — installation and your first atlas.',
+  'plugin.spriteOptimizer.reference.title': 'Reference',
+  'plugin.spriteOptimizer.reference.description': 'Hotkeys, project settings, and technical details for Sprite Optimizer.',
+  'plugin.spriteOptimizer.features.atlas.title': 'Atlas Mode',
+  'plugin.spriteOptimizer.features.atlas.description': 'Pack textures into atlas sheets with an interactive editor.',
+  'plugin.spriteOptimizer.features.optimize.title': 'Optimize Mode',
+  'plugin.spriteOptimizer.features.optimize.description': 'Trim transparent edges while preserving sprite pivot.',
+  'plugin.spriteOptimizer.features.import-atlas.title': 'Import Atlas',
+  'plugin.spriteOptimizer.features.import-atlas.description': 'Reverse-engineer an existing atlas back into editable elements.',
+  'plugin.spriteOptimizer.features.project-asset.title': 'Sprite Optimizer Project',
+  'plugin.spriteOptimizer.features.project-asset.description': 'Resumable editing sessions — save an atlas and come back to it later.',
+
+  'plugin.manualsprite.getting-started.title': 'How to use',
+  'plugin.manualsprite.getting-started.description': 'Step-by-step guide for Manual Sprite Editor Tools — from install to mesh generation.',
+  'plugin.manualsprite.reference.title': 'Reference',
+  'plugin.manualsprite.reference.description': 'Toolbar, hotkeys, Project Settings, and technical details for ManualSprite Editor Tools.',
+
+  'plugin.mouseinterceptor.getting-started.title': 'How to use',
+  'plugin.mouseinterceptor.getting-started.description': 'Add MouseInterceptorComponent, subscribe to mouse delegates in Blueprint, tune the double-click threshold.',
+  'plugin.mouseinterceptor.reference.title': 'Reference',
+  'plugin.mouseinterceptor.reference.description': 'API, delegates, and FAQ for Mouse Interceptor.',
+
+  'site.about.title': 'About',
+  'site.about.description': 'CRAFTCODE — who is behind the tools, how to reach out, and where to track updates.',
+  'site.templates.title': 'Templates',
+  'site.templates.description': 'Project and game templates for Unreal Engine — coming soon.',
+};
+
+async function processFile(file, en, ru) {
+  const src = await readFile(file, 'utf8');
+  const fm = parseFrontmatter(src);
+  const body = src.slice(fm.bodyStart);
+
+  // Frontmatter mirror into i18n JSON
+  const frontBase = frontmatterBaseFor(file);
+  for (const field of ['title', 'description', 'tagline', 'kicker']) {
+    if (!fm.data[field]) continue;
+    const k = `${frontBase}.${field}`;
+    if (ru[k] === undefined) ru[k] = fm.data[field];
+    if (en[k] === undefined) en[k] = FRONTMATTER_EN[k] ?? '';
+  }
+
+  const tree = unified().use(remarkParse).use(remarkMdx).parse(body);
+  const fileKey = fileKeyFor(file);
+  const { hits, wraps } = collectHits(body, tree, fileKey);
+
+  for (const h of hits) {
+    if (ru[h.key] === undefined) ru[h.key] = h.text;
+    if (en[h.key] === undefined) en[h.key] = '';
+  }
+
+  let count = 0;
+  if (WRITE && wraps.length && file.endsWith('.mdx')) {
+    const { out, count: c } = applyWraps(body, wraps);
+    count = c;
+    if (c > 0) {
+      await writeFile(file, src.slice(0, fm.bodyStart) + out, 'utf8');
+    }
+  }
+  return { hits, wraps: count };
 }
 
 async function main() {
@@ -165,17 +332,24 @@ async function main() {
 
   console.log(`[i18n] scanning ${files.length} files in ${path.relative(ROOT, CONTENT_ROOT)} …`);
 
-  let total = 0;
+  let totalHits = 0;
+  let totalWraps = 0;
   for (const f of files) {
-    const hits = await processFile(f, en, ru);
-    const rel = path.relative(CONTENT_ROOT, f).replace(/\\/g, '/');
-    console.log(`  · ${rel} → ${hits.length}`);
-    total += hits.length;
+    try {
+      const { hits, wraps } = await processFile(f, en, ru);
+      const rel = path.relative(CONTENT_ROOT, f).replace(/\\/g, '/');
+      console.log(`  · ${rel} → ${hits.length} hits, ${wraps} wraps`);
+      totalHits += hits.length;
+      totalWraps += wraps;
+    } catch (err) {
+      console.error(`  ! ${f}: ${err.message}`);
+    }
   }
 
   const enAfter = Object.keys(en).length;
   const ruAfter = Object.keys(ru).length;
-  console.log(`[i18n] hits total: ${total}`);
+  console.log(`[i18n] hits total: ${totalHits}`);
+  console.log(`[i18n] wraps written: ${totalWraps}`);
   console.log(`[i18n] en.json: ${enBefore} → ${enAfter} keys`);
   console.log(`[i18n] ru.json: ${ruBefore} → ${ruAfter} keys`);
 

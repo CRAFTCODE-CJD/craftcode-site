@@ -4,7 +4,7 @@ description: Пошаговое руководство по работе с Manu
 order: 2
 ---
 
-## Установка
+## <Trans id="plugin.manualsprite.getting-started.h.установка">Установка</Trans>
 
 <Steps>
   <Step title="Купи и установи через FAB">
@@ -20,13 +20,13 @@ order: 2
 
 ---
 
-## Шаг 1 — Создай ассет Manual Sprite
+## <Trans id="plugin.manualsprite.getting-started.h.шаг-1-создай-ассет-manual-sprite">Шаг 1 — Создай ассет Manual Sprite</Trans>
 
-В **Content Browser** нажми **правую кнопку мыши** → категория **Paper2D** → **Manual Sprite**. Дай ассету имя.
+<Trans id="plugin.manualsprite.getting-started.шаг-1-создай-ассет-manual-sprite.p1">В **Content Browser** нажми **правую кнопку мыши** → категория **Paper2D** → **Manual Sprite**. Дай ассету имя.</Trans>
 
-## Шаг 2 — Открой редактор
+## <Trans id="plugin.manualsprite.getting-started.h.шаг-2-открой-редактор">Шаг 2 — Открой редактор</Trans>
 
-Дважды кликни по ассету `Manual Sprite`. В панели **Details** справа:
+<Trans id="plugin.manualsprite.getting-started.шаг-2-открой-редактор.p1">Дважды кликни по ассету `Manual Sprite`. В панели **Details** справа:</Trans>
 
 <Steps>
   <Step title="Назначь Source Texture">
@@ -39,9 +39,9 @@ order: 2
 
 ---
 
-## Шаг 3 — Редактируй геометрию
+## <Trans id="plugin.manualsprite.getting-started.h.шаг-3-редактируй-геометрию">Шаг 3 — Редактируй геометрию</Trans>
 
-Используй кнопки тулбара или горячие клавиши:
+<Trans id="plugin.manualsprite.getting-started.шаг-3-редактируй-геометрию.p1">Используй кнопки тулбара или горячие клавиши:</Trans>
 
 | Режим | Клавиша | Действие |
 |-------|---------|----------|
@@ -52,15 +52,15 @@ order: 2
 
 <Image src="/images/plugins/manualsprite/Screen_02.png" alt="Тулбар редактора Manual Sprite" caption="Тулбар: История — Режимы — Зеркало — Сетка — Инструменты — Generate" />
 
-### Зеркальное редактирование
+### <Trans id="plugin.manualsprite.getting-started.h.зеркальное-редактирование">Зеркальное редактирование</Trans>
 
-Включается кнопками **X**, **Y**, **XY** на тулбаре. При движении вершины её зеркало двигается симметрично — удобно для симметричных персонажей и объектов.
+<Trans id="plugin.manualsprite.getting-started.зеркальное-редактирование.p1">Включается кнопками **X**, **Y**, **XY** на тулбаре. При движении вершины её зеркало двигается симметрично — удобно для симметричных персонажей и объектов.</Trans>
 
 <Block type="info">
-Комбинируй зеркала: включённый **XY** = одна правка копируется в четыре квадранта. Отличный способ быстро собрать фигурку фронт-анфас.
+<Trans id="plugin.manualsprite.getting-started.block.p1">Комбинируй зеркала: включённый **XY** = одна правка копируется в четыре квадранта. Отличный способ быстро собрать фигурку фронт-анфас.</Trans>
 </Block>
 
-### Автотриангуляция
+### <Trans id="plugin.manualsprite.getting-started.h.автотриангуляция">Автотриангуляция</Trans>
 
 - **`3`** — автотриангуляция Делоне для выделенных вершин.
 - **`V`** — проверка на пересечения. Красные рёбра = пересекаются друг с другом, надо перестроить.
@@ -68,9 +68,9 @@ order: 2
 
 ---
 
-## Шаг 4 — Генерация меша
+## <Trans id="plugin.manualsprite.getting-started.h.шаг-4-генерация-меша">Шаг 4 — Генерация меша</Trans>
 
-Нажми `Ctrl+M` или кнопку **Generate** на тулбаре. Откроется диалог **Mesh Generation**:
+<Trans id="plugin.manualsprite.getting-started.шаг-4-генерация-меша.p1">Нажми `Ctrl+M` или кнопку **Generate** на тулбаре. Откроется диалог **Mesh Generation**:</Trans>
 
 <Image src="/images/plugins/manualsprite/Screen_03.png" alt="Диалог генерации StaticMesh / SkeletalMesh" caption="Окно настройки генерации меша" />
 
@@ -81,8 +81,8 @@ order: 2
 | **Asset Name & Path** | Имя и путь для новых ассетов |
 | **Material Settings** | Авто-создание Lit/Unlit материала, двусторонность |
 
-Нажми **Generate** — новые ассеты появятся в Content Browser и подсветятся.
+<Trans id="plugin.manualsprite.getting-started.шаг-4-генерация-меша.p3">Нажми **Generate** — новые ассеты появятся в Content Browser и подсветятся.</Trans>
 
 <Block type="ok" title="Результат">
-После генерации ты получаешь полноценный `StaticMesh` или `SkeletalMesh` с материалом, который можно использовать в любом 3D-актёре. Геометрия остаётся в ассете `Manual Sprite` — можно перегенерировать после правок.
+<Trans id="plugin.manualsprite.getting-started.block.p1">После генерации ты получаешь полноценный `StaticMesh` или `SkeletalMesh` с материалом, который можно использовать в любом 3D-актёре. Геометрия остаётся в ассете `Manual Sprite` — можно перегенерировать после правок.</Trans>
 </Block>

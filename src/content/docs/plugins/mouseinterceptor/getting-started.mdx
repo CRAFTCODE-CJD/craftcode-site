@@ -4,7 +4,7 @@ description: Добавить MouseInterceptorComponent, подписаться 
 order: 2
 ---
 
-## Установка
+## <Trans id="plugin.mouseinterceptor.getting-started.h.установка">Установка</Trans>
 
 <Steps>
   <Step title="Купи и установи через FAB">
@@ -20,7 +20,7 @@ order: 2
 
 ---
 
-## Шаг 1 — Добавить компонент
+## <Trans id="plugin.mouseinterceptor.getting-started.h.шаг-1-добавить-компонент">Шаг 1 — Добавить компонент</Trans>
 
 <Steps>
   <Step title="Открой актор">
@@ -38,9 +38,9 @@ order: 2
 
 ---
 
-## Шаг 2 — Подписаться на делегаты
+## <Trans id="plugin.mouseinterceptor.getting-started.h.шаг-2-подписаться-на-делегаты">Шаг 2 — Подписаться на делегаты</Trans>
 
-В **Blueprint Event Graph** выбранного актора:
+<Trans id="plugin.mouseinterceptor.getting-started.шаг-2-подписаться-на-делегаты.p1">В **Blueprint Event Graph** выбранного актора:</Trans>
 
 <Steps>
   <Step title="Выбери компонент">
@@ -53,7 +53,7 @@ order: 2
 
 <Image src="/images/plugins/mouseinterceptor/Image_02.png" alt="Привязка OnMousePressed в Event Graph" caption="Узел OnMousePressed создан" />
 
-Параметры делегата:
+<Trans id="plugin.mouseinterceptor.getting-started.шаг-2-подписаться-на-делегаты.p2">Параметры делегата:</Trans>
 
 - **`Button`** — `EKeys::LeftMouseButton`, `RightMouseButton`, `MiddleMouseButton` и т.д.
 - **`bIsDoubleClick`** — `true` если клик попал в окно `DoubleClickThreshold` с предыдущего клика той же кнопкой.
@@ -62,7 +62,7 @@ order: 2
 
 ---
 
-## Пример Blueprint-логики
+## <Trans id="plugin.mouseinterceptor.getting-started.h.пример-blueprint-логики">Пример Blueprint-логики</Trans>
 
 ```text
 Event OnMousePressed (Button, bIsDoubleClick)
@@ -75,30 +75,30 @@ Event OnMousePressed (Button, bIsDoubleClick)
 
 ---
 
-## Настройка порога двойного клика
+## <Trans id="plugin.mouseinterceptor.getting-started.h.настройка-порога-двойного-клика">Настройка порога двойного клика</Trans>
 
-По умолчанию порог — `0.25` секунды. Меняется в runtime через `SetDoubleClickThreshold`.
+<Trans id="plugin.mouseinterceptor.getting-started.настройка-порога-двойного-клика.p1">По умолчанию порог — `0.25` секунды. Меняется в runtime через `SetDoubleClickThreshold`.</Trans>
 
 ```cpp
 MouseInterceptorComponent->SetDoubleClickThreshold(0.5f); // полсекунды
 ```
 
-Или через Blueprint (тот же метод):
+<Trans id="plugin.mouseinterceptor.getting-started.настройка-порога-двойного-клика.p2">Или через Blueprint (тот же метод):</Trans>
 
 <Image src="/images/plugins/mouseinterceptor/Image_05.png" alt="SetDoubleClickThreshold в Blueprint" caption="Метод вызывается как обычная Blueprint-функция" />
 
 <Block type="warning" title="Отключение двойного клика">
-Плагин всегда определяет двойной клик. Чтобы фактически «отключить» определение — поставь порог очень большим: `SetDoubleClickThreshold(10.0f)`. Тогда флаг `bIsDoubleClick` будет `false` почти всегда.
+<Trans id="plugin.mouseinterceptor.getting-started.block.p1">Плагин всегда определяет двойной клик. Чтобы фактически «отключить» определение — поставь порог очень большим: `SetDoubleClickThreshold(10.0f)`. Тогда флаг `bIsDoubleClick` будет `false` почти всегда.</Trans>
 </Block>
 
 ---
 
-## Заметки
+## <Trans id="plugin.mouseinterceptor.getting-started.h.заметки">Заметки</Trans>
 
 <Block type="info" title="Client-side only">
-Плагин обрабатывает ввод на клиенте — сетевая репликация не поддерживается. Если нужен сетевой кликстрим, отправляй события сам через RPC.
+<Trans id="plugin.mouseinterceptor.getting-started.block.p1">Плагин обрабатывает ввод на клиенте — сетевая репликация не поддерживается. Если нужен сетевой кликстрим, отправляй события сам через RPC.</Trans>
 </Block>
 
 <Block type="ok" title="Zero Tick">
-Компонент не использует `Tick` — Slate сам вызывает препроцессор только при реальных событиях мыши. Можно вешать на сотни акторов без потерь производительности.
+<Trans id="plugin.mouseinterceptor.getting-started.block.p1">Компонент не использует `Tick` — Slate сам вызывает препроцессор только при реальных событиях мыши. Можно вешать на сотни акторов без потерь производительности.</Trans>
 </Block>

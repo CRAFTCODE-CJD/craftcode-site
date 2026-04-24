@@ -1,0 +1,59 @@
+---
+title: Sprite Optimizer Project
+description: Возобновляемые сессии редактирования — сохрани атлас и вернись к нему позже.
+order: 3
+---
+
+<Trans id="plugin.spriteOptimizer.features.project-asset.body.p1">**Sprite Optimizer Project** — новый тип ассета (появился в v2.1). Сохраняет всё состояние сессии редактирования: раскладку, размеры страниц, состояние обрезки каждого элемента, чекбоксы, настройки.</Trans>
+
+---
+
+## <Trans id="plugin.spriteOptimizer.features.project-asset.h.проблема-которую-он-решает">Проблема, которую он решает</Trans>
+
+<Trans id="plugin.spriteOptimizer.features.project-asset.проблема-которую-он-решает.p1">До v2.1 единственный способ вернуться к сохранённому атласу — переимпортировать его. Это медленно на больших атласах, и все ручные правки (перемещения, повороты) нужно было повторять заново.</Trans>
+
+<Trans id="plugin.spriteOptimizer.features.project-asset.проблема-которую-он-решает.p2">**С Project-ассетом** — двойной клик и ты ровно там, где остановился. Состояние восстанавливается побайтово.</Trans>
+
+---
+
+## <Trans id="plugin.spriteOptimizer.features.project-asset.h.как-работает">Как работает</Trans>
+
+<Trans id="plugin.spriteOptimizer.features.project-asset.как-работает.p1">**Это автоматически.** При каждом **Create Atlas** плагин сохраняет `_Project.uasset` рядом с атласом:</Trans>
+
+```
+Content/YourFolder/Atlas/
+├── MyAtlas.uasset              ← атлас-текстура
+├── MyAtlas_Project.uasset      ← сессия редактирования  ← NEW
+├── MyAtlas_Sprite1.uasset
+└── MyAtlas_Sprite1_MI.uasset
+```
+
+<Trans id="plugin.spriteOptimizer.features.project-asset.как-работает.p2">Чтобы возобновить сессию — **дважды кликни по `_Project.uasset`** в Content Browser. Редактор откроется с восстановленным состоянием.</Trans>
+
+---
+
+## <Trans id="plugin.spriteOptimizer.features.project-asset.h.сохранение-без-экспорта">Сохранение без экспорта</Trans>
+
+<Trans id="plugin.spriteOptimizer.features.project-asset.сохранение-без-экспорта.p1">Нажми **Save** (`Ctrl+S`) в тулбаре редактора — сессия сохранится без запуска Create Atlas. Удобно когда хочешь попробовать другую раскладку без потери текущей.</Trans>
+
+---
+
+## <Trans id="plugin.spriteOptimizer.features.project-asset.h.после-create-atlas">После Create Atlas</Trans>
+
+<Trans id="plugin.spriteOptimizer.features.project-asset.после-create-atlas.p1">В уведомлении об успехе появляется ссылка **"Open Project"** — открывает проект в свежем окне с чистым состоянием памяти. Пригодится после работы с большим атласом.</Trans>
+
+---
+
+## <Trans id="plugin.spriteOptimizer.features.project-asset.h.иконка-ассета">Иконка ассета</Trans>
+
+<Trans id="plugin.spriteOptimizer.features.project-asset.иконка-ассета.p1">Project-ассеты имеют уникальную иконку (синяя плитка с сеткой атласа + шестерёнка) — легко найти в Content Browser. ПКМ → **"Open Generated Atlas"** — прыгнуть к атласу, который вышел из этой сессии.</Trans>
+
+---
+
+## <Trans id="plugin.spriteOptimizer.features.project-asset.h.что-восстанавливается">Что восстанавливается</Trans>
+
+- Расположение и поворот каждого элемента
+- Размеры и количество страниц
+- Состояние обрезки (trim state) каждого элемента
+- Чекбоксы Placed/Unplaced
+- Все настройки панели Settings

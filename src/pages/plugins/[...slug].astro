@@ -73,6 +73,20 @@ const data = entry.data;
 // Current page's plugin-index (for breadcrumb middle segment).
 const pluginIndex = siblings.find((s) => s.isIndex);
 const isPluginIndex = entry.id === `plugins/${pluginSlug}`;
+
+// Build an i18n base key matching scripts/extract-i18n.mjs frontmatterBaseFor:
+//   plugins/sprite-optimizer/index.mdx   → plugin.spriteOptimizer
+//   plugins/sprite-optimizer/reference   → plugin.spriteOptimizer.reference
+//   plugins/sprite-optimizer/features/atlas → plugin.spriteOptimizer.features.atlas
+const _slugCamel = pluginSlug.replace(/[-_](\w)/g, (_m, c: string) => c.toUpperCase());
+const _tail = entry.id.replace(/^plugins\//, '').split('/').slice(1).filter((p) => p !== 'index').join('.');
+const i18nBase = _tail ? `plugin.${_slugCamel}.${_tail}` : `plugin.${_slugCamel}`;
+const k = {
+  title: `${i18nBase}.title`,
+  tagline: `${i18nBase}.tagline`,
+  kicker: `${i18nBase}.kicker`,
+  description: `${i18nBase}.description`,
+};
 ---
 
 <Base title={data.title} description={data.description} image={data.image}>
@@ -89,13 +103,13 @@ const isPluginIndex = entry.id === `plugins/${pluginSlug}`;
       {!isPluginIndex && (
         <>
           <span class="sep" aria-hidden="true">/</span>
-          <span class="current">{data.title}</span>
+          <span class="current" data-i18n={k.title}>{data.title}</span>
         </>
       )}
       {isPluginIndex && (
         <>
           <span class="sep" aria-hidden="true">/</span>
-          <span class="current">{data.title}</span>
+          <span class="current" data-i18n={k.title}>{data.title}</span>
         </>
       )}
     </nav>
@@ -110,6 +124,7 @@ const isPluginIndex = entry.id === `plugins/${pluginSlug}`;
           image={data.image}
           accent={data.accent}
           ctas={data.ctas}
+          i18nKeys={{ title: k.title, tagline: k.tagline, kicker: k.kicker }}
         />
 
         {data.stats && data.stats.stats.length > 0 && (
@@ -150,9 +165,9 @@ const isPluginIndex = entry.id === `plugins/${pluginSlug}`;
       </>
     ) : (
       <header class="plugin-page__head">
-        {data.kicker && <p class="plugin-page__kicker">{data.kicker}</p>}
-        <h1 class="plugin-page__title">{data.title}</h1>
-        {data.tagline && <p class="plugin-page__tagline">{data.tagline}</p>}
+        {data.kicker && <p class="plugin-page__kicker" data-i18n={k.kicker}>{data.kicker}</p>}
+        <h1 class="plugin-page__title" data-i18n={k.title}>{data.title}</h1>
+        {data.tagline && <p class="plugin-page__tagline" data-i18n={k.tagline}>{data.tagline}</p>}
       </header>
     )}
 
@@ -164,12 +179,22 @@ const isPluginIndex = entry.id === `plugins/${pluginSlug}`;
             <CompanionBot bot="code" anim="typing" size={40} />
           </div>
           <ul>
-            {siblings.map((s) => (
-              <li class:list={[{ active: s.active, nested: !!s.subgroup }]}>
-                {s.subgroup && <span class="plugin-sidebar__group">/{s.subgroup}</span>}
-                <a href={s.href} aria-current={s.active ? 'page' : undefined}>{s.title}</a>
-              </li>
-            ))}
+            {siblings.map((s) => {
+              // Derive i18n title key from href: /plugins/<slug>/<tail>/
+              const mm = s.href.match(/^\/plugins\/([^/]+)(?:\/(.+?))?\/?$/);
+              let titleKey: string | undefined;
+              if (mm) {
+                const sCamel = mm[1].replace(/[-_](\w)/g, (_m, c: string) => c.toUpperCase());
+                const tail = (mm[2] || '').split('/').filter((p) => p && p !== 'index').join('.');
+                titleKey = tail ? `plugin.${sCamel}.${tail}.title` : `plugin.${sCamel}.title`;
+              }
+              return (
+                <li class:list={[{ active: s.active, nested: !!s.subgroup }]}>
+                  {s.subgroup && <span class="plugin-sidebar__group">/{s.subgroup}</span>}
+                  <a href={s.href} aria-current={s.active ? 'page' : undefined} data-i18n={titleKey}>{s.title}</a>
+                </li>
+              );
+            })}
           </ul>
         </aside>
       )}

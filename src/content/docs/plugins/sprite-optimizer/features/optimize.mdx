@@ -4,17 +4,17 @@ description: Обрезка прозрачных краёв текстур с с
 order: 1
 ---
 
-**Optimize Mode** обрезает прозрачные пиксели по краям текстур, значительно уменьшая их размер — при этом спрайты остаются на тех же визуальных позициях в сцене.
+<Trans id="plugin.spriteOptimizer.features.optimize.body.p1">**Optimize Mode** обрезает прозрачные пиксели по краям текстур, значительно уменьшая их размер — при этом спрайты остаются на тех же визуальных позициях в сцене.</Trans>
 
 ---
 
-## Как открыть
+## <Trans id="plugin.spriteOptimizer.features.optimize.h.как-открыть">Как открыть</Trans>
 
-Content Browser → выдели текстуры → ПКМ → **Sprite Optimizer → Optimize**.
+<Trans id="plugin.spriteOptimizer.features.optimize.как-открыть.p1">Content Browser → выдели текстуры → ПКМ → **Sprite Optimizer → Optimize**.</Trans>
 
 ---
 
-## Рабочий процесс
+## <Trans id="plugin.spriteOptimizer.features.optimize.h.рабочий-процесс">Рабочий процесс</Trans>
 
 1. Редактор откроется со списком выбранных текстур.
 2. Нажми **F5** (Analyze) — плагин вычислит обрезанные размеры и экономию памяти.
@@ -28,13 +28,13 @@ Content Browser → выдели текстуры → ПКМ → **Sprite Optimi
 
 ---
 
-## Сохранение пивота (Preserve Position)
+## <Trans id="plugin.spriteOptimizer.features.optimize.h.сохранение-пивота-preserve-position">Сохранение пивота (Preserve Position)</Trans>
 
-Опция **Preserve Pos ✓** — ключевая фича. После обрезки плагин автоматически корректирует пивот спрайта так, чтобы он оставался на прежней визуальной позиции в сцене.
+<Trans id="plugin.spriteOptimizer.features.optimize.сохранение-пивота-preserve-position.p1">Опция **Preserve Pos ✓** — ключевая фича. После обрезки плагин автоматически корректирует пивот спрайта так, чтобы он оставался на прежней визуальной позиции в сцене.</Trans>
 
 ![Демонстрация Preserve Position — 99% экономия памяти](/images/plugins/sprite-optimizer/PivotPreservation_Demo.png)
 
-Реальный пример из README:
+<Trans id="plugin.spriteOptimizer.features.optimize.сохранение-пивота-preserve-position.p2">Реальный пример из README:</Trans>
 
 > 6 текстур 2048×2048 обрезаны до фактического содержимого.  
 > **32.2 MB → 186 KB** (экономия 99%).  
@@ -42,7 +42,7 @@ Content Browser → выдели текстуры → ПКМ → **Sprite Optimi
 
 ---
 
-## Настройки
+## <Trans id="plugin.spriteOptimizer.features.optimize.h.настройки">Настройки</Trans>
 
 | Параметр | Описание |
 |----------|----------|
@@ -53,7 +53,7 @@ Content Browser → выдели текстуры → ПКМ → **Sprite Optimi
 
 ---
 
-## Советы
+## <Trans id="plugin.spriteOptimizer.features.optimize.h.советы">Советы</Trans>
 
 - **Alpha Threshold по умолчанию = 0** (полностью прозрачные пиксели). Увеличь до 1–5 чтобы срезать полупрозрачную "ауру" вокруг объектов.
 - Если после обрезки размер *вырос* (оранжевый цвет) — текстура практически без прозрачных краёв, обрезать её нет смысла.

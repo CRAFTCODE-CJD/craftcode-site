@@ -1,0 +1,64 @@
+---
+title: Import Atlas
+description: Реверс-инжиниринг готового атласа обратно в отдельные редактируемые элементы.
+order: 4
+---
+
+<Trans id="plugin.spriteOptimizer.features.import-atlas.body.p1">**Import Atlas** разбивает существующую атлас-текстуру обратно в отдельные элементы, которые можно снова редактировать в Atlas Editor.</Trans>
+
+---
+
+## <Trans id="plugin.spriteOptimizer.features.import-atlas.h.как-открыть">Как открыть</Trans>
+
+<Trans id="plugin.spriteOptimizer.features.import-atlas.как-открыть.p1">Content Browser → ПКМ на атлас-текстуре → **Sprite Optimizer → Import Atlas**.</Trans>
+
+---
+
+## <Trans id="plugin.spriteOptimizer.features.import-atlas.h.источники-данных">Источники данных</Trans>
+
+<Trans id="plugin.spriteOptimizer.features.import-atlas.источники-данных.p1">Если атлас уже имеет привязанные Sprites или Material Instances, появится диалог выбора источника:</Trans>
+
+- **Yes (Sprites)** — восстановить регионы из данных спрайтов
+- **No (Material Instances)** — восстановить из MI UV-параметров
+- **Cancel** — открыть Slice Texture вручную
+
+<Trans id="plugin.spriteOptimizer.features.import-atlas.источники-данных.p2">Если метаданных нет — автоматически открывается диалог **Slice Texture**.</Trans>
+
+---
+
+## <Trans id="plugin.spriteOptimizer.features.import-atlas.h.slice-texture-ручная-нарезка">Slice Texture — ручная нарезка</Trans>
+
+### <Trans id="plugin.spriteOptimizer.features.import-atlas.h.auto-mode-flood-fill">Auto Mode (Flood Fill)</Trans>
+
+<Trans id="plugin.spriteOptimizer.features.import-atlas.auto-mode-flood-fill.p1">Автоматически определяет регионы по прозрачности (flood fill). Жёлтые контуры = обнаруженные острова.</Trans>
+
+<Trans id="plugin.spriteOptimizer.features.import-atlas.auto-mode-flood-fill.p2">Настраивается:</Trans>
+- **Alpha Threshold** — порог прозрачности
+
+### <Trans id="plugin.spriteOptimizer.features.import-atlas.h.grid-mode">Grid Mode</Trans>
+
+<Trans id="plugin.spriteOptimizer.features.import-atlas.grid-mode.p1">Нарезает текстуру равномерной сеткой.</Trans>
+
+<Trans id="plugin.spriteOptimizer.features.import-atlas.grid-mode.p2">Настраивается:</Trans>
+- **Cell Width / Cell Height** — размер ячейки
+- **Margin** — внешний отступ
+- **Spacing** — промежуток между ячейками
+
+### <Trans id="plugin.spriteOptimizer.features.import-atlas.h.ручное-редактирование-регионов">Ручное редактирование регионов</Trans>
+
+| Действие | Как |
+|----------|-----|
+| Выбрать регион | ЛКМ |
+| Нарисовать новый | ЛКМ перетащить по пустому месту |
+| Удалить | Выбрать → `Del` |
+| Изменить размер | Потащить края/углы выделенного |
+| Отметить как повёрнутый | Выбрать → `R` (снимается при экспорте) |
+| Зум / Пан | Колесо мыши / ПКМ или СКМ |
+
+<Trans id="plugin.spriteOptimizer.features.import-atlas.ручное-редактирование-регионов.p2">Зелёный = выбранный регион. Оранжевый с "R" = помечен как повёрнутый.</Trans>
+
+---
+
+## <Trans id="plugin.spriteOptimizer.features.import-atlas.h.после-нарезки">После нарезки</Trans>
+
+<Trans id="plugin.spriteOptimizer.features.import-atlas.после-нарезки.p1">Нажми **Slice** — текстуры сохраняются в подпапку `Sliced/`, и открывается новый Atlas Editor с этими элементами.</Trans>

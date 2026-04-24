@@ -4,30 +4,30 @@ description: API, делегаты и FAQ для Mouse Interceptor.
 order: 10
 ---
 
-## Компонент
+## <Trans id="plugin.mouseinterceptor.reference.h.компонент">Компонент</Trans>
 
-**`UMouseInterceptorComponent`** — `UActorComponent`, добавляется к любому актору через панель **Components**.
+<Trans id="plugin.mouseinterceptor.reference.компонент.p1">**`UMouseInterceptorComponent`** — `UActorComponent`, добавляется к любому актору через панель **Components**.</Trans>
 
 <Block type="info">
-Компонент регистрирует собственный `IInputProcessor` в `FSlateApplication` при `BeginPlay` и снимает регистрацию при `EndPlay`. Никаких тиков, никакого polling.
+<Trans id="plugin.mouseinterceptor.reference.block.p1">Компонент регистрирует собственный `IInputProcessor` в `FSlateApplication` при `BeginPlay` и снимает регистрацию при `EndPlay`. Никаких тиков, никакого polling.</Trans>
 </Block>
 
 ---
 
-## Делегаты
+## <Trans id="plugin.mouseinterceptor.reference.h.делегаты">Делегаты</Trans>
 
-### `OnMousePressed`
+### <Trans id="plugin.mouseinterceptor.reference.h.onmousepressed">`OnMousePressed`</Trans>
 
-Срабатывает при **нажатии** кнопки мыши.
+<Trans id="plugin.mouseinterceptor.reference.onmousepressed.p1">Срабатывает при **нажатии** кнопки мыши.</Trans>
 
 | Параметр | Тип | Описание |
 |----------|-----|----------|
 | `Button` | `FKey` | Нажатая кнопка (`EKeys::LeftMouseButton`, `RightMouseButton`, `MiddleMouseButton`, `ThumbMouseButton`, `ThumbMouseButton2`) |
 | `bIsDoubleClick` | `bool` | `true`, если клик попал в окно `DoubleClickThreshold` с предыдущего клика той же кнопкой |
 
-### `OnMouseReleased`
+### <Trans id="plugin.mouseinterceptor.reference.h.onmousereleased">`OnMouseReleased`</Trans>
 
-Срабатывает при **отпускании** кнопки мыши.
+<Trans id="plugin.mouseinterceptor.reference.onmousereleased.p1">Срабатывает при **отпускании** кнопки мыши.</Trans>
 
 | Параметр | Тип | Описание |
 |----------|-----|----------|
@@ -36,35 +36,35 @@ order: 10
 
 ---
 
-## Функции
+## <Trans id="plugin.mouseinterceptor.reference.h.функции">Функции</Trans>
 
-### `SetDoubleClickThreshold(float Threshold)`
+### <Trans id="plugin.mouseinterceptor.reference.h.setdoubleclickthreshold-float-threshold">`SetDoubleClickThreshold(float Threshold)`</Trans>
 
-Устанавливает интервал (в секундах) для определения двойного клика.
+<Trans id="plugin.mouseinterceptor.reference.setdoubleclickthreshold-float-threshold.p1">Устанавливает интервал (в секундах) для определения двойного клика.</Trans>
 
 ```cpp
 MouseInterceptorComponent->SetDoubleClickThreshold(0.5f);
 ```
 
-По умолчанию — `0.25s`. Рекомендации:
+<Trans id="plugin.mouseinterceptor.reference.setdoubleclickthreshold-float-threshold.p2">По умолчанию — `0.25s`. Рекомендации:</Trans>
 
 - `0.2–0.3s` — стандартный «windows-подобный» двойной клик
 - `0.15s` — для быстрого геймплея
 - `10.0f` — фактическое отключение определения (флаг всегда `false`)
 
-### `GetDoubleClickThreshold()`
+### <Trans id="plugin.mouseinterceptor.reference.h.getdoubleclickthreshold">`GetDoubleClickThreshold()`</Trans>
 
-Возвращает текущий порог в секундах.
+<Trans id="plugin.mouseinterceptor.reference.getdoubleclickthreshold.p1">Возвращает текущий порог в секундах.</Trans>
 
 ---
 
-## Code Modules
+## <Trans id="plugin.mouseinterceptor.reference.h.code-modules">Code Modules</Trans>
 
 - **MouseInterceptor** `[Runtime]`
 
 ---
 
-## Зависимости (`.Build.cs`)
+## <Trans id="plugin.mouseinterceptor.reference.h.зависимости-build-cs">Зависимости (`.Build.cs`)</Trans>
 
 ```cs
 PublicDependencyModuleNames.AddRange(new string[] {
@@ -76,7 +76,7 @@ PublicDependencyModuleNames.AddRange(new string[] {
 
 ---
 
-## Поддерживаемые версии
+## <Trans id="plugin.mouseinterceptor.reference.h.поддерживаемые-версии">Поддерживаемые версии</Trans>
 
 | UE | Статус |
 |-----|--------|
@@ -84,29 +84,29 @@ PublicDependencyModuleNames.AddRange(new string[] {
 | 5.0 – 5.7 | ✅ CrossEngine |
 
 <Block type="ok">
-Единый исходник скомпилируется на любой поддерживаемой версии без правок — в `.uplugin` стоит `EngineVersion: "4.27"` для широкой совместимости.
+<Trans id="plugin.mouseinterceptor.reference.block.p1">Единый исходник скомпилируется на любой поддерживаемой версии без правок — в `.uplugin` стоит `EngineVersion: "4.27"` для широкой совместимости.</Trans>
 </Block>
 
 ---
 
-## FAQ
+## <Trans id="plugin.mouseinterceptor.reference.h.faq">FAQ</Trans>
 
-### Как отключить двойной клик?
+### <Trans id="plugin.mouseinterceptor.reference.h.как-отключить-двойной-клик">Как отключить двойной клик?</Trans>
 
-Установи `DoubleClickThreshold` в очень большое значение — например `10.0f`. Флаг `bIsDoubleClick` будет `false` практически всегда.
+<Trans id="plugin.mouseinterceptor.reference.как-отключить-двойной-клик.p1">Установи `DoubleClickThreshold` в очень большое значение — например `10.0f`. Флаг `bIsDoubleClick` будет `false` практически всегда.</Trans>
 
-### Поддерживается ли сетевая репликация?
+### <Trans id="plugin.mouseinterceptor.reference.h.поддерживается-ли-сетевая-репликация">Поддерживается ли сетевая репликация?</Trans>
 
-Нет — плагин обрабатывает ввод только на клиентской стороне. Для сетевой передачи кликов оберни делегаты в RPC руками.
+<Trans id="plugin.mouseinterceptor.reference.поддерживается-ли-сетевая-репликация.p1">Нет — плагин обрабатывает ввод только на клиентской стороне. Для сетевой передачи кликов оберни делегаты в RPC руками.</Trans>
 
-### Работает ли перехват когда активен UI-виджет?
+### <Trans id="plugin.mouseinterceptor.reference.h.работает-ли-перехват-когда-активен-ui-виджет">Работает ли перехват когда активен UI-виджет?</Trans>
 
-Да — перехват **глобальный**, независим от состояния фокуса ввода. Работает когда курсор вне окна? **Нет** — Slate получает события только пока окно активно.
+<Trans id="plugin.mouseinterceptor.reference.работает-ли-перехват-когда-активен-ui-виджет.p1">Да — перехват **глобальный**, независим от состояния фокуса ввода. Работает когда курсор вне окна? **Нет** — Slate получает события только пока окно активно.</Trans>
 
-### Что с right-click UE-меню контекста?
+### <Trans id="plugin.mouseinterceptor.reference.h.что-с-right-click-ue-меню-контекста">Что с right-click UE-меню контекста?</Trans>
 
-Плагин получает события **до** стандартной обработки Slate. Если нужно сохранить дефолтное поведение (например, ПКМ в UMG-виджете), обрабатывай в своём делегате флаг `bIsHandled` — можно вернуть `false` и пустить событие дальше.
+<Trans id="plugin.mouseinterceptor.reference.что-с-right-click-ue-меню-контекста.p1">Плагин получает события **до** стандартной обработки Slate. Если нужно сохранить дефолтное поведение (например, ПКМ в UMG-виджете), обрабатывай в своём делегате флаг `bIsHandled` — можно вернуть `false` и пустить событие дальше.</Trans>
 
-### Совместим с Enhanced Input?
+### <Trans id="plugin.mouseinterceptor.reference.h.совместим-с-enhanced-input">Совместим с Enhanced Input?</Trans>
 
-Да — плагин работает параллельно Enhanced Input (оба слушают Slate). Два разных слоя ввода, не конкурируют.
+<Trans id="plugin.mouseinterceptor.reference.совместим-с-enhanced-input.p1">Да — плагин работает параллельно Enhanced Input (оба слушают Slate). Два разных слоя ввода, не конкурируют.</Trans>

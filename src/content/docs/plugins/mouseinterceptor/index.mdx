@@ -17,13 +17,13 @@ ctas:
 order: 1
 ---
 
-## Обзор
+## <Trans id="plugin.mouseinterceptor.h.обзор">Обзор</Trans>
 
 <Block type="info" title="Что это">
-Плагин захватывает все события мыши глобально — независимо от того, что сейчас активно на экране (UMG, уровень, редактор). События приходят через делегаты, подключаются в Blueprint в несколько нодов.
+<Trans id="plugin.mouseinterceptor.block.p1">Плагин захватывает все события мыши глобально — независимо от того, что сейчас активно на экране (UMG, уровень, редактор). События приходят через делегаты, подключаются в Blueprint в несколько нодов.</Trans>
 </Block>
 
-## Ключевые возможности
+## <Trans id="plugin.mouseinterceptor.h.ключевые-возможности">Ключевые возможности</Trans>
 
 <CardGrid>
   <Card title="Глобальный перехват">
@@ -40,7 +40,7 @@ order: 1
   </Card>
 </CardGrid>
 
-## Как это выглядит
+## <Trans id="plugin.mouseinterceptor.h.как-это-выглядит">Как это выглядит</Trans>
 
 <Image src="/images/plugins/mouseinterceptor/Image_01.png" alt="Компонент MouseInterceptorComponent в панели Components" caption="Компонент в панели Components" />
 
@@ -48,7 +48,7 @@ order: 1
 
 <Image src="/images/plugins/mouseinterceptor/Image_03.png" alt="Обработка нажатия с проверкой bIsDoubleClick" caption="Обработка нажатия с проверкой bIsDoubleClick" />
 
-## Поддерживаемые платформы
+## <Trans id="plugin.mouseinterceptor.h.поддерживаемые-платформы">Поддерживаемые платформы</Trans>
 
 | Платформа | Разработка | Сборка |
 |-----------|-----------|--------|
@@ -56,15 +56,15 @@ order: 1
 | macOS | ✅ | ✅ |
 | Linux | ✅ | ✅ |
 
-## Поддерживаемые версии движка
+## <Trans id="plugin.mouseinterceptor.h.поддерживаемые-версии-движка">Поддерживаемые версии движка</Trans>
 
-Плагин поставляется как **CrossEngine** — один и тот же исходник компилируется на UE 4.27 и всех линиях UE 5 вплоть до 5.7.
+<Trans id="plugin.mouseinterceptor.поддерживаемые-версии-движка.p1">Плагин поставляется как **CrossEngine** — один и тот же исходник компилируется на UE 4.27 и всех линиях UE 5 вплоть до 5.7.</Trans>
 
 <Block type="ok" title="Zero Tick">
-`Tick` отключён в компоненте — плагин использует Slate-препроцессор ввода, который срабатывает только когда мышь реально генерирует события. CPU-нагрузка = 0 при простое.
+<Trans id="plugin.mouseinterceptor.block.p1">`Tick` отключён в компоненте — плагин использует Slate-препроцессор ввода, который срабатывает только когда мышь реально генерирует события. CPU-нагрузка = 0 при простое.</Trans>
 </Block>
 
-## Что дальше
+## <Trans id="plugin.mouseinterceptor.h.что-дальше">Что дальше</Trans>
 
 - [Как использовать](/plugins/mouseinterceptor/getting-started/) — шаг за шагом: добавить компонент, подписаться на делегаты, настроить порог.
 - [Справка](/plugins/mouseinterceptor/reference/) — API, FAQ, примеры.

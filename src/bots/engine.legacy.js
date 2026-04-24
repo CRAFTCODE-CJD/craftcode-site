@@ -194,14 +194,14 @@ import { FRAME_ORDER, fIdx, CLIPS, STATE_TO_CLIP } from './frames.data.js';
     // ── Physics constants ──
     S: 48,              // sprite render size (matches CSS .companion width/height)
     SIDE_M: 6,          // horizontal margin from viewport edges
-    FLOOR_M: 5,         // bottom margin — feet land 5 px above the dashed floor line.
-                        // Tuned by user feedback: 8 was too floaty, 2 was too low
-                        // (into the line), 5 reads as "standing on the floor".
-    PLATFORM_M: 10,     // feet-above-platform gap on obstacle-top landings.
-                        // BIGGER than FLOOR_M because the platform bar visually has
-                        // "height" (it's a thick striped bar, not a flat line), so
-                        // a small gap reads as "sinking in". 10 px clears the
-                        // striped band cleanly.
+    FLOOR_M: 1,         // bottom margin — feet land 1 px above the dashed floor line.
+                        // NOTE: now that FOOT_Y is the actual VISIBLE feet pixel
+                        // row (not the full 48-px sprite box), this margin is a
+                        // true cosmetic gap, not padding-compensation.
+    PLATFORM_M: 2,      // feet-above-platform gap on obstacle-top landings.
+                        // Kept tiny so the bot visibly "stands" on the platform
+                        // rather than hovering above it. FOOT_Y is the real
+                        // pixel baseline so 2 px reads as light floor contact.
     GRAVITY: 1800,      // px/s² — gravitational pull
     WALK_SPEED: 40,     // px/s — reduced from perim-based (was ~0.006/frame)
     MAX_V: 2200,        // clamp on throw velocity
@@ -223,13 +223,16 @@ import { FRAME_ORDER, fIdx, CLIPS, STATE_TO_CLIP } from './frames.data.js';
       code:  { padL: 8,  padR: 8,  padT: 15, padB: 12 },  // 32 × 21
     },
 
-    // Pixel Y of the feet-bottom line, measured from sprite.top.
-    // Empirically the generated sprites render the feet close to the
-    // sprite's bottom edge (not at src y=26/24 as ANIMATIONS.md documents),
-    // so treating the full sprite height as the foot baseline gives a
-    // visibly correct floor contact. Any transparent pixels below the
-    // actual feet just add to the visible FLOOR_M gap — harmless.
-    FOOT_Y: { craft: 48, code: 48 },
+    // Pixel Y of the feet-bottom line, measured from sprite.top (render px).
+    // Per ANIMATIONS.md § "Pivot": feet baseline sits at source y=26 (CRAFT)
+    // and y=24 (CODE). Scale factor = 48/32 = 1.5 →
+    //   craft: 26 × 1.5 = 39  (hitbox padB=8 → hb.bottom = p.y+40 → 1px below)
+    //   code : 24 × 1.5 = 36  (hitbox padB=12 → hb.bottom = p.y+36, exact)
+    // Using these values means p.y + FOOT_Y is where the VISIBLE soles render,
+    // so FLOOR_M / PLATFORM_M are true cosmetic gaps, not padding comp.
+    // Previously set to 48 (full sprite box) which made bots float 9-12 px
+    // above the floor — user-visible "not standing on the ground" bug.
+    FOOT_Y: { craft: 39, code: 36 },
 
     // Pixel-measured "head top" — the Y (in render px, relative to
     // sprite.top) of the first opaque pixel at the top of the sprite.

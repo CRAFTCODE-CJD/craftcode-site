@@ -78,8 +78,9 @@ export const SCENES = [
     lines: [
       { who: 'code',  text: 'надо ребилд' },
       { who: 'craft', text: 'чего' },
-      { who: 'code',  text: 'я ещё не решил. но надо' },
-      { who: 'craft', text: 'звучит как пятница' },
+      { who: 'code',  text: 'shaders. интуиция.' },
+      { who: 'craft', text: 'у тебя нет интуиции' },
+      { who: 'code',  text: 'есть. лежит в /Engine/Experimental/', clip: 'typing' },
     ]},
 
   { id: 'idle.draft_sketch', tags: ['idle'], weight: 2, cooldown: 120,
@@ -185,8 +186,9 @@ export const SCENES = [
   { id: 'idle.paper2d_flex', tags: ['idle'], weight: 1, cooldown: 200,
     lines: [
       { who: 'craft', text: 'Paper2D всё-таки живёт' },
-      { who:  'code', text: 'живёт. просто тихо' },
-      { who: 'craft', text: 'как мы по субботам' },
+      { who:  'code', text: 'живёт. просто тихо. как депрекейтед API' },
+      { who: 'craft', text: 'ОБИДНО' },
+      { who:  'code', text: 'зато honest' },
     ]},
 
   { id: 'idle.blueprint_spaghetti', tags: ['idle'], weight: 1.5, cooldown: 160,
@@ -404,8 +406,9 @@ export const SCENES = [
     ]},
   { id: 'accent.try_it', tags: ['accent'], weight: 1, cooldown: 45,
     lines: [
-      { who: 'craft', text: 'новый skin!' },
-      { who: 'code',  text: 'надо привыкнуть к LUT' },
+      { who: 'craft', text: 'новый skin! я в нём худее' },
+      { who: 'code',  text: 'тот же bounding box' },
+      { who: 'craft', text: 'ДУША худее' },
     ]},
   { id: 'accent.smell', tags: ['accent'], weight: 0.6, cooldown: 120,
     lines: [
@@ -548,7 +551,8 @@ export const SCENES = [
     lines: [
       { who: 'craft', text: 'ты сегодня странный' },
       { who: 'code',  text: 'ты всегда странный. это baseline' },
-      { who: 'craft', text: '...' },
+      { who: 'craft', text: 'мой baseline хотя бы тёплый' },
+      { who: 'code',  text: 'мой измеряется в кельвинах' },
     ]},
 
   { id: 'idle.warm', tags: ['idle'], weight: 2, cooldown: 180,
@@ -572,6 +576,8 @@ export const SCENES = [
     lines: [
       { who: 'craft', text: '*дуется в отдельном layer*' },
       { who: 'code',  text: 'cooldown 60s' },
+      { who: 'craft', text: '90' },
+      { who: 'code',  text: 'торг уместен' },
     ]},
   { id: 'idle.annoyed_code', tags: ['idle'], weight: 3, cooldown: 60,
     requires: (ctx) => ctx.flags.code_annoyed,
@@ -681,8 +687,9 @@ export const SCENES = [
     ]},
   { id: 'env.morning_2', tags: ['morning'], weight: 3, cooldown: 600,
     lines: [
-      { who: 'code',  text: 'Pull rebase прошёл. Ты?' },
-      { who: 'craft', text: 'Я всегда готов. Для чего — потом вспомню.' },
+      { who: 'code',  text: 'pull rebase прошёл. у тебя?' },
+      { who: 'craft', text: 'конфликт в моей голове' },
+      { who: 'code',  text: 'merge --strategy=кофе' },
     ]},
   { id: 'env.evening_1', tags: ['evening'], weight: 5, cooldown: 600,
     lines: [
@@ -697,14 +704,16 @@ export const SCENES = [
     ]},
   { id: 'env.silence_1', tags: ['silence_break'], weight: 5,
     lines: [
-      { who: 'craft', text: 'Тишина правильной формы.' },
-      { who: 'code',  text: 'Acoustic null. Ровно.' },
+      { who: 'craft', text: 'тишина какой-то... правильной формы' },
+      { who: 'code',  text: 'это квадрат 64x64. default silence.' },
+      { who: 'craft', text: 'я думал кастомная' },
     ]},
   { id: 'env.silence_2', tags: ['silence_break'], weight: 3,
     lines: [
       { who: 'code',  text: '...' },
-      { who: 'craft', text: 'Ты тоже think()?' },
-      { who: 'code',  text: 'Всегда.' },
+      { who: 'craft', text: 'ты в think()?' },
+      { who: 'code',  text: 'нет. в while(true) {}' },
+      { who: 'craft', text: 'вылезай, чайник вскипел' },
     ]},
 
   // ─── SPATIAL HOOKS ──────────────────────────────────
@@ -777,8 +786,10 @@ export const SCENES = [
     ]},
   { id: 'user.reconcile_2', tags: ['reconciliation'], weight: 3, cooldown: 60,
     lines: [
-      { who: 'craft', text: 'Чертёж снова сходится.', clip: 'sketch_air' },
-      { who: 'code',  text: 'Tolerance: ok.' },
+      { who: 'craft', text: 'чертёж снова сходится', clip: 'sketch_air' },
+      { who: 'code',  text: 'tolerance: ok. я даже проверять не буду' },
+      { who: 'craft', text: 'ого, вера', act: 'surprised' },
+      { who: 'code',  text: 'нет. лень.' },
     ]},
 
   { id: 'user.saved_craft', tags: ['picked_up_after_hurt:craft'], weight: 5, cooldown: 30,
@@ -840,8 +851,10 @@ export const SCENES = [
     ]},
   { id: 'easter.theme_sense', tags: ['idle'], weight: 2, cooldown: 240,
     lines: [
-      { who: 'craft', text: 'Чуешь? LUT сменили.' },
-      { who: 'code',  text: 'Contrast +12%. Допустимо.' },
+      { who: 'craft', text: 'чуешь? LUT сменили' },
+      { who: 'code',  text: 'contrast +12%. допустимо' },
+      { who: 'craft', text: 'я стал красивее на 12%' },
+      { who: 'code',  text: 'нет. просто темнее' },
     ]},
   { id: 'mood.low_craft', tags: ['idle'], weight: 3, cooldown: 120,
     requires: (ctx) => ctx.sim && ctx.sim.mood.craft < 30,
@@ -860,8 +873,10 @@ export const SCENES = [
   { id: 'mood.high_both', tags: ['idle'], weight: 2, cooldown: 180,
     requires: (ctx) => ctx.sim && ctx.sim.mood.craft > 70 && ctx.sim.mood.code > 70,
     lines: [
-      { who: 'craft', text: 'Сегодня что-то... compile-ится сразу.' },
-      { who: 'code',  text: 'Оптимальный режим. Confirmed.' },
+      { who: 'craft', text: 'сегодня что-то... compile-ится с первого раза' },
+      { who: 'code',  text: 'подозрительно. проверь warnings' },
+      { who: 'craft', text: 'ноль' },
+      { who: 'code',  text: 'значит нас подменили' },
     ]},
 
   // ─── JUMPS & PARKOUR ────────────────────────────────
@@ -1094,8 +1109,9 @@ export const SCENES = [
 
   { id: 'event.item_seen.generic', tags: ['event','event:item_seen'], weight: 1, cooldown: 45,
     lines: [
-      { who: 'code',  text: 'что-то упало' },
-      { who: 'craft', text: 'ага, видел!' },
+      { who: 'code',  text: 'тут объект без owner' },
+      { who: 'craft', text: 'ничей значит мой' },
+      { who: 'code',  text: 'по spec это называется «воровство»' },
     ]},
 
   { id: 'event.platform_appear.generic', tags: ['event','event:platform_appear'], weight: 1, cooldown: 80,
@@ -1108,5 +1124,134 @@ export const SCENES = [
     lines: [
       { who: 'code',  text: 'оно... поехало?' },
       { who: 'craft', text: 'мир шевелится! держись!' },
+      { who: 'code',  text: 'это не мир. это static mesh забыл про static' },
+    ]},
+
+  // ═════════════════════════════════════════════════════════════════
+  //  SECOND PASS — новые наблюдательные сценки
+  // ═════════════════════════════════════════════════════════════════
+  { id: 'idle.atlas_grid_crooked', tags: ['idle'], weight: 1.5, cooldown: 200,
+    lines: [
+      { who: 'craft', text: 'глянь на атлас. grid кривой' },
+      { who:  'code', text: 'это ты наклонил голову', clip: 'measure_distance' },
+      { who: 'craft', text: '*выпрямляется*' },
+      { who:  'code', text: 'теперь кривой ты' },
+    ]},
+
+  { id: 'idle.navmesh_bug', tags: ['idle'], weight: 1.5, cooldown: 220,
+    lines: [
+      { who:  'code', text: 'нашёл дыру в navmesh' },
+      { who: 'craft', text: 'большую?' },
+      { who:  'code', text: 'ровно под тобой' },
+      { who: 'craft', text: 'я её заполняю СОБОЙ', act: 'excited' },
+    ]},
+
+  { id: 'idle.delaunay_rant', tags: ['idle'], weight: 1, cooldown: 300,
+    lines: [
+      { who: 'craft', text: 'Delaunay лучше чем Voronoi' },
+      { who:  'code', text: 'обоснуй' },
+      { who: 'craft', text: 'просто посмотри на треугольники' },
+      { who:  'code', text: 'это не обоснование' },
+      { who: 'craft', text: 'это ЭСТЕТИКА', clip: 'excited' },
+    ]},
+
+  { id: 'idle.depth_sort_war', tags: ['idle'], weight: 1.2, cooldown: 180,
+    lines: [
+      { who: 'craft', text: 'я опять за тобой' },
+      { who:  'code', text: 'z-order. ничего личного' },
+      { who: 'craft', text: 'личного НЕТ, но Z+1 МОЁ' },
+      { who:  'code', text: 'возьми 0.5. компромисс' },
+    ]},
+
+  { id: 'idle.baseline_hug', tags: ['idle'], weight: 1, cooldown: 260,
+    lines: [
+      { who: 'craft', text: '*обнимает baseline-линию*' },
+      { who:  'code', text: 'она не для этого' },
+      { who: 'craft', text: 'а для чего' },
+      { who:  'code', text: 'для kerning. но... продолжай' },
+    ]},
+
+  { id: 'idle.framerate_philosophy', tags: ['idle'], weight: 1, cooldown: 280,
+    lines: [
+      { who: 'craft', text: 'а в чём смысл framerate?' },
+      { who:  'code', text: 'чтобы следующий кадр был' },
+      { who: 'craft', text: 'глубоко' },
+      { who:  'code', text: 'нет. буквально' },
+    ]},
+
+  { id: 'idle.shader_compile', tags: ['idle'], weight: 1.3, cooldown: 200,
+    lines: [
+      { who:  'code', text: 'shader компилится' },
+      { who: 'craft', text: 'сколько' },
+      { who:  'code', text: '4812 из 5200' },
+      { who: 'craft', text: 'можно я ЖИТЬ пойду' },
+      { who:  'code', text: 'ты в main thread. нельзя' },
+    ]},
+
+  { id: 'idle.commit_message', tags: ['idle'], weight: 1.2, cooldown: 200,
+    lines: [
+      { who:  'code', text: 'опиши коммит' },
+      { who: 'craft', text: '"норм"' },
+      { who:  'code', text: 'отклонено' },
+      { who: 'craft', text: '"ну норм"' },
+      { who:  'code', text: 'прошло review. стыдно.' },
+    ]},
+
+  { id: 'idle.pull_craft', tags: ['idle'], weight: 1, cooldown: 240,
+    lines: [
+      { who: 'craft', text: '*тянет CODE за угол*' },
+      { who:  'code', text: 'отпусти. я не draggable' },
+      { who: 'craft', text: 'теперь да' },
+      { who:  'code', text: 'это fraud' },
+    ]},
+
+  { id: 'idle.collision_poetry', tags: ['idle'], weight: 1, cooldown: 260,
+    lines: [
+      { who: 'craft', text: 'collision — это поцелуй двух объектов' },
+      { who:  'code', text: 'это overlap event' },
+      { who: 'craft', text: 'так не романтично' },
+      { who:  'code', text: 'зато правда' },
+    ]},
+
+  { id: 'idle.vsync_tuesday', tags: ['idle'], weight: 1, cooldown: 300,
+    lines: [
+      { who: 'craft', text: 'сегодня вторник?' },
+      { who:  'code', text: 'да. vsync подтверждает' },
+      { who: 'craft', text: 'vsync не знает дней' },
+      { who:  'code', text: 'мой знает. он бегает круг каждые 16.6мс' },
+    ]},
+
+  { id: 'idle.uv_seam_scar', tags: ['idle'], weight: 1, cooldown: 280,
+    lines: [
+      { who:  'code', text: 'у тебя UV-шов виден' },
+      { who: 'craft', text: 'это шрам. боевой' },
+      { who:  'code', text: 'бой был с Photoshop' },
+      { who: 'craft', text: 'я проиграл' },
+    ]},
+
+  { id: 'idle.pivot_drama', tags: ['idle'], weight: 1.2, cooldown: 200,
+    lines: [
+      { who: 'craft', text: '*ставит pivot в центр*' },
+      { who:  'code', text: 'это pivot ДЛЯ ВРАЩЕНИЯ' },
+      { who: 'craft', text: 'и?' },
+      { who:  'code', text: 'мы не вращаемся' },
+      { who: 'craft', text: 'мы духовно', clip: 'excited' },
+    ]},
+
+  { id: 'idle.coffee_tick', tags: ['idle'], weight: 1, cooldown: 300,
+    lines: [
+      { who: 'craft', text: 'хочу кофе' },
+      { who:  'code', text: 'DeltaTime с последнего — 41 минута' },
+      { who: 'craft', text: 'значит пора' },
+      { who:  'code', text: 'я налью. ровно 80 мл' },
+      { who: 'craft', text: 'ТЕБЕ поэзия противопоказана' },
+    ]},
+
+  { id: 'idle.spawn_monday', tags: ['idle'], weight: 0.9, cooldown: 400,
+    lines: [
+      { who: 'craft', text: 'понедельник — тяжёлый spawn' },
+      { who:  'code', text: 'статистика согласна' },
+      { who: 'craft', text: 'ты... ведёшь статистику?' },
+      { who:  'code', text: 'с 2019. по настроению' },
     ]},
 ];

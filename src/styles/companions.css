@@ -105,8 +105,29 @@
     ),
     var(--surface);
   border: 1px solid color-mix(in oklab, var(--accent) 45%, transparent);
+  box-shadow:
+    0 0 0 1px color-mix(in oklab, var(--accent) 15%, transparent),
+    0 6px 14px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 color-mix(in oklab, var(--accent-2) 30%, transparent);
   z-index: 2;
   pointer-events: none;
+}
+/* Soft shadow beneath each platform so it visually grounds into the stage
+   instead of floating flatly. Positioned as a pseudo below the bar. */
+.companions-obstacle::before {
+  content: '';
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  bottom: -10px;
+  height: 8px;
+  background: radial-gradient(ellipse at 50% 0%,
+    rgba(0, 0, 0, 0.45) 0%,
+    rgba(0, 0, 0, 0.15) 50%,
+    transparent 80%);
+  filter: blur(2px);
+  pointer-events: none;
+  opacity: 0.8;
 }
 .companions-obstacle .obstacle-lbl {
   position: absolute;
@@ -330,9 +351,12 @@
   background: var(--bg);
   border: 1px solid var(--accent);
   border-radius: 0;
-  padding: 8px 14px;
+  padding: 8px 12px;
   font-family: 'VT323', 'Russo One', monospace;
-  font-size: 16px;
+  /* Scale with viewport: 13-16 px. VT323 is a bitmap font so clamp values
+     above 16 look over-inflated on mobile; 13 keeps RU (longer words) legible
+     without forcing 3-line wraps on short EN strings. */
+  font-size: clamp(13px, 2.6vw, 16px);
   letter-spacing: 0.02em;
   color: var(--ink);
   /* Sizing strategy:
@@ -346,9 +370,16 @@
      - `overflow-wrap: break-word` only breaks mid-word if a single
         word exceeds max-width (rare in Russian). */
   white-space: normal;
-  overflow-wrap: break-word;
+  /* RU text often has long compound words (e.g. "оптимизировать") that would
+     blow past max-width. `anywhere` lets the browser break mid-word ONLY if
+     there is no valid wrap opportunity — EN short phrases stay unbroken.
+     Hyphens: auto gives soft hyphen points where the RU dictionary has them. */
+  overflow-wrap: anywhere;
+  word-break: normal;
+  hyphens: auto;
+  line-height: 1.4;
   width: max-content;
-  max-width: min(280px, calc(100vw - 24px));
+  max-width: min(240px, calc(100vw - 24px));
   box-shadow: 0 10px 24px rgba(10, 8, 5, 0.14);
   opacity: 0;
   pointer-events: none;
@@ -400,7 +431,15 @@
   .companion-bubble { transition: opacity 0.1s !important; }
 }
 
-/* Mobile — narrower bubbles, slightly larger text for legibility */
+/* Tablet — slightly tighter max-width so bubbles don't cross the stage edge */
 @media (max-width: 760px) {
-  .companion-bubble { font-size: 14px; max-width: 220px; }
+  .companion-bubble { max-width: 200px; }
+}
+/* Narrow phones — shrink max-width so RU text stays inside the 280-px stage. */
+@media (max-width: 500px) {
+  .companion-bubble {
+    max-width: 180px;
+    padding: 6px 10px;
+    line-height: 1.35;
+  }
 }

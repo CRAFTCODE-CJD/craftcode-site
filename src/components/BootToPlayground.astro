@@ -41,19 +41,23 @@ import TypingText from '~/components/TypingText.astro';
     <!-- Obstacles live INSIDE .companions so the physics refreshObstacles()
          scan (which scopes to the companions container) can measure them. -->
     <div class="companions" aria-live="polite" aria-atomic="false">
-      <!-- A low step -->
+      <!-- A low step on the left — reachable via a normal jump from ground.
+           Stage is 420px tall; ground line ≈ 419. A jump clears ~60 px, so
+           a step_01 top at 360 keeps it trivially stepable. -->
       <div class="companions-obstacle" data-ob data-dynamic="hover"
-           style="left: 10%; top: 350px; width: 120px; height: 30px;">
+           style="left: 8%; top: 360px; width: 130px; height: 28px;">
         <span class="obstacle-lbl">// step_01</span>
       </div>
-      <!-- A floating platform in the middle -->
+      <!-- A floating platform in the middle, reachable with a running jump
+           off step_01 (gap ≈ 90 px, height drop ≈ 70 px). -->
       <div class="companions-obstacle" data-ob data-dynamic="slide"
-           style="left: 40%; top: 260px; width: 140px; height: 16px;">
+           style="left: 38%; top: 290px; width: 150px; height: 14px;">
         <span class="obstacle-lbl">// floating_02</span>
       </div>
-      <!-- A higher platform on the right -->
+      <!-- A higher platform on the right. From floating_02 the bot can hop
+           up (platform tops differ by only ~60 px). -->
       <div class="companions-obstacle" data-ob
-           style="right: 8%; top: 300px; width: 150px; height: 24px;">
+           style="right: 9%; top: 230px; width: 150px; height: 22px;">
         <span class="obstacle-lbl">// crate_03</span>
       </div>
       
@@ -165,7 +169,23 @@ import TypingText from '~/components/TypingText.astro';
       0 0 40px color-mix(in oklab, var(--accent) 15%, transparent);
   }
 
-  /* Deeper dashed floor line */
+  /* Dashed neon floor line + warm glow. `::before` is a warm glow pad that
+     reads as "ground haze"; `::after` is the crisp dashed stripe. Both are
+     pointer-events: none and sit below companions (z=10). */
+  .cc-stage::before {
+    content: '';
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    height: 80px;
+    background:
+      linear-gradient(to top,
+        color-mix(in oklab, var(--accent) 22%, transparent) 0%,
+        color-mix(in oklab, var(--accent-2) 8%, transparent) 40%,
+        transparent 100%);
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0.9;
+  }
   .cc-stage::after {
     content: '';
     position: absolute;
@@ -176,10 +196,12 @@ import TypingText from '~/components/TypingText.astro';
       var(--accent) 0 12px,
       transparent 12px 24px
     );
-    opacity: 0.75;
+    opacity: 0.85;
     pointer-events: none;
     z-index: 1;
-    box-shadow: 0 -4px 20px color-mix(in oklab, var(--accent) 50%, transparent);
+    box-shadow:
+      0 -2px 10px color-mix(in oklab, var(--accent) 55%, transparent),
+      0 -8px 30px color-mix(in oklab, var(--accent) 30%, transparent);
   }
 
   /* Both phase-layers fill the stage box. Opacity + scale cross-fade. */

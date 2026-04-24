@@ -449,9 +449,25 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
 
       // Ground friction when wandering is idle — bleed off horizontal
       // velocity so a thrown bot eventually settles instead of sliding.
+      // A harder coefficient kicks in at high speed (right after a
+      // throw) so the bot doesn't just trundle across the stage.
       if (bot.wanderDir === 0 && bot.isGrounded()) {
-        bot.vel.x *= 0.85;
+        const sp = Math.abs(bot.vel.x);
+        const coef = sp > 300 ? 0.72 : sp > 120 ? 0.80 : 0.88;
+        bot.vel.x *= coef;
         if (Math.abs(bot.vel.x) < 5) bot.vel.x = 0;
+      }
+
+      // Screen wrap for AIRBORNE (thrown) bots — classic toroidal
+      // behaviour when a bot has been launched hard enough to leave
+      // the stage. Ground-based bots still bounce off walls (see the
+      // wander loop below). Threshold chosen so a bot has to really
+      // fly past the edge (+ its own sprite width) before wrapping —
+      // prevents accidental teleports on wall-bounce.
+      if (!bot.isDragging && !bot.isGrounded()) {
+        const pad = 40;
+        if (bot.pos.x < -pad) bot.pos.x += LOGICAL_W + pad * 2;
+        else if (bot.pos.x > LOGICAL_W + pad) bot.pos.x -= LOGICAL_W + pad * 2;
       }
     }
   });
@@ -652,7 +668,14 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
 
   canvas.addEventListener('pointermove', (ev) => {
     if (!dragged || ev.pointerId !== activePointerId) return;
-    const { x, y } = toWorld(ev);
+    const { x: rawX, y: rawY } = toWorld(ev);
+    // Clamp the drag position inside the stage so the user can't drop
+    // a bot through the floor, into an off-screen void, or past the
+    // walls. Feet (pos.y for anchor='bot') can reach FLOOR_TOP_Y at
+    // most — below that the body would clip through the ground.
+    const DRAG_MARGIN = 20;
+    const x = Math.max(DRAG_MARGIN, Math.min(LOGICAL_W - DRAG_MARGIN, rawX));
+    const y = Math.max(60, Math.min(FLOOR_TOP_Y, rawY));
     dragged.pos.x = x;
     dragged.pos.y = y;
     const now = performance.now();

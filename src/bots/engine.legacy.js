@@ -921,6 +921,29 @@ import { FRAME_ORDER, fIdx, CLIPS, STATE_TO_CLIP } from './frames.data.js';
           sim.stackFired[who] = false;
         }
       });
+
+      // 11. Inner monologue — tiny 1-3 word bubble every 15-40 s idle,
+      //     20% chance, bypassing the SCENE pipeline (pure quickBubble).
+      if (sim._innerMonoNext === undefined) {
+        sim._innerMonoTimer = 0;
+        sim._innerMonoNext  = 15 + Math.random() * 25;
+      }
+      sim._innerMonoTimer += dt;
+      if (sim._innerMonoTimer >= sim._innerMonoNext) {
+        sim._innerMonoTimer = 0;
+        sim._innerMonoNext  = 15 + Math.random() * 25;
+        const roll = Math.random();
+        const dialogueIdle = this.dialogueState === 'idle';
+        const botsQuiet    = this.pos.craft.grounded && this.pos.code.grounded && !this.activeDrag;
+        if (roll < 0.20 && dialogueIdle && botsQuiet && !this.muted) {
+          const POOL = ['...hmm', 'почти готово', 'крч', 'lol', 'brb', 'zzz',
+                        'o_O', 'wait what', 'ага', 'ок', '...', 'чёт', 'hm',
+                        'meh', 'ну-ну'];
+          const who  = Math.random() < 0.5 ? 'craft' : 'code';
+          const text = POOL[Math.floor(Math.random() * POOL.length)];
+          try { this.quickBubble(who, text, 1500); } catch (_) {}
+        }
+      }
     },
 
     // Play the hit reaction (hit_squash → stars → recover) on hard land.

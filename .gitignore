@@ -47,3 +47,5 @@ coverage/
 # ─── Claude preview server temp ─────────────
 .claude-preview/
 .aider*
+
+.claude/worktrees/

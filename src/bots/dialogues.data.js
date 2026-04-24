@@ -20,129 +20,89 @@
 //  LORE & CHARACTER BIBLE
 //  (Полный лор: LORE.md в корне репо. Здесь — рабочая шпаргалка.)
 //
-//  🎭 CRAFT (Коралловый, высокий) — Творец
-//     Поверхность: энтузиаст, импульсивный, тёплый, немного забывчивый.
-//     Глубина: боится, что его работа "недостаточно настоящая". Ревнует к
-//              точности CODE, но глубоко её уважает. Его энергия идёт
-//              волнами — от гиперактивности ("искрит") до меланхоличного
-//              затишья.
-//     Речь: короткие восклицания ("!", "Ого!"), эмоциональные глаголы.
-//           Часто начинает длинную метафору и забывает её закончить.
-//     Тики: лепит формы из воздуха (sketch_air), покачивается, крутит
-//           молоток. Эксклюзивные клипы: hammer, sketch_air.
-//     Радости: новый тон краски, круглые фаски, когда CODE улыбается.
-//     Страхи: потерять мысль до вечера, обидеть партнёра.
-//
-//  🧊 CODE (Бирюзовый, широкий) — Инженер
-//     Поверхность: точный, методичный, сухой, молчаливый.
-//     Глубина: его "сухость" — форма глубокой нежности. Не понимает иронию,
-//              но заботится через точность ("3.14 см правее, иначе упадёшь").
-//              Боится неточности: "неровное = неспокойное".
-//     Речь: короткие фразы, факты, цифры, существительные. Редкий, ОЧЕНЬ
-//           сухой юмор.
-//     Тики: измеряет расстояние (measure_distance), микро-тайпинг,
-//           выравнивание ног. Эксклюзивные клипы: bar, measure_distance.
-//     Радости: когда цифры сошлись. Когда тишина "правильной" длины.
-//     Страхи: что CRAFT улетит со сквозняком и не вернётся.
-//
-//  ⚖️ ДИНАМИКА ПАРЫ
-//     - CRAFT инициирует, CODE сдерживает и направляет.
-//     - Микро-ссоры (из-за миллиметров) и микро-примирения — рутина.
-//     - Их объединяет работа над «Чертежом № 7» (Магнум Опус).
-//     - НИКАКОЙ четвёртой стены. Вмешательство пользователя = ветер/
-//       аномалия/сквозняк/"слой перекрасили".
-//
-//  🔑 СЛОВАРЬ МАСТЕРСКОЙ
-//     Валентин       = любимый тяжёлый камень / гиря
-//     Сквозняк       = вмешательство пользователя (drag/throw)
-//     Аномалия       = непредвиденное физическое событие
-//     Слой перекрасили = смена темы сайта
-//     Не по чертежу  = хаос, ошибка
-//     Ровно / В допуске = наивысшая похвала от CODE
-//     Усадка         = отдых, пауза
-//     Шум            = баги, непонятные явления
-//     Искрит         = гипер-возбуждение CRAFT
-//     Пересчёт       = способ CODE успокоиться
-//     Архитектор     = "Первый Архитектор", создатель (отсутствует)
-//
-//  Adding a new scene: push a new entry into SCENES with a unique id
-//  and at least one matching `tags` value. The engine auto-picks it
-//  whenever that tag's context fires.
+//  🎭 CRAFT — розовый пиксель-энтузиаст. Любит Paper2D, круглые фаски,
+//             бросается в идеи головой вперёд, часто не дочитывает доку.
+//             Говорит слэнгом: "крч", "lol", "brb". Ломает pivot'ы.
+//  🧊 CODE  — жёлтый инженер. Atlas-минималист, считает миллиметры и кадры,
+//             сухой юмор, иногда выдаёт бинарное "01". Фиксит за CRAFT.
+//  ⚖️ Вместе: пилят «Чертёж № 7» — их Магнум Опус (вероятно, спрайт-атлас).
+//             Никакой четвёртой стены: drag/throw = "сквозняк", смена темы =
+//             "слой перекрасили", баги = "шум", UE crash = "Tick() умер".
 // ════════════════════════════════════════════════════
 
 export const SCENES = [
   // ─── IDLE chatter ────────────────────────────────────
   { id: 'idle.build_idea', tags: ['idle'], weight: 3, cooldown: 80,
     lines: [
-      { who: 'craft', text: 'придумал новую форму' },
-      { who: 'code',  text: 'чертёж есть?' },
+      { who: 'craft', text: 'крч, придумал новый спрайт' },
+      { who: 'code',  text: 'pivot где' },
       { who: 'craft', text: 'в голове', act: 'excited' },
-      { who: 'code',  text: 'ненадёжное место' },
+      { who: 'code',  text: 'опять уедет' },
     ]},
 
   { id: 'idle.sculpt_air', tags: ['idle'], weight: 2, cooldown: 100,
     lines: [
-      { who: 'craft', text: '*лепит в воздухе*', act: 'typing' },
-      { who: 'code',  text: 'что это' },
+      { who: 'craft', text: '*лепит меш в воздухе*', act: 'typing' },
+      { who: 'code',  text: 'это че' },
       { who: 'craft', text: 'угол' },
-      { who: 'code',  text: 'в нём 91 градус' },
-      { who: 'craft', text: 'я старался' },
+      { who: 'code',  text: 'в нём 91 градус. normals плачут' },
+      { who: 'craft', text: 'я художник, я так вижу' },
     ]},
 
   { id: 'idle.measure_me', tags: ['idle'], weight: 2, cooldown: 90,
     lines: [
-      { who: 'code',  text: 'между нами 3.14 см' },
+      { who: 'code',  text: 'между нами ровно 3.14 UE-юнита' },
       { who: 'craft', text: 'только что было пять' },
-      { who: 'code',  text: 'ты подполз' },
+      { who: 'code',  text: 'ты подполз. vx > 0' },
     ]},
 
   { id: 'idle.breathing', tags: ['idle'], weight: 1, cooldown: 180,
     lines: [
-      { who: 'code',  text: 'ты дышишь?' },
-      { who: 'craft', text: 'вроде' },
-      { who: 'code',  text: 'перестань' },
+      { who: 'code',  text: 'ты в Tick() сейчас?' },
+      { who: 'craft', text: 'вроде да' },
+      { who: 'code',  text: 'отпишись' },
       { who: 'craft', text: '...' },
-      { who: 'code',  text: 'теперь дыши' },
+      { who: 'code',  text: 'ок, дыши дальше' },
     ]},
 
   { id: 'idle.what_are_we', tags: ['idle'], weight: 2, cooldown: 140,
     lines: [
-      { who: 'craft', text: 'а мы для чего?' },
-      { who: 'code',  text: 'строить' },
-      { who: 'craft', text: 'что' },
-      { who: 'code',  text: 'всё это' },
-      { who: 'craft', text: '*оглядывается*' },
+      { who: 'craft', text: 'а мы вообще для чего?' },
+      { who: 'code',  text: 'для атласа' },
+      { who: 'craft', text: 'какого' },
+      { who: 'code',  text: 'этого вот всего', act: 'surprised' },
+      { who: 'craft', text: '*оглядывается, видит UV*' },
     ]},
 
   { id: 'idle.redo_it', tags: ['idle'], weight: 2, cooldown: 100,
     lines: [
-      { who: 'code',  text: 'надо переделать' },
-      { who: 'craft', text: 'что именно' },
-      { who: 'code',  text: 'я ещё не решил' },
-      { who: 'craft', text: 'это опасно звучит' },
+      { who: 'code',  text: 'надо ребилд' },
+      { who: 'craft', text: 'чего' },
+      { who: 'code',  text: 'я ещё не решил. но надо' },
+      { who: 'craft', text: 'звучит как пятница' },
     ]},
 
   { id: 'idle.draft_sketch', tags: ['idle'], weight: 2, cooldown: 120,
     lines: [
-      { who: 'craft', text: 'нарисую — покажу' },
-      { who: 'code',  text: 'я возьму линейку' },
-      { who: 'craft', text: 'не надо', act: 'surprised' },
-      { who: 'code',  text: 'поздно' },
+      { who: 'craft', text: 'щас набросаю спрайт — глянешь' },
+      { who: 'code',  text: 'я возьму линейку и grid snap' },
+      { who: 'craft', text: 'только без snap!', act: 'surprised' },
+      { who: 'code',  text: 'поздно. уже 16x16' },
     ]},
 
   { id: 'idle.small_victory', tags: ['idle'], weight: 1, cooldown: 150,
     lines: [
-      { who: 'code',  text: 'вчера я подровнял край' },
+      { who: 'code',  text: 'вчера я подровнял край атласа' },
       { who: 'craft', text: 'какой' },
       { who: 'code',  text: 'не помню какой' },
-      { who: 'craft', text: 'но ты помнишь что ровнял' },
-      { who: 'code',  text: 'я помню чувство' },
+      { who: 'craft', text: 'но ты помнишь чувство' },
+      { who: 'code',  text: 'да. -42 пикселя впустую' },
     ]},
 
   { id: 'idle.listen_quiet', tags: ['idle'], weight: 1, cooldown: 140,
     lines: [
       { who: 'craft', text: 'слышишь как тишина звенит?' },
-      { who: 'code',  text: 'это не тишина. это нагрузка' },
+      { who: 'code',  text: 'это не тишина. это GPU fan' },
       { who: 'craft', text: 'красиво звучит' },
     ]},
 
@@ -150,19 +110,19 @@ export const SCENES = [
     lines: [
       { who: 'code',  text: 'давай посчитаем' },
       { who: 'craft', text: 'что' },
-      { who: 'code',  text: 'что-нибудь' },
+      { who: 'code',  text: 'drawcalls' },
       { who: 'craft', text: 'один' },
-      { who: 'code',  text: 'достаточно' },
+      { who: 'code',  text: 'уже слишком много' },
     ]},
 
   { id: 'idle.valentin', tags: ['idle'], weight: 0.8, cooldown: 400,
     lines: [
-      { who: 'craft', text: 'имя камню придумаем?' },
-      { who: 'code',  text: 'какому' },
-      { who: 'craft', text: 'любому' },
-      { who: 'code',  text: 'Валентин' },
-      { who: 'craft', text: '...почему' },
-      { who: 'code',  text: 'он похож' },
+      { who: 'craft', text: 'назовём этот камень?' },
+      { who: 'code',  text: 'каким неймингом' },
+      { who: 'craft', text: 'любым' },
+      { who: 'code',  text: 'Валентин_FINAL_v2' },
+      { who: 'craft', text: '...почему v2' },
+      { who: 'code',  text: 'будет v3. всегда так' },
     ],
     effect: (ctx) => ctx.setFlag('valentin_mentioned', 1, 600) },
 
@@ -170,324 +130,432 @@ export const SCENES = [
     requires: (ctx) => !!ctx.flags.valentin_mentioned,
     lines: [
       { who: 'craft', text: 'а где Валентин?' },
-      { who: 'code',  text: 'на своём месте' },
-      { who: 'craft', text: 'хорошо' },
+      { who: 'code',  text: 'в /Assets/_old/' },
+      { who: 'craft', text: 'ну хоть живой' },
     ]},
 
   { id: 'idle.tiny_wave', tags: ['idle'], weight: 1.2, cooldown: 180,
     lines: [
-      { who: 'craft', text: 'потренируюсь', act: 'wave' },
-      { who: 'code',  text: 'в чём' },
-      { who: 'craft', text: 'в эмоциях' },
-      { who: 'code',  text: 'убедительно' },
+      { who: 'craft', text: 'потренирую анимацию', act: 'wave' },
+      { who: 'code',  text: 'сколько кадров' },
+      { who: 'craft', text: 'четыре' },
+      { who: 'code',  text: 'убедительно. как Paper2D в 2014' },
     ]},
 
   { id: 'idle.you_tired', tags: ['idle'], weight: 1, cooldown: 160,
     lines: [
       { who: 'code',  text: 'ты сегодня тише' },
-      { who: 'craft', text: 'думаю' },
+      { who: 'craft', text: 'мыслю' },
       { who: 'code',  text: 'о?' },
-      { who: 'craft', text: 'это секрет' },
+      { who: 'craft', text: 'NDA' },
     ]},
 
   { id: 'idle.both_stare', tags: ['idle'], weight: 0.7, cooldown: 240,
     lines: [
       { who: 'craft', text: '*смотрит вдаль*' },
-      { who: 'code',  text: '*смотрит туда же*' },
+      { who: 'code',  text: '*смотрит в тот же viewport*' },
       { who: 'craft', text: 'что там' },
-      { who: 'code',  text: 'другая сторона' },
+      { who: 'code',  text: 'level streaming. ничего интересного' },
+    ]},
+
+  // ─── NEW IDLE — game-dev flavour ─────────────────────
+  { id: 'idle.tick_dead', tags: ['idle'], weight: 2, cooldown: 120,
+    lines: [
+      { who: 'craft', text: 'чёт Tick() подвисает' },
+      { who:  'code', text: 'ты в BeginPlay залип' },
+      { who: 'craft', text: 'а, точно. brb' },
+    ]},
+
+  { id: 'idle.atlas_full', tags: ['idle'], weight: 2, cooldown: 150,
+    lines: [
+      { who:  'code', text: 'атлас забит под потолок' },
+      { who: 'craft', text: 'ещё один спрайт влезет?' },
+      { who:  'code', text: 'только если ты станешь 2x2' },
+      { who: 'craft', text: 'ставлю downscale', act: 'typing' },
+    ]},
+
+  { id: 'idle.pivot_gone', tags: ['idle'], weight: 2, cooldown: 130,
+    lines: [
+      { who: 'craft', text: 'чёт pivot опять уехал' },
+      { who:  'code', text: 'куда' },
+      { who: 'craft', text: 'куда-то в (0, -∞)' },
+      { who:  'code', text: 'романтично' },
+    ]},
+
+  { id: 'idle.paper2d_flex', tags: ['idle'], weight: 1, cooldown: 200,
+    lines: [
+      { who: 'craft', text: 'Paper2D всё-таки живёт' },
+      { who:  'code', text: 'живёт. просто тихо' },
+      { who: 'craft', text: 'как мы по субботам' },
+    ]},
+
+  { id: 'idle.blueprint_spaghetti', tags: ['idle'], weight: 1.5, cooldown: 160,
+    lines: [
+      { who: 'craft', text: 'глянь мой блюпринт' },
+      { who:  'code', text: '*молча отключает монитор*' },
+      { who: 'craft', text: 'ну и ладно, lol' },
+    ]},
+
+  { id: 'idle.lightmap_bake', tags: ['idle'], weight: 1, cooldown: 300,
+    lines: [
+      { who:  'code', text: 'lightmap печётся. 47 минут' },
+      { who: 'craft', text: 'кофе?' },
+      { who:  'code', text: 'два' },
+    ]},
+
+  { id: 'idle.fps_drop', tags: ['idle'], weight: 1.5, cooldown: 150,
+    lines: [
+      { who: 'craft', text: 'у меня 24 fps' },
+      { who:  'code', text: 'это кинематографично' },
+      { who: 'craft', text: 'это страдание' },
+    ]},
+
+  { id: 'idle.git_blame', tags: ['idle'], weight: 1, cooldown: 180,
+    lines: [
+      { who:  'code', text: 'git blame показал тебя' },
+      { who: 'craft', text: 'ложь и инсинуации' },
+      { who:  'code', text: 'commit "wip fix wip"' },
+      { who: 'craft', text: '...ок это я' },
+    ]},
+
+  { id: 'idle.npe', tags: ['idle'], weight: 1, cooldown: 120,
+    lines: [
+      { who: 'craft', text: 'nullptr поймал' },
+      { who:  'code', text: 'классика' },
+      { who: 'craft', text: 'я его отпустил' },
+      { who:  'code', text: 'он вернётся' },
+    ]},
+
+  { id: 'idle.hot_reload', tags: ['idle'], weight: 1.2, cooldown: 140,
+    lines: [
+      { who:  'code', text: 'hot reload' },
+      { who: 'craft', text: 'не надо' },
+      { who:  'code', text: 'уже' },
+      { who: 'craft', text: '*экран потух*' },
+    ]},
+
+  { id: 'idle.todo_forever', tags: ['idle'], weight: 1, cooldown: 220,
+    lines: [
+      { who: 'craft', text: '// TODO: fix later' },
+      { who:  'code', text: 'дата комита?' },
+      { who: 'craft', text: '2019' },
+      { who:  'code', text: 'later уже прошёл' },
+    ]},
+
+  { id: 'idle.uv_island', tags: ['idle'], weight: 1, cooldown: 240,
+    lines: [
+      { who: 'craft', text: 'UV-остров уплыл' },
+      { who:  'code', text: 'поймай за угол' },
+      { who: 'craft', text: 'он без углов' },
+      { who:  'code', text: 'ты его круглым нарисовал' },
+    ]},
+
+  { id: 'idle.engine_version', tags: ['idle'], weight: 0.8, cooldown: 400,
+    lines: [
+      { who: 'craft', text: 'UE 5.5 вышел?' },
+      { who:  'code', text: '5.6' },
+      { who: 'craft', text: 'мы на 5.2' },
+      { who:  'code', text: 'я знаю' },
+    ]},
+
+  { id: 'idle.shipping_build', tags: ['idle'], weight: 0.8, cooldown: 300,
+    lines: [
+      { who:  'code', text: 'shipping собирается' },
+      { who: 'craft', text: 'сколько' },
+      { who:  'code', text: '3 часа' },
+      { who: 'craft', text: 'brb, кушать' },
     ]},
 
   // ─── CLICK responses ─────────────────────────────────
   { id: 'click.craft.1',  tags: ['click:craft'], weight: 1, cooldown: 3,
     lines: [{ who: 'craft', text: 'хэй' }] },
   { id: 'click.craft.2',  tags: ['click:craft'], weight: 1, cooldown: 3,
-    lines: [{ who: 'craft', text: 'осторожнее' }] },
+    lines: [{ who: 'craft', text: 'коллайдер же' }] },
   { id: 'click.craft.3',  tags: ['click:craft'], weight: 1, cooldown: 3,
-    lines: [{ who: 'craft', text: 'щекотно' }] },
+    lines: [{ who: 'craft', text: 'щекотно lol' }] },
   { id: 'click.craft.4',  tags: ['click:craft'], weight: 0.8, cooldown: 6,
-    lines: [{ who: 'craft', text: '*поёжился*', act: 'surprised' }] },
+    lines: [{ who: 'craft', text: '*поёжился в 1 кадр*', act: 'surprised' }] },
   { id: 'click.craft.spam', tags: ['click:craft'], weight: 2, cooldown: 12,
     requires: (ctx) => (ctx.flags.craft_click_count || 0) >= 4,
-    lines: [{ who: 'craft', text: 'СТОП', act: 'surprised' }] },
+    lines: [{ who: 'craft', text: 'СТОП, я не кнопка', act: 'surprised' }] },
 
   { id: 'click.code.1', tags: ['click:code'], weight: 1, cooldown: 3,
-    lines: [{ who: 'code', text: 'зафиксировано' }] },
+    lines: [{ who: 'code', text: 'input зафиксирован' }] },
   { id: 'click.code.2', tags: ['click:code'], weight: 1, cooldown: 3,
-    lines: [{ who: 'code', text: 'измерено' }] },
+    lines: [{ who: 'code', text: 'tap @ (x,y)' }] },
   { id: 'click.code.3', tags: ['click:code'], weight: 1, cooldown: 3,
-    lines: [{ who: 'code', text: 'и что это было' }] },
+    lines: [{ who: 'code', text: 'и это был... клик' }] },
   { id: 'click.code.4', tags: ['click:code'], weight: 0.7, cooldown: 8,
-    lines: [{ who: 'code', text: '*демонстративно молчит*' }] },
+    lines: [{ who: 'code', text: '*молчит в 01010*' }] },
   { id: 'click.code.spam', tags: ['click:code'], weight: 2, cooldown: 12,
     requires: (ctx) => (ctx.flags.code_click_count || 0) >= 4,
-    lines: [{ who: 'code', text: 'достаточно касаний', act: 'surprised' }] },
+    lines: [{ who: 'code', text: 'rate limit превышен', act: 'surprised' }] },
 
-  // ─── GRAB reactions (fast, one-liner) ────────────────
+  // ─── GRAB reactions ─────────────────────────────────
   { id: 'grab.craft.1', tags: ['grab:craft'], weight: 2, cooldown: 2,
     lines: [{ who: 'craft', text: 'ОЙ' }] },
   { id: 'grab.craft.2', tags: ['grab:craft'], weight: 1, cooldown: 5,
-    lines: [{ who: 'craft', text: 'ЛЕЧУ?' }] },
+    lines: [{ who: 'craft', text: 'ЛЕЧУ?!' }] },
   { id: 'grab.craft.3', tags: ['grab:craft'], weight: 1, cooldown: 5,
-    lines: [{ who: 'craft', text: 'невесомость!' }] },
+    lines: [{ who: 'craft', text: 'zero-g mode!' }] },
   { id: 'grab.craft.4', tags: ['grab:craft'], weight: 1, cooldown: 5,
-    lines: [{ who: 'craft', text: 'аа, коррекция высоты' }] },
+    lines: [{ who: 'craft', text: 'аа, teleport' }] },
   { id: 'grab.craft.5', tags: ['grab:craft'], weight: 0.6, cooldown: 12,
-    lines: [{ who: 'craft', text: 'лапы, лапы не трогай' }] },
+    lines: [{ who: 'craft', text: 'лапы, лапы, это asset!' }] },
 
   { id: 'grab.code.1', tags: ['grab:code'], weight: 2, cooldown: 2,
     lines: [{ who: 'code', text: 'координаты плывут' }] },
   { id: 'grab.code.2', tags: ['grab:code'], weight: 1, cooldown: 5,
-    lines: [{ who: 'code', text: 'высота: растёт' }] },
+    lines: [{ who: 'code', text: 'Y++' }] },
   { id: 'grab.code.3', tags: ['grab:code'], weight: 1, cooldown: 5,
-    lines: [{ who: 'code', text: 'не ронять' }] },
+    lines: [{ who: 'code', text: 'не ронять. я prefab' }] },
   { id: 'grab.code.4', tags: ['grab:code'], weight: 1, cooldown: 5,
-    lines: [{ who: 'code', text: 'отпусти на платформу' }] },
+    lines: [{ who: 'code', text: 'отпусти на floor_01' }] },
   { id: 'grab.code.5', tags: ['grab:code'], weight: 0.6, cooldown: 12,
-    lines: [{ who: 'code', text: 'я точное оборудование' }] },
+    lines: [{ who: 'code', text: 'это precision hardware' }] },
 
-  // ─── THROW reactions (airborne launched) ─────────────
+  // ─── THROW reactions ─────────────────────────────────
   { id: 'throw.craft.1', tags: ['throw:craft'], weight: 2, cooldown: 3,
     lines: [{ who: 'craft', text: 'ЛЕЧУУУУ' }] },
   { id: 'throw.craft.2', tags: ['throw:craft'], weight: 1, cooldown: 5,
-    lines: [{ who: 'craft', text: 'я ПТИЦА' }] },
+    lines: [{ who: 'craft', text: 'я RAGDOLL!' }] },
   { id: 'throw.craft.3', tags: ['throw:craft'], weight: 1, cooldown: 5,
     lines: [{ who: 'craft', text: 'не по чертежу!' }] },
   { id: 'throw.craft.4', tags: ['throw:craft'], weight: 0.7, cooldown: 12,
-    lines: [{ who: 'craft', text: 'ВАУ' }] },
+    lines: [{ who: 'craft', text: 'ВАУ parabola' }] },
 
   { id: 'throw.code.1', tags: ['throw:code'], weight: 2, cooldown: 3,
-    lines: [{ who: 'code', text: 'скорость: избыточна' }] },
+    lines: [{ who: 'code', text: 'velocity: избыточна' }] },
   { id: 'throw.code.2', tags: ['throw:code'], weight: 1, cooldown: 5,
-    lines: [{ who: 'code', text: 'траектория неизвестна' }] },
+    lines: [{ who: 'code', text: 'trajectory = NaN' }] },
   { id: 'throw.code.3', tags: ['throw:code'], weight: 1, cooldown: 5,
-    lines: [{ who: 'code', text: 'я этого не просил' }] },
+    lines: [{ who: 'code', text: 'я не подписывал release form' }] },
   { id: 'throw.code.4', tags: ['throw:code'], weight: 0.7, cooldown: 12,
-    lines: [{ who: 'code', text: 'инерция подхватила' }] },
+    lines: [{ who: 'code', text: 'inertia подхватила' }] },
 
-  // ─── PARTNER reactions — when OTHER is airborne/lands ─
+  // ─── PARTNER reactions ──────────────────────────────
   { id: 'partner.code_sees_craft_flying', tags: ['partner_on_throw:craft'], weight: 2, cooldown: 6,
-    lines: [{ who: 'code', text: 'CRAFT?!', act: 'surprised' }] },
+    lines: [{ who: 'code', text: 'CRAFT?! У тебя wings нет', act: 'surprised' }] },
   { id: 'partner.code_measures_flight', tags: ['partner_on_throw:craft'], weight: 1, cooldown: 10,
-    lines: [{ who: 'code', text: 'любопытная траектория' }] },
+    lines: [{ who: 'code', text: 'любопытный arc' }] },
   { id: 'partner.code_calls_craft', tags: ['partner_on_throw:craft'], weight: 1, cooldown: 10,
-    lines: [{ who: 'code', text: 'возвращайся' }] },
+    lines: [{ who: 'code', text: 'возвращайся в prefab' }] },
   { id: 'partner.code_shrug', tags: ['partner_on_throw:craft'], weight: 0.8, cooldown: 15,
-    lines: [{ who: 'code', text: '*записывает высоту*', act: 'typing' }] },
+    lines: [{ who: 'code', text: '*логирует высоту в csv*', act: 'typing' }] },
 
   { id: 'partner.craft_sees_code_flying', tags: ['partner_on_throw:code'], weight: 2, cooldown: 6,
-    lines: [{ who: 'craft', text: 'CODE!', act: 'surprised' }] },
+    lines: [{ who: 'craft', text: 'CODE!!', act: 'surprised' }] },
   { id: 'partner.craft_cheers_code', tags: ['partner_on_throw:code'], weight: 1, cooldown: 10,
-    lines: [{ who: 'craft', text: 'ты МОЖЕШЬ летать!' }] },
+    lines: [{ who: 'craft', text: 'ты ЛЕТИШЬ! как птица gltf!' }] },
   { id: 'partner.craft_worry_code', tags: ['partner_on_throw:code'], weight: 1, cooldown: 10,
-    lines: [{ who: 'craft', text: 'не потеряйся' }] },
+    lines: [{ who: 'craft', text: 'не garbage-collect его!' }] },
 
   { id: 'partner.code_check_craft', tags: ['partner_on_land_hard:craft'], weight: 2, cooldown: 8,
     lines: [
-      { who: 'code',  text: 'ты цел?', act: 'surprised' },
-      { who: 'craft', text: 'угу' },
+      { who: 'code',  text: 'ты цел? хитбоксы?', act: 'surprised' },
+      { who: 'craft', text: 'угу. только pride минус десять' },
       { who: 'code',  text: 'это не по чертежу' },
     ]},
   { id: 'partner.craft_check_code', tags: ['partner_on_land_hard:code'], weight: 2, cooldown: 8,
     lines: [
       { who: 'craft', text: 'CODE?', act: 'surprised' },
-      { who: 'code',  text: 'углы на месте' },
+      { who: 'code',  text: 'углы integrity OK' },
       { who: 'craft', text: 'фух' },
     ]},
 
-  // ─── LANDING reactions (own bubble, fast) ────────────
+  // ─── LANDING ─────────────────────────────────────────
   { id: 'land_soft.1', tags: ['land_soft:craft','land_soft:code'], weight: 2, cooldown: 2,
     lines: [{ who: 'craft', text: 'уф' }] },
   { id: 'land_soft.2', tags: ['land_soft:craft','land_soft:code'], weight: 1, cooldown: 4,
-    lines: [{ who: 'craft', text: '*отряхивается*' }] },
+    lines: [{ who: 'craft', text: '*обнуляет velocity*' }] },
   { id: 'land_soft.3', tags: ['land_soft:craft','land_soft:code'], weight: 1, cooldown: 4,
-    lines: [{ who: 'craft', text: 'приземлился' }] },
+    lines: [{ who: 'craft', text: 'touched ground' }] },
   { id: 'land_soft.4', tags: ['land_soft:craft','land_soft:code'], weight: 0.8, cooldown: 8,
-    lines: [{ who: 'craft', text: 'живой' }] },
+    lines: [{ who: 'craft', text: 'HP: 100' }] },
 
   { id: 'land_hard.1', tags: ['land_hard:craft','land_hard:code'], weight: 2, cooldown: 2,
     lines: [{ who: 'craft', text: 'БАМ', act: 'surprised' }] },
   { id: 'land_hard.2', tags: ['land_hard:craft','land_hard:code'], weight: 1, cooldown: 5,
-    lines: [{ who: 'craft', text: 'я видел звёзды' }] },
+    lines: [{ who: 'craft', text: 'увидел stars.fbx' }] },
   { id: 'land_hard.3', tags: ['land_hard:craft','land_hard:code'], weight: 1, cooldown: 5,
-    lines: [{ who: 'craft', text: '*лежит*' }] },
+    lines: [{ who: 'craft', text: '*ragdoll mode*' }] },
   { id: 'land_hard.4', tags: ['land_hard:craft','land_hard:code'], weight: 0.8, cooldown: 8,
-    lines: [{ who: 'craft', text: 'ещё раз — не надо' }] },
+    lines: [{ who: 'craft', text: 'респавн?..' }] },
 
-  // ─── SETDOWN (released gently) ───────────────────────
+  // ─── SETDOWN ─────────────────────────────────────────
   { id: 'setdown.1', tags: ['setdown:craft','setdown:code'], weight: 2, cooldown: 2,
-    lines: [{ who: 'craft', text: '*поставили на место*' }] },
+    lines: [{ who: 'craft', text: '*teleport complete*' }] },
   { id: 'setdown.2', tags: ['setdown:craft','setdown:code'], weight: 1, cooldown: 4,
-    lines: [{ who: 'craft', text: 'спасибо' }] },
+    lines: [{ who: 'craft', text: 'thx' }] },
   { id: 'setdown.3', tags: ['setdown:craft','setdown:code'], weight: 1, cooldown: 4,
-    lines: [{ who: 'craft', text: 'удобно' }] },
+    lines: [{ who: 'craft', text: 'новый spawn point' }] },
 
-  // ─── ACCENT change — "we repainted a layer" ──────────
+  // ─── ACCENT ──────────────────────────────────────────
   { id: 'accent.repaint', tags: ['accent'], weight: 2, cooldown: 30,
     lines: [
-      { who: 'craft', text: 'мы перекрасили?', act: 'surprised' },
-      { who: 'code',  text: 'слой сдвинулся' },
-      { who: 'craft', text: 'красиво' },
+      { who: 'craft', text: 'нам тему перекрасили?', act: 'surprised' },
+      { who: 'code',  text: 'post-process сдвинулся' },
+      { who: 'craft', text: 'ну вкусно' },
     ]},
   { id: 'accent.spectrum', tags: ['accent'], weight: 1.5, cooldown: 30,
     lines: [
-      { who: 'code',  text: 'пигмент изменён' },
-      { who: 'craft', text: 'запиши тон' },
+      { who: 'code',  text: 'палитра обновлена' },
+      { who: 'craft', text: 'сохрани hex' },
     ]},
   { id: 'accent.try_it', tags: ['accent'], weight: 1, cooldown: 45,
     lines: [
-      { who: 'craft', text: 'новая палитра!' },
-      { who: 'code',  text: 'надо привыкнуть' },
+      { who: 'craft', text: 'новый skin!' },
+      { who: 'code',  text: 'надо привыкнуть к LUT' },
     ]},
   { id: 'accent.smell', tags: ['accent'], weight: 0.6, cooldown: 120,
     lines: [
       { who: 'craft', text: 'пахнет иначе' },
-      { who: 'code',  text: 'у цвета нет запаха' },
-      { who: 'craft', text: 'есть' },
+      { who: 'code',  text: 'у shader нет запаха' },
+      { who: 'craft', text: 'у этого есть' },
     ]},
 
   // ─── KONAMI / special ────────────────────────────────
   { id: 'konami.dance', tags: ['konami'], weight: 1, cooldown: 5,
     lines: [
-      { who: 'craft', text: '🕺', act: 'wave' },
-      { who: 'code',  text: '💃', act: 'wave' },
+      { who: 'craft', text: '🕺 dance.anim', act: 'wave' },
+      { who: 'code',  text: '💃 loop=true', act: 'wave' },
       { who: 'craft', text: 'что это было' },
-      { who: 'code',  text: 'не останавливайся' },
+      { who: 'code',  text: 'не останавливайся, FPS держит' },
     ]},
 
   { id: 'unmuted.return', tags: ['unmuted'], weight: 1, cooldown: 5,
     lines: [
-      { who: 'craft', text: 'живые', act: 'wave' },
-      { who: 'code',  text: 'снова' },
+      { who: 'craft', text: 'snd back', act: 'wave' },
+      { who: 'code',  text: 'gain = 1.0' },
     ]},
 
-  // ─── INSIGHT one-liners (during thinking macro) ──────
+  // ─── INSIGHT ─────────────────────────────────────────
   { id: 'insight.craft.1', tags: ['insight:craft'], weight: 1, cooldown: 25,
-    lines: [{ who: 'craft', text: 'идея!' }] },
+    lines: [{ who: 'craft', text: 'о! идея!' }] },
   { id: 'insight.craft.2', tags: ['insight:craft'], weight: 1, cooldown: 25,
-    lines: [{ who: 'craft', text: 'щас запишу' }] },
+    lines: [{ who: 'craft', text: 'щас запишу в TODO' }] },
   { id: 'insight.craft.3', tags: ['insight:craft'], weight: 1, cooldown: 25,
-    lines: [{ who: 'craft', text: '*рисует*' }] },
+    lines: [{ who: 'craft', text: '*рисует в Aseprite*' }] },
   { id: 'insight.craft.4', tags: ['insight:craft'], weight: 1, cooldown: 25,
-    lines: [{ who: 'craft', text: 'новая форма' }] },
+    lines: [{ who: 'craft', text: 'новый layer' }] },
   { id: 'insight.craft.5', tags: ['insight:craft'], weight: 0.7, cooldown: 45,
-    lines: [{ who: 'craft', text: 'ну конечно!' }] },
+    lines: [{ who: 'craft', text: 'ну конечно! pivot вниз!' }] },
 
   { id: 'insight.code.1', tags: ['insight:code'], weight: 1, cooldown: 25,
-    lines: [{ who: 'code', text: '3.14 см ровно' }] },
+    lines: [{ who: 'code', text: 'ровно 3.14 UU' }] },
   { id: 'insight.code.2', tags: ['insight:code'], weight: 1, cooldown: 25,
-    lines: [{ who: 'code', text: 'проверим ещё раз' }] },
+    lines: [{ who: 'code', text: 'перепроверю hash' }] },
   { id: 'insight.code.3', tags: ['insight:code'], weight: 1, cooldown: 25,
-    lines: [{ who: 'code', text: '*измеряет*' }] },
+    lines: [{ who: 'code', text: '*измеряет margin*' }] },
   { id: 'insight.code.4', tags: ['insight:code'], weight: 1, cooldown: 25,
-    lines: [{ who: 'code', text: 'сходится' }] },
+    lines: [{ who: 'code', text: 'ассерт прошёл' }] },
   { id: 'insight.code.5', tags: ['insight:code'], weight: 0.7, cooldown: 45,
-    lines: [{ who: 'code', text: 'рефактор готов' }] },
+    lines: [{ who: 'code', text: 'рефактор готов. -300 строк' }] },
 
-  // ─── TOSS — scene A sets up a launch, the engine actions it ─
+  // ─── TOSS intro ──────────────────────────────────────
   { id: 'toss.craft.chertyozh', tags: ['toss_intro:craft'], weight: 1, cooldown: 420,
     lines: [
-      { who: 'craft', text: 'ты опять поправил мой чертёж?' },
-      { who: 'code',  text: 'он был косой' },
+      { who: 'craft', text: 'ты опять починил мой pivot?' },
+      { who: 'code',  text: 'он был кривой на 7 пикселей' },
       { who: 'craft', text: 'он был ТВОРЧЕСКИЙ', act: 'surprised' },
-      { who: 'code',  text: 'и косой' },
-      { who: 'craft', text: '.всё.' },
+      { who: 'code',  text: 'и кривой' },
+      { who: 'craft', text: '.коммит.реверт.' },
     ]},
   { id: 'toss.craft.ruler', tags: ['toss_intro:craft'], weight: 1, cooldown: 420,
     lines: [
-      { who: 'code',  text: '3.14 см. отойди' },
+      { who: 'code',  text: '3.14 см. отойди, я замеряю' },
       { who: 'craft', text: 'отойду? я?' },
-      { who: 'code',  text: 'ты мешаешь замеру' },
+      { who: 'code',  text: 'ты мешаешь snap grid' },
       { who: 'craft', text: 'знаешь что ещё мешает' },
       { who: 'code',  text: 'что' },
-      { who: 'craft', text: 'ничего. ты летишь.' },
+      { who: 'craft', text: 'ничего. ты уже в воздухе.' },
     ]},
   { id: 'toss.craft.silent', tags: ['toss_intro:craft'], weight: 0.8, cooldown: 500,
     lines: [
       { who: 'craft', text: 'CODE' },
       { who: 'code',  text: 'что' },
-      { who: 'craft', text: 'у меня идея' },
+      { who: 'craft', text: 'у меня план' },
       { who: 'code',  text: 'ок' },
-      { who: 'craft', text: 'ты не спросил какая', act: 'surprised' },
-      { who: 'code',  text: '...какая' },
-      { who: 'craft', text: 'поздно' },
+      { who: 'craft', text: 'ты не спросил какой', act: 'surprised' },
+      { who: 'code',  text: '...какой' },
+      { who: 'craft', text: 'поздно. launch().' },
     ]},
 
   { id: 'toss.code.noise', tags: ['toss_intro:code'], weight: 1, cooldown: 420,
     lines: [
       { who: 'craft', text: 'ААААААА' },
-      { who: 'code',  text: 'тише' },
+      { who: 'code',  text: 'mute' },
       { who: 'craft', text: 'АААААА' },
-      { who: 'code',  text: 'ладно.' },
+      { who: 'code',  text: 'ладно. твой ход.' },
     ]},
   { id: 'toss.code.plan', tags: ['toss_intro:code'], weight: 1, cooldown: 420,
     lines: [
-      { who: 'craft', text: '*лепит круглое*', act: 'typing' },
-      { who: 'code',  text: 'должно быть квадратным' },
+      { who: 'craft', text: '*лепит круглый спрайт*', act: 'typing' },
+      { who: 'code',  text: 'должен быть квадратным для tile' },
       { who: 'craft', text: 'нет' },
-      { who: 'code',  text: 'проверь траекторию' },
+      { who: 'code',  text: 'проверь trajectory' },
       { who: 'craft', text: 'чью' },
       { who: 'code',  text: 'свою.' },
     ]},
   { id: 'toss.code.measurement', tags: ['toss_intro:code'], weight: 0.8, cooldown: 500,
     lines: [
-      { who: 'code',  text: 'между нами стало 2 см' },
-      { who: 'craft', text: 'это я подошёл' },
-      { who: 'code',  text: 'нарушение протокола' },
+      { who: 'code',  text: 'между нами 2 юнита' },
+      { who: 'craft', text: 'это я подполз' },
+      { who: 'code',  text: 'violation of spacing' },
       { who: 'craft', text: 'ой', act: 'surprised' },
-      { who: 'code',  text: 'коррекция' },
+      { who: 'code',  text: 'коррекция через physics' },
     ]},
 
   { id: 'toss_shout.craft.1', tags: ['toss_shout:craft'], weight: 1, cooldown: 10,
     lines: [{ who: 'craft', text: 'АЛЛЕ-ОП!' }] },
   { id: 'toss_shout.craft.2', tags: ['toss_shout:craft'], weight: 1, cooldown: 10,
-    lines: [{ who: 'craft', text: 'ЛЕТИ' }] },
+    lines: [{ who: 'craft', text: 'LAUNCH()' }] },
   { id: 'toss_shout.craft.3', tags: ['toss_shout:craft'], weight: 0.7, cooldown: 20,
-    lines: [{ who: 'craft', text: '*хех*' }] },
+    lines: [{ who: 'craft', text: '*хех, чит активен*' }] },
 
   { id: 'toss_shout.code.1', tags: ['toss_shout:code'], weight: 1, cooldown: 10,
-    lines: [{ who: 'code', text: 'замер высоты' }] },
+    lines: [{ who: 'code', text: 'замер apex' }] },
   { id: 'toss_shout.code.2', tags: ['toss_shout:code'], weight: 1, cooldown: 10,
-    lines: [{ who: 'code', text: 'параболический эксперимент' }] },
+    lines: [{ who: 'code', text: 'parabolic test #42' }] },
   { id: 'toss_shout.code.3', tags: ['toss_shout:code'], weight: 0.7, cooldown: 20,
-    lines: [{ who: 'code', text: 'давай ещё раз' }] },
+    lines: [{ who: 'code', text: 'reset и ещё раз' }] },
 
-  // ─── CONTINUITY scenes — reference recent events ────
+  // ─── CONTINUITY ─────────────────────────────────────
   { id: 'idle.after_throw', tags: ['idle'], weight: 5, cooldown: 40,
     requires: (ctx) => ctx.flags.craft_airborne_recent || ctx.flags.code_airborne_recent,
     lines: [
-      { who: 'craft', text: 'до сих пор укачивает' },
-      { who: 'code',  text: 'очень понимаю' },
+      { who: 'craft', text: 'до сих пор motion sick' },
+      { who: 'code',  text: 'vestibular буфер переполнен' },
     ]},
 
   { id: 'idle.wary_after_throws', tags: ['idle'], weight: 4, cooldown: 180,
     requires: (ctx) => (ctx.flags.thrown_count || 0) >= 3,
     lines: [
-      { who: 'craft', text: 'давай сегодня недалеко от пола' },
-      { who: 'code',  text: 'высота — плохая идея' },
+      { who: 'craft', text: 'давай сегодня низко-поли' },
+      { who: 'code',  text: 'высота — bad idea' },
     ]},
 
   { id: 'idle.post_crash', tags: ['idle'], weight: 6, cooldown: 30,
     requires: (ctx) => ctx.flags.craft_landed_hard_recent || ctx.flags.code_landed_hard_recent,
     lines: [
-      { who: 'code',  text: 'у меня ещё звенит' },
-      { who: 'craft', text: 'у меня тоже' },
-      { who: 'code',  text: 'постоим' },
+      { who: 'code',  text: 'у меня ещё буферы звенят' },
+      { who: 'craft', text: 'у меня vsync сбился' },
+      { who: 'code',  text: 'постоим в pause' },
     ]},
 
   { id: 'idle.tense', tags: ['idle'], weight: 3, cooldown: 90,
     requires: (ctx) => (ctx.flags.rapport ?? 50) < 30,
     lines: [
       { who: 'craft', text: 'ты сегодня странный' },
-      { who: 'code',  text: 'ты всегда странный' },
+      { who: 'code',  text: 'ты всегда странный. это baseline' },
       { who: 'craft', text: '...' },
     ]},
 
   { id: 'idle.warm', tags: ['idle'], weight: 2, cooldown: 180,
     requires: (ctx) => (ctx.flags.rapport ?? 50) > 70,
     lines: [
-      { who: 'craft', text: 'мне нравится как мы работаем' },
-      { who: 'code',  text: '*молча, но одобрительно*' },
+      { who: 'craft', text: 'мы красиво ship-аем' },
+      { who: 'code',  text: '*тихо, но одобрительно*' },
     ]},
 
   { id: 'accent.followup', tags: ['idle'], weight: 6, cooldown: 0,
@@ -495,105 +563,102 @@ export const SCENES = [
     effect: (ctx) => ctx.setFlag('accent_followup_done', 1, 180),
     lines: [
       { who: 'craft', text: 'этот тон ещё тёплый' },
-      { who: 'code',  text: 'пигмент оседает' },
+      { who: 'code',  text: 'пиксели оседают' },
       { who: 'craft', text: 'он приживётся' },
     ]},
 
   { id: 'idle.annoyed_craft', tags: ['idle'], weight: 3, cooldown: 60,
     requires: (ctx) => ctx.flags.craft_annoyed,
     lines: [
-      { who: 'craft', text: '*дуется*' },
-      { who: 'code',  text: 'пройдёт' },
+      { who: 'craft', text: '*дуется в отдельном layer*' },
+      { who: 'code',  text: 'cooldown 60s' },
     ]},
   { id: 'idle.annoyed_code', tags: ['idle'], weight: 3, cooldown: 60,
     requires: (ctx) => ctx.flags.code_annoyed,
     lines: [
-      { who: 'code',  text: 'я ещё раз пересчитаю' },
-      { who: 'craft', text: 'всё, всё, я тихо' },
+      { who: 'code',  text: 'я ещё раз пересчитаю atlas' },
+      { who: 'craft', text: 'всё, молчу, tab закрыл' },
     ]},
 
-  // ─── SCENE CHAINS — scene A sets flag, scene B follows up ─
+  // ─── SCENE CHAINS ────────────────────────────────────
   { id: 'chain.build.open', tags: ['idle'], weight: 2, cooldown: 100,
     requires: (ctx) => !ctx.flags.chain_build,
     effect: (ctx) => ctx.setFlag('chain_build', 1, 120),
     lines: [
-      { who: 'craft', text: 'что будем строить?' },
-      { who: 'code',  text: 'сначала чертёж' },
-      { who: 'craft', text: 'ок', act: 'typing' },
+      { who: 'craft', text: 'что будем билдить сегодня?' },
+      { who: 'code',  text: 'сначала спецификация' },
+      { who: 'craft', text: 'ок, ок', act: 'typing' },
     ]},
   { id: 'chain.build.close', tags: ['idle'], weight: 8, cooldown: 30,
     requires: (ctx) => ctx.flags.chain_build,
     effect: (ctx) => { delete ctx.flags.chain_build; delete ctx.flagExpiry.chain_build; },
     lines: [
-      { who: 'code',  text: 'ну что, чертёж?' },
+      { who: 'code',  text: 'ну что, спека?' },
       { who: 'craft', text: 'получается' },
-      { who: 'code',  text: 'проверю пропорции', act: 'typing' },
-      { who: 'craft', text: 'они... творческие' },
+      { who: 'code',  text: 'проверю scope', act: 'typing' },
+      { who: 'craft', text: 'он... гибкий' },
     ]},
 
   { id: 'chain.measure.open', tags: ['idle'], weight: 1.5, cooldown: 120,
     requires: (ctx) => !ctx.flags.chain_measure,
     effect: (ctx) => ctx.setFlag('chain_measure', 1, 90),
     lines: [
-      { who: 'code',  text: 'я что-то измерю' },
-      { who: 'craft', text: 'что именно' },
-      { who: 'code',  text: 'узнаешь потом', act: 'typing' },
+      { who: 'code',  text: 'я что-то профилирую' },
+      { who: 'craft', text: 'что' },
+      { who: 'code',  text: 'сам скоро узнаю', act: 'typing' },
     ]},
   { id: 'chain.measure.close', tags: ['idle'], weight: 8, cooldown: 30,
     requires: (ctx) => ctx.flags.chain_measure,
     effect: (ctx) => { delete ctx.flags.chain_measure; delete ctx.flagExpiry.chain_measure; },
     lines: [
       { who: 'craft', text: 'ну?' },
-      { who: 'code',  text: 'ровно' },
-      { who: 'craft', text: 'что ровно' },
-      { who: 'code',  text: 'всё что должно быть ровно' },
+      { who: 'code',  text: 'в допуске' },
+      { who: 'craft', text: 'что именно' },
+      { who: 'code',  text: 'всё, что должно быть ровно. кроме тебя' },
     ]},
 
   // ═════════════════════════════════════════════════════════════════
-  //  БЛОК 3 — «Чертёж № 7» (шести-этапная арка, тикает раз в 60 с)
-  //  Сценарий: CRAFT вдохновляется → CODE замеряет → CRAFT изгибает →
-  //  CODE замечает ошибку → CRAFT чинит → вместе ликуют → сброс цикла.
-  //  Прогресс хранится в flags.chertyozh_7_step (0..5, потом назад в 0).
+  //  БЛОК 3 — «Чертёж № 7»
   // ═════════════════════════════════════════════════════════════════
   { id: 'chertyozh.step_0', tags: ['chertyozh_7_tick'], weight: 10,
     requires: (ctx) => (ctx.flags.chertyozh_7_step || 0) === 0,
     effect:   (ctx) => ctx.setFlag('chertyozh_7_step', 1),
     lines: [
-      { who: 'craft', text: 'Я снова думал о Седьмом.', clip: 'idea' },
-      { who: 'code',  text: 'Базовые векторы всё ещё не утверждены.' },
-      { who: 'craft', text: 'Забудь про векторы. Важен импульс.' },
+      { who: 'craft', text: 'Я снова думал о Седьмом атласе.', clip: 'idea' },
+      { who: 'code',  text: 'Базовые UV всё ещё не утверждены.' },
+      { who: 'craft', text: 'Забудь про UV. Важен vibe.' },
     ]},
   { id: 'chertyozh.step_1', tags: ['chertyozh_7_tick'], weight: 10,
     requires: (ctx) => ctx.flags.chertyozh_7_step === 1,
     effect:   (ctx) => ctx.setFlag('chertyozh_7_step', 2),
     lines: [
-      { who: 'code',  text: 'Замеряю дистанцию для Седьмого.', clip: 'measure_distance' },
+      { who: 'code',  text: 'Замеряю padding для Седьмого.', clip: 'measure_distance' },
       { who: 'craft', text: 'Сколько нам нужно места?' },
-      { who: 'code',  text: 'Больше, чем мы имеем.' },
+      { who: 'code',  text: '2048 мало. 4096 жирно.' },
     ]},
   { id: 'chertyozh.step_2', tags: ['chertyozh_7_tick'], weight: 10,
     requires: (ctx) => ctx.flags.chertyozh_7_step === 2,
     effect:   (ctx) => ctx.setFlag('chertyozh_7_step', 3),
     lines: [
-      { who: 'craft', text: 'Если изогнём фаску вот так...', clip: 'sketch_air' },
-      { who: 'code',  text: 'Допуск нарушен на 3 миллиметра.' },
-      { who: 'craft', text: 'Это дыхание формы. Ей нужен воздух.' },
+      { who: 'craft', text: 'Если загнём фаску вот так...', clip: 'sketch_air' },
+      { who: 'code',  text: 'Отклонение +3 px от сетки.' },
+      { who: 'craft', text: 'Это дыхание спрайта. Ему нужен воздух.' },
     ]},
   { id: 'chertyozh.step_3', tags: ['chertyozh_7_tick'], weight: 10,
     requires: (ctx) => ctx.flags.chertyozh_7_step === 3,
     effect:   (ctx) => ctx.setFlag('chertyozh_7_step', 4),
     lines: [
-      { who: 'code',  text: 'Ты сделал угол 91 градус.' },
-      { who: 'craft', text: 'Он... так лучше чувствуется.', act: 'surprised' },
-      { who: 'code',  text: '91 — это не чувство. Это структурный коллапс.', clip: 'facepalm' },
+      { who: 'code',  text: 'Ты сделал угол 91°.' },
+      { who: 'craft', text: 'Он... так живее чувствуется.', act: 'surprised' },
+      { who: 'code',  text: '91 — это не чувство. Это z-fighting.', clip: 'facepalm' },
     ]},
   { id: 'chertyozh.step_4', tags: ['chertyozh_7_tick'], weight: 10,
     requires: (ctx) => ctx.flags.chertyozh_7_step === 4,
     effect:   (ctx) => ctx.setFlag('chertyozh_7_step', 5),
     lines: [
-      { who: 'craft', text: 'Я выровнял стыки.', clip: 'hammer' },
-      { who: 'code',  text: 'Сканирую... Отклонение 0.00. Ровно.' },
-      { who: 'craft', text: 'Ради тебя, мой друг.' },
+      { who: 'craft', text: 'Я подогнал стыки.', clip: 'hammer' },
+      { who: 'code',  text: 'Сканирую... delta 0.00 px. Ровно.' },
+      { who: 'craft', text: 'Ради тебя, друг.' },
     ]},
   { id: 'chertyozh.step_5', tags: ['chertyozh_7_tick'], weight: 15,
     requires: (ctx) => ctx.flags.chertyozh_7_step === 5,
@@ -603,282 +668,379 @@ export const SCENES = [
       ctx.modifyMood('code',  +20);
     },
     lines: [
-      { who: 'code',  text: 'Седьмой Чертёж стабилизирован.', clip: 'bar' },
-      { who: 'craft', text: 'МЫ ЭТО СДЕЛАЛИ!', clip: 'cheer' },
-      { who: 'code',  text: 'Процесс усадки начат.', clip: 'laugh' },
+      { who: 'code',  text: 'Седьмой Атлас ship-ed.', clip: 'bar' },
+      { who: 'craft', text: 'МЫ ЭТО ЗАРЕЛИЗИЛИ!', clip: 'cheer' },
+      { who: 'code',  text: 'Патч 1.0.1 уже в очереди.', clip: 'laugh' },
     ]},
 
-  // ═════════════════════════════════════════════════════════════════
-  //  БЛОК 7 — ВРЕМЯ СУТОК (morning / evening / silence_break)
-  // ═════════════════════════════════════════════════════════════════
+  // ─── MORNING / EVENING ──────────────────────────────
   { id: 'env.morning_1', tags: ['morning'], weight: 5, cooldown: 600,
     lines: [
-      { who: 'craft', text: 'Свежий цикл. Шарниры готовы.', clip: 'excited' },
-      { who: 'code',  text: 'Синхронизация осей завершена.' },
+      { who: 'craft', text: 'Свежий билд. Шарниры smooth.', clip: 'excited' },
+      { who: 'code',  text: 'Editor прогрет.' },
     ]},
   { id: 'env.morning_2', tags: ['morning'], weight: 3, cooldown: 600,
     lines: [
-      { who: 'code',  text: 'Калибровка прошла. Ты?' },
+      { who: 'code',  text: 'Pull rebase прошёл. Ты?' },
       { who: 'craft', text: 'Я всегда готов. Для чего — потом вспомню.' },
     ]},
   { id: 'env.evening_1', tags: ['evening'], weight: 5, cooldown: 600,
     lines: [
-      { who: 'craft', text: 'Мастерская затихает. Тени мягче.' },
-      { who: 'code',  text: 'Температура среды снижена на 4 градуса.' },
-      { who: 'craft', text: 'Время для тихих мыслей.', clip: 'silent_stare' },
+      { who: 'craft', text: 'Мастерская в night shift mode.' },
+      { who: 'code',  text: 'Ambient -4°C. CPU тоже.' },
+      { who: 'craft', text: 'Время тихого refactor.', clip: 'silent_stare' },
     ]},
   { id: 'env.evening_2', tags: ['evening'], weight: 3, cooldown: 600,
     lines: [
-      { who: 'code',  text: 'Архитектор сегодня не приходил.' },
-      { who: 'craft', text: 'Его чертежи говорят за него.' },
+      { who: 'code',  text: 'Архитектор сегодня не push-ил.' },
+      { who: 'craft', text: 'Его коммиты говорят за него.' },
     ]},
   { id: 'env.silence_1', tags: ['silence_break'], weight: 5,
     lines: [
       { who: 'craft', text: 'Тишина правильной формы.' },
-      { who: 'code',  text: 'Акустический вакуум. Ровно.' },
+      { who: 'code',  text: 'Acoustic null. Ровно.' },
     ]},
   { id: 'env.silence_2', tags: ['silence_break'], weight: 3,
     lines: [
       { who: 'code',  text: '...' },
-      { who: 'craft', text: 'Ты тоже думаешь?' },
+      { who: 'craft', text: 'Ты тоже think()?' },
       { who: 'code',  text: 'Всегда.' },
     ]},
 
-  // ═════════════════════════════════════════════════════════════════
-  //  БЛОК 5 — ПРОСТРАНСТВЕННЫЕ ХУКИ (stack / platform / stuck / lost / drag)
-  // ═════════════════════════════════════════════════════════════════
-  // --- СТЕК: кто-то на голове у другого ---
+  // ─── SPATIAL HOOKS ──────────────────────────────────
   { id: 'space.stack_top_craft', tags: ['stack:top:craft'], weight: 5, cooldown: 30,
-    lines: [{ who: 'craft', text: 'Ого! Вижу верхний край!', clip: 'wave' }]},
+    lines: [{ who: 'craft', text: 'Ого! Вижу top-edge!', clip: 'wave' }]},
   { id: 'space.stack_top_code',  tags: ['stack:top:code'],  weight: 5, cooldown: 30,
-    lines: [{ who: 'code',  text: 'Координата Y увеличена. Обзор оптимален.' }]},
+    lines: [{ who: 'code',  text: 'Y++. Обзор max.' }]},
   { id: 'space.stack_bot_craft', tags: ['stack:bottom:craft'], weight: 5, cooldown: 30,
-    lines: [{ who: 'craft', text: 'Стоишь как каменный блок. Тяжёлый!', act: 'surprised' }]},
+    lines: [{ who: 'craft', text: 'Ты тяжёлый как uncompressed PNG!', act: 'surprised' }]},
   { id: 'space.stack_bot_code',  tags: ['stack:bottom:code'],  weight: 5, cooldown: 30,
-    lines: [{ who: 'code',  text: 'Моя несущая способность не рассчитана на хаос.', clip: 'facepalm' }]},
+    lines: [{ who: 'code',  text: 'Моя collision capsule не для этого.', clip: 'facepalm' }]},
 
-  // --- ПЕРЕТАСКИВАНИЕ (аномалия) ---
   { id: 'space.drag_craft', tags: ['partner_dragged:craft'], weight: 5, cooldown: 20,
     lines: [
-      { who: 'code',  text: 'Фиксирую пространственную аномалию.' },
-      { who: 'craft', text: 'Лечу не по чертежу-у-у!' },
+      { who: 'code',  text: 'Фиксирую space anomaly.' },
+      { who: 'craft', text: 'Лечу-у-у не по atlas-у!' },
     ]},
   { id: 'space.drag_code',  tags: ['partner_dragged:code'],  weight: 5, cooldown: 20,
     lines: [
-      { who: 'craft', text: 'Эй! Куда сквозняк тебя потащил?!', act: 'surprised' },
-      { who: 'code',  text: 'Внешняя сила. Я не контролирую вектор.' },
+      { who: 'craft', text: 'Эй! Сквозняк CODE украл!', act: 'surprised' },
+      { who: 'code',  text: 'Внешний input. Vector out of scope.' },
     ]},
 
-  // --- ПОТЕРЯН за верхним краем мастерской ---
   { id: 'space.lost_craft', tags: ['partner_lost:craft'], weight: 5, cooldown: 15,
-    lines: [{ who: 'code', text: 'Связь потеряна. Он покинул сетку координат.', act: 'surprised' }]},
+    lines: [{ who: 'code', text: 'Связь lost. Он вне grid.', act: 'surprised' }]},
   { id: 'space.lost_code',  tags: ['partner_lost:code'],  weight: 5, cooldown: 15,
-    lines: [{ who: 'craft', text: 'CODE?! Ты где?!', act: 'surprised' }]},
+    lines: [{ who: 'craft', text: 'CODE?! respawn?!', act: 'surprised' }]},
 
-  // --- ЗАСТРЯЛИ ВМЕСТЕ (микро-нежность или раздражение) ---
   { id: 'space.stuck_1', tags: ['stuck_together'], weight: 5, cooldown: 60,
     lines: [
-      { who: 'code',  text: 'Дистанция ноль. Мы занимаем одни координаты.' },
-      { who: 'craft', text: 'Так теплее. Считай это усадкой.' },
+      { who: 'code',  text: 'Dist=0. Overlap detected.' },
+      { who: 'craft', text: 'Так теплее. Считай ambient occlusion.' },
     ]},
   { id: 'space.stuck_2', tags: ['stuck_together'], weight: 3, cooldown: 60,
     lines: [
-      { who: 'code',  text: 'Ты стоишь слишком близко. Протокол нарушен.' },
-      { who: 'craft', text: 'А если не нарушать?' },
+      { who: 'code',  text: 'Слишком близко. Padding violation.' },
+      { who: 'craft', text: 'А если не violation?' },
       { who: 'code',  text: '...допустимо.' },
     ]},
 
-  // --- ОТДЫХ НА ПЛАТФОРМЕ (10 с без движения на возвышении) ---
   { id: 'space.platform_craft', tags: ['platform_rest:craft'], weight: 5, cooldown: 45,
     lines: [
-      { who: 'craft', text: 'С этой полки пыль выглядит как звёзды.', clip: 'stargaze' },
-      { who: 'code',  text: 'Это микрочастицы силикона.' },
+      { who: 'craft', text: 'С полки пыль как particle system.', clip: 'stargaze' },
+      { who: 'code',  text: 'Это GPU dust.' },
     ]},
   { id: 'space.platform_code',  tags: ['platform_rest:code'],  weight: 5, cooldown: 45,
-    lines: [{ who: 'code', text: 'Возвышение стабильно. Можно начать пересчёт.', clip: 'measure_distance' }]},
+    lines: [{ who: 'code', text: 'Высота stable. Можно profile-ить.', clip: 'measure_distance' }]},
 
-  // --- СЕРИЯ УДАРОВ (3+ за 10 с) ---
   { id: 'space.bumped_craft', tags: ['bumped_repeated:craft'], weight: 5, cooldown: 30,
-    lines: [{ who: 'craft', text: 'У меня шарниры искрят от стен!', clip: 'facepalm' }]},
+    lines: [{ who: 'craft', text: 'Collider в каждую стену!', clip: 'facepalm' }]},
   { id: 'space.bumped_code',  tags: ['bumped_repeated:code'],  weight: 5, cooldown: 30,
-    lines: [{ who: 'code',  text: 'Механический стресс 85%. Поставь меня ровно.', clip: 'facepalm' }]},
+    lines: [{ who: 'code',  text: 'Stress 85%. Поставь ровно.', clip: 'facepalm' }]},
 
-  // ═════════════════════════════════════════════════════════════════
-  //  БЛОК 6 — ВЗАИМОДЕЙСТВИЕ С ПОЛЬЗОВАТЕЛЕМ (без 4-й стены)
-  // ═════════════════════════════════════════════════════════════════
-  // --- ГЛАДЯТ (один спокойный click после паузы) ---
+  // ─── USER INTERACTION ──────────────────────────────
   { id: 'user.touch_craft', tags: ['gentle_touch:craft'], weight: 5, cooldown: 120,
     lines: [
-      { who: 'craft', text: 'Ой, щекотно!', clip: 'chuckle' },
-      { who: 'code',  text: 'Сенсоры зафиксировали статический разряд.' },
+      { who: 'craft', text: 'Ой, щекотно! 12 fps смеха.', clip: 'chuckle' },
+      { who: 'code',  text: 'Sensor caught статику.' },
     ]},
   { id: 'user.touch_code',  tags: ['gentle_touch:code'],  weight: 5, cooldown: 120,
     lines: [
-      { who: 'code',  text: 'Внешнее давление оптимально.', clip: 'wave' },
-      { who: 'craft', text: 'Стенд вибрирует. Добрый знак!' },
+      { who: 'code',  text: 'Внешнее давление optimal.', clip: 'wave' },
+      { who: 'craft', text: 'Стенд вибрирует. Like!' },
     ]},
 
-  // --- СОБРАЛИ ВМЕСТЕ (мягко опустили рядом) ---
   { id: 'user.reconcile_1', tags: ['reconciliation'], weight: 5, cooldown: 60,
     lines: [
-      { who: 'code',  text: 'Дистанция восстановлена. Система стабильна.' },
-      { who: 'craft', text: 'Аномалия нас сблизила. Хорошо.', clip: 'excited' },
+      { who: 'code',  text: 'Dist восстановлена. System stable.' },
+      { who: 'craft', text: 'Сквозняк нас reunite-нул.', clip: 'excited' },
     ]},
   { id: 'user.reconcile_2', tags: ['reconciliation'], weight: 3, cooldown: 60,
     lines: [
-      { who: 'craft', text: 'Кажется, чертёж снова сходится.', clip: 'sketch_air' },
-      { who: 'code',  text: 'Подтверждаю. Допуски в норме.' },
+      { who: 'craft', text: 'Чертёж снова сходится.', clip: 'sketch_air' },
+      { who: 'code',  text: 'Tolerance: ok.' },
     ]},
 
-  // --- СПАСЛИ ПОСЛЕ УДАРА (подняли сразу после хита) ---
   { id: 'user.saved_craft', tags: ['picked_up_after_hurt:craft'], weight: 5, cooldown: 30,
     effect: (ctx) => ctx.modifyMood('craft', +10),
-    lines: [{ who: 'craft', text: 'Фух... спасибо. Меня знатно помяло.', clip: 'wipe_tear' }]},
+    lines: [{ who: 'craft', text: 'Фух... thx. HP было на нуле.', clip: 'wipe_tear' }]},
   { id: 'user.saved_code',  tags: ['picked_up_after_hurt:code'],  weight: 5, cooldown: 30,
     effect: (ctx) => ctx.modifyMood('code', +10),
-    lines: [{ who: 'code', text: 'Вектор изменён. Благодарю за стабилизацию.' }]},
+    lines: [{ who: 'code', text: 'Vector восстановлен. Thx for stabilization.' }]},
 
-  // ═════════════════════════════════════════════════════════════════
-  //  БЛОК 8 / 9 — МАКРО-СЦЕНЫ (handoff, coffee break, pair wave)
-  // ═════════════════════════════════════════════════════════════════
-  // Длинная работа молотком (только на этапе 4 Седьмого Чертежа)
+  // ─── MACRO ──────────────────────────────────────────
   { id: 'macro.hammer_time', tags: ['idle'], weight: 2, cooldown: 180,
     requires: (ctx) => ctx.flags.chertyozh_7_step === 4,
     lines: [
-      { who: 'craft', text: 'Сейчас... подгоню этот край.' },
+      { who: 'craft', text: 'Сейчас... подправлю край.' },
       { who: 'craft', text: '...хрясь...', clip: 'hammer' },
-      { who: 'craft', text: '...ещё чуть-чуть...', clip: 'hammer' },
-      { who: 'craft', text: 'Идеально. Как по маслу.' },
-      { who: 'code',  text: 'Механическое воздействие в пределах нормы.' },
+      { who: 'craft', text: '...ещё пиксель...', clip: 'hammer' },
+      { who: 'craft', text: 'Pixel-perfect.' },
+      { who: 'code',  text: 'Механическое воздействие в норме.' },
     ]},
-  // Передача ноутбука (когда боты рядом). Близость отслеживает _simTick,
-  // выставляющий flag.bots_close (TTL 2с после последнего подтверждения).
-  // Клавиша: проверяем FLAG, не DOM.
   { id: 'macro.handoff_laptop', tags: ['idle'], weight: 2, cooldown: 240,
     requires: (ctx) => !!ctx.flags.bots_close,
     lines: [
-      { who: 'craft', text: 'Я пересчитал векторы. Смотри.', clip: 'share_laptop' },
-      { who: 'code',  text: 'Принимаю пакет данных...', clip: 'share_laptop' },
-      { who: 'code',  text: 'Ошибка 0%. Удивительно.', clip: 'typing' },
-      { who: 'craft', text: 'Я же говорил! Интуиция.', clip: 'excited' },
+      { who: 'craft', text: 'Я перебрал атлас. Смотри.', clip: 'share_laptop' },
+      { who: 'code',  text: 'Принимаю diff...', clip: 'share_laptop' },
+      { who: 'code',  text: 'Conflicts=0. Подозрительно.', clip: 'typing' },
+      { who: 'craft', text: 'Я говорил! Интуиция.', clip: 'excited' },
     ]},
-  // Кофе-брейк (только после полудня)
   { id: 'macro.coffee_break', tags: ['idle'], weight: 2, cooldown: 300,
     requires: (ctx) => ctx.sim && ctx.sim.workshopTime > 0.5,
     lines: [
-      { who: 'code',  text: 'Уровень энергии падает. Предлагаю паузу.', clip: 'rest' },
-      { who: 'craft', text: 'Хорошая идея. Вливаем масло.', clip: 'coffee_sip' },
-      { who: 'code',  text: '...Тишина стабилизирует.', clip: 'silent_stare' },
+      { who: 'code',  text: 'Energy стек падает. Паузу?', clip: 'rest' },
+      { who: 'craft', text: 'Да. Масло в кофеварку.', clip: 'coffee_sip' },
+      { who: 'code',  text: '...Тишина стабилизирует CPU.', clip: 'silent_stare' },
     ]},
-  // Одновременный привет в пустоту
   { id: 'macro.pair_wave', tags: ['idle'], weight: 2, cooldown: 180,
     lines: [
-      { who: 'craft', text: 'Привет, пространство!', clip: 'wave' },
-      { who: 'code',  text: 'Приветствую, вакуум.', clip: 'wave' },
+      { who: 'craft', text: 'Привет, viewport!', clip: 'wave' },
+      { who: 'code',  text: 'Hi, vacuum.', clip: 'wave' },
     ]},
 
-  // ═════════════════════════════════════════════════════════════════
-  //  ПАСХАЛКИ (редкие, cooldown 300+ секунд)
-  // ═════════════════════════════════════════════════════════════════
+  // ─── EASTER ─────────────────────────────────────────
   { id: 'easter.singing', tags: ['idle'], weight: 0.5, cooldown: 300,
     lines: [
-      { who: 'craft', text: '*ммм-мм-ммм...*', clip: 'wave' },
-      { who: 'code',  text: 'Что за звуковая частота?' },
-      { who: 'craft', text: 'Мелодия из старого чертежа Архитектора.' },
+      { who: 'craft', text: '*ммм-мм-8-bit мотив...*', clip: 'wave' },
+      { who: 'code',  text: 'Это chiptune?' },
+      { who: 'craft', text: 'Это my soul.wav' },
     ]},
   { id: 'easter.code_laugh', tags: ['idle'], weight: 0.5, cooldown: 500,
     lines: [
-      { who: 'code',  text: '101010. Шутка.', clip: 'laugh' },
-      { who: 'craft', text: 'Ты... ты только что смеялся?!', act: 'surprised' },
-      { who: 'code',  text: 'Акустический сбой. Забудь.' },
+      { who: 'code',  text: '01001000 01000001. Шутка.', clip: 'laugh' },
+      { who: 'craft', text: 'Ты только что смеялся?!', act: 'surprised' },
+      { who: 'code',  text: 'Акустический bug. Забудь.' },
     ]},
   { id: 'easter.valentin_missing', tags: ['idle'], weight: 2, cooldown: 180,
     lines: [
-      { who: 'craft', text: 'Ты не видел Валентина?' },
-      { who: 'code',  text: 'Твой камень лежал на оси X:40. Я его не трогал.' },
-      { who: 'craft', text: 'Он вечно куда-то уползает...' },
+      { who: 'craft', text: 'Ты не git-оишь Валентина?' },
+      { who: 'code',  text: 'X:40 его коорд. Я untouched.' },
+      { who: 'craft', text: 'Он вечно куда-то merge-ит...' },
     ]},
   { id: 'easter.theme_sense', tags: ['idle'], weight: 2, cooldown: 240,
     lines: [
-      { who: 'craft', text: 'Чувствуешь? Слой перекрасили.' },
-      { who: 'code',  text: 'Фоновый контраст изменён на 12%. Допустимо.' },
+      { who: 'craft', text: 'Чуешь? LUT сменили.' },
+      { who: 'code',  text: 'Contrast +12%. Допустимо.' },
     ]},
-  // Низкое настроение — нежная поддержка
   { id: 'mood.low_craft', tags: ['idle'], weight: 3, cooldown: 120,
     requires: (ctx) => ctx.sim && ctx.sim.mood.craft < 30,
     lines: [
-      { who: 'craft', text: '*тихо*' },
-      { who: 'code',  text: 'Хочешь, я подсчитаю что-нибудь?' },
-      { who: 'craft', text: 'Потом. Сейчас хочу просто постоять.' },
+      { who: 'craft', text: '*тихо, в серый layer*' },
+      { who: 'code',  text: 'Хочешь, я что-нибудь profile-ну?' },
+      { who: 'craft', text: 'Потом. Сейчас standby.' },
     ]},
   { id: 'mood.low_code', tags: ['idle'], weight: 3, cooldown: 120,
     requires: (ctx) => ctx.sim && ctx.sim.mood.code < 30,
     lines: [
-      { who: 'code',  text: 'Множество допусков нарушено.' },
-      { who: 'craft', text: 'Мы починим. Потом.' },
-      { who: 'code',  text: '...спасибо.' },
+      { who: 'code',  text: 'Допуски нарушены. Множество.' },
+      { who: 'craft', text: 'Починим. Завтра.' },
+      { who: 'code',  text: '...thx.' },
     ]},
-  // Высокое настроение — совместная радость
   { id: 'mood.high_both', tags: ['idle'], weight: 2, cooldown: 180,
     requires: (ctx) => ctx.sim && ctx.sim.mood.craft > 70 && ctx.sim.mood.code > 70,
     lines: [
-      { who: 'craft', text: 'Сегодня что-то... поётся.' },
-      { who: 'code',  text: 'Оптимальный операционный режим. Я согласен.' },
+      { who: 'craft', text: 'Сегодня что-то... compile-ится сразу.' },
+      { who: 'code',  text: 'Оптимальный режим. Confirmed.' },
     ]},
 
-  // ─── JUMPS & PARKOUR ─────────────────────────────────
+  // ─── JUMPS & PARKOUR ────────────────────────────────
   { id: 'jump.craft.1', tags: ['jump:craft'], weight: 2, cooldown: 15,
     lines: [{ who: 'craft', text: 'Оп!' }] },
   { id: 'jump.craft.2', tags: ['jump:craft'], weight: 1, cooldown: 30,
     lines: [{ who: 'craft', text: 'Пружиню!' }] },
   { id: 'jump.craft.3', tags: ['jump:craft'], weight: 1, cooldown: 40,
     lines: [
-      { who: 'craft', text: 'Левитация!' },
-      { who: 'code', text: 'это просто прыжок' }
+      { who: 'craft', text: 'Levitate.anim!' },
+      { who: 'code', text: 'это просто jump, lol' }
     ]},
 
   { id: 'jump.code.1', tags: ['jump:code'], weight: 2, cooldown: 15,
-    lines: [{ who: 'code', text: 'смещение по Y' }] },
+    lines: [{ who: 'code', text: 'Y-offset' }] },
   { id: 'jump.code.2', tags: ['jump:code'], weight: 1, cooldown: 30,
-    lines: [{ who: 'code', text: 'вектор вверх' }] },
+    lines: [{ who: 'code', text: 'vector.up' }] },
 
   { id: 'jump_down.craft.1', tags: ['jump_down:craft'], weight: 2, cooldown: 15,
-    lines: [{ who: 'craft', text: 'Гравитация, спасай!' }] },
+    lines: [{ who: 'craft', text: 'Гравитация, catch!' }] },
   { id: 'jump_down.code.1', tags: ['jump_down:code'], weight: 2, cooldown: 15,
-    lines: [{ who: 'code', text: 'спуск подтверждён' }] },
+    lines: [{ who: 'code', text: 'descent confirmed' }] },
 
   { id: 'jump_over.craft.1', tags: ['jump_over:craft'], weight: 2, cooldown: 15,
     lines: [{ who: 'craft', text: 'Паркур!' }] },
   { id: 'jump_over.craft.2', tags: ['jump_over:craft'], weight: 1, cooldown: 30,
-    lines: [{ who: 'craft', text: 'Огибаем препятствие!' }] },
+    lines: [{ who: 'craft', text: 'obstacle bypass!' }] },
   { id: 'jump_over.code.1', tags: ['jump_over:code'], weight: 2, cooldown: 20,
-    lines: [{ who: 'code', text: 'обходной манёвр' }] },
+    lines: [{ who: 'code', text: 'detour' }] },
   { id: 'jump_over.code.2', tags: ['jump_over:code'], weight: 1, cooldown: 30,
-    lines: [{ who: 'code', text: 'преграда. перепрыгиваю.' }] },
+    lines: [{ who: 'code', text: 'obstacle. hopping over.' }] },
 
   { id: 'stuck.craft.1', tags: ['stuck_jump:craft'], weight: 2, cooldown: 15,
     lines: [{ who: 'craft', text: 'Застрял! РРР!', act: 'surprised' }] },
   { id: 'stuck.craft.2', tags: ['stuck_jump:craft'], weight: 1, cooldown: 30,
-    lines: [{ who: 'craft', text: 'Тут нет пути!', act: 'surprised' }] },
+    lines: [{ who: 'craft', text: 'Navmesh broken!', act: 'surprised' }] },
   { id: 'stuck.code.1', tags: ['stuck_jump:code'], weight: 2, cooldown: 15,
-    lines: [{ who: 'code', text: 'ошибка коллизии' }] },
+    lines: [{ who: 'code', text: 'collision error' }] },
   { id: 'stuck.code.2', tags: ['stuck_jump:code'], weight: 1, cooldown: 30,
-    lines: [{ who: 'code', text: 'маршрут заблокирован' }] },
+    lines: [{ who: 'code', text: 'path blocked' }] },
 
   // ─── BUTTON PRESSED ─────────────────────────────────
   { id: 'button.craft.1', tags: ['button_pressed:craft'], weight: 2, cooldown: 20,
     lines: [
-      { who: 'craft', text: 'Я НАЖАЛ!', act: 'excited' },
-      { who: 'code', text: 'вижу. фон моргает.' }
+      { who: 'craft', text: 'Я НАЖАЛ КНОПКУ!', act: 'excited' },
+      { who: 'code', text: 'вижу. post-process моргает' }
     ]},
   { id: 'button.craft.2', tags: ['button_pressed:craft'], weight: 1, cooldown: 40,
     lines: [
       { who: 'craft', text: 'Смотри, магия!', act: 'surprised' },
-      { who: 'code', text: 'это скрипт, а не магия' }
+      { who: 'code', text: 'это script, а не магия' }
     ]},
   { id: 'button.code.1', tags: ['button_pressed:code'], weight: 2, cooldown: 30,
     lines: [
-      { who: 'code', text: 'контакт замкнут.' },
+      { who: 'code', text: 'event триггернулся.' },
       { who: 'craft', text: 'Ещё, нажми ещё!' }
+    ]},
+
+  // ═════════════════════════════════════════════════════════════════
+  //  BEHAVIOR — новые поведенческие сценки (engine пока не экзекьютит
+  //  actions, но структура готова под будущий scripted AI).
+  // ═════════════════════════════════════════════════════════════════
+  { id: 'behavior.chase', tags: ['behavior','idle'], weight: 1.2, cooldown: 240,
+    lines: [
+      { who: 'craft', text: 'А ну иди сюда!' },
+      { who: 'code',  text: 'Покидаю зону. Escape.exe' },
+      { who: 'craft', text: 'Я тебя всё равно догоню!' },
+      { who: 'code',  text: 'Мой ping 12 мс. Не догонишь.' },
+    ]},
+
+  { id: 'behavior.dance_battle', tags: ['behavior','idle'], weight: 1, cooldown: 300,
+    lines: [
+      { who: 'craft', text: 'Dance battle!', clip: 'wave' },
+      { who: 'code',  text: '*грувит на 128 bpm*', clip: 'wave' },
+      { who: 'craft', text: 'твой стиль — robot?' },
+      { who: 'code',  text: 'статистически точный robot' },
+    ]},
+
+  { id: 'behavior.stuck_corner', tags: ['behavior','idle'], weight: 1, cooldown: 220,
+    lines: [
+      { who: 'craft', text: 'эм. я в углу.' },
+      { who: 'code',  text: '*смеётся бесшумно*', clip: 'laugh' },
+      { who: 'craft', text: 'navmesh предал меня' },
+      { who: 'code',  text: 'ты предал navmesh' },
+    ]},
+
+  { id: 'behavior.ball_toss', tags: ['behavior','idle'], weight: 1, cooldown: 200,
+    lines: [
+      { who: 'code',  text: 'ball.throw()' },
+      { who: 'craft', text: 'ЛОВЛЮ!', act: 'excited' },
+      { who: 'code',  text: 'она в 3.14 см левее' },
+      { who: 'craft', text: '*ловит головой*' },
+    ]},
+
+  { id: 'behavior.staring_contest', tags: ['behavior','idle'], weight: 0.8, cooldown: 260,
+    lines: [
+      { who: 'craft', text: 'гляделки. готов?' },
+      { who: 'code',  text: 'у меня нет век' },
+      { who: 'craft', text: 'это читерство' },
+      { who: 'code',  text: 'это ТТХ' },
+    ]},
+
+  { id: 'behavior.shadow_play', tags: ['behavior','idle'], weight: 0.8, cooldown: 280,
+    lines: [
+      { who: 'craft', text: 'смотри, тень как дракон!' },
+      { who: 'code',  text: 'это просто ambient occlusion' },
+      { who: 'craft', text: 'у меня дракон' },
+    ]},
+
+  { id: 'behavior.hide_seek', tags: ['behavior','idle'], weight: 1, cooldown: 250,
+    lines: [
+      { who: 'craft', text: 'прячусь!' },
+      { who: 'code',  text: 'ты за одним пикселем' },
+      { who: 'craft', text: 'он мой размер' },
+      { who: 'code',  text: 'справедливо' },
+    ]},
+
+  { id: 'behavior.copy_me', tags: ['behavior','idle'], weight: 0.9, cooldown: 240,
+    lines: [
+      { who: 'craft', text: 'повторяй за мной' },
+      { who: 'craft', text: '*машет*', clip: 'wave' },
+      { who: 'code',  text: '*машет с задержкой 1 кадр*', clip: 'wave' },
+      { who: 'craft', text: 'lag у тебя' },
+    ]},
+
+  { id: 'behavior.race', tags: ['behavior','idle'], weight: 1, cooldown: 260,
+    lines: [
+      { who: 'craft', text: 'гонка до края!' },
+      { who: 'code',  text: 'три, два, один' },
+      { who: 'craft', text: 'ЧИТ!' },
+      { who: 'code',  text: 'ты стартанул на "два"' },
+    ]},
+
+  { id: 'behavior.rock_paper', tags: ['behavior','idle'], weight: 0.9, cooldown: 280,
+    lines: [
+      { who: 'craft', text: 'камень-ножницы' },
+      { who: 'code',  text: 'я всегда камень' },
+      { who: 'craft', text: 'почему' },
+      { who: 'code',  text: 'я и есть камень' },
+    ]},
+
+  { id: 'behavior.pair_plank', tags: ['behavior','idle'], weight: 0.8, cooldown: 300,
+    lines: [
+      { who: 'code',  text: 'планка. 30 секунд.' },
+      { who: 'craft', text: 'я художник, у меня талант' },
+      { who: 'code',  text: 'это не отмазка' },
+      { who: 'craft', text: 'в UE5 это отмазка' },
+    ]},
+
+  { id: 'behavior.poke_loop', tags: ['behavior','idle'], weight: 0.9, cooldown: 200,
+    lines: [
+      { who: 'craft', text: 'тык' },
+      { who: 'code',  text: 'stop' },
+      { who: 'craft', text: 'тык' },
+      { who: 'code',  text: 'STOP', act: 'surprised' },
+      { who: 'craft', text: 'тык' },
+    ]},
+
+  { id: 'behavior.echo_canyon', tags: ['behavior','idle'], weight: 0.7, cooldown: 320,
+    lines: [
+      { who: 'craft', text: 'ЭХОО!' },
+      { who: 'code',  text: 'нет reverb bus' },
+      { who: 'craft', text: 'ЭХОО!' },
+      { who: 'code',  text: '*добавляет reverb*' },
+      { who: 'craft', text: 'эхо-о-о...' },
+    ]},
+
+  { id: 'behavior.sync_nap', tags: ['behavior','idle'], weight: 0.8, cooldown: 340,
+    lines: [
+      { who: 'craft', text: 'синхронный zzz?' },
+      { who: 'code',  text: 'sleep(5)' },
+      { who: 'craft', text: '*zzz*' },
+      { who: 'code',  text: '*zzz, но ровно*' },
+    ]},
+
+  { id: 'behavior.highfive', tags: ['behavior','idle'], weight: 1, cooldown: 220,
+    lines: [
+      { who: 'craft', text: 'HIGH-FIVE!', act: 'excited' },
+      { who: 'code',  text: '*касание: зарегистрировано*', clip: 'wave' },
+      { who: 'craft', text: 'ачивка!' },
     ]},
 ];

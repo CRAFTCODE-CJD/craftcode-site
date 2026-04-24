@@ -176,6 +176,7 @@ export function bindGlobalTerminal(opts: Omit<TerminalOptions, 'host'> = {}): vo
     if (disposer) return;
     host.classList.add('term-open');
     disposer = mountTerminal({ ...opts, host });
+    document.dispatchEvent(new CustomEvent('cc:terminal-open'));
   };
 
   document.addEventListener('keydown', (e) => {
@@ -191,6 +192,7 @@ export function bindGlobalTerminal(opts: Omit<TerminalOptions, 'host'> = {}): vo
       disposer();
       disposer = null;
       document.querySelector<HTMLElement>('[data-terminal-mount]')?.classList.remove('term-open');
+      document.dispatchEvent(new CustomEvent('cc:terminal-close'));
     }
   });
 }

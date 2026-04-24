@@ -21,6 +21,8 @@ import type {
 // Side-effect import — engine.legacy.js attaches its API to window.__companions
 // once the DOM is ready. Astro's <script> bundles this into a defer module.
 import './engine.legacy.js';
+// Virtual camera — auto-initialises on DOM ready. Keeps both robots framed.
+import './bot.camera';
 
 type Listener = (s: BotState) => void;
 

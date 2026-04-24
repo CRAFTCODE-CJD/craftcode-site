@@ -14,6 +14,25 @@
     16 idea_a(-768)   17 idea_b(-816)           — thinking sequence
     18 think_a(-864)  19 think_b(-912)           — squat + laptop    */
 
+/* ── Virtual camera wrapper ───────────────────────────────────────────
+   Wraps the entire `.companions` sub-tree and applies a translate+scale
+   so both robots are always comfortably framed. The follow-logic lives
+   in bot.camera.ts and writes inline transform on this element.       */
+.cc-stage-camera {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 50%;
+  transform: translate(0, 0) scale(1);
+  transition: transform 750ms cubic-bezier(.25, .1, .25, 1);
+  will-change: transform;
+}
+.cc-stage-play[data-camera="off"] .cc-stage-camera {
+  transform: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cc-stage-camera { transition: none; }
+}
+
 /* `.companions` now lives INSIDE the BootToPlayground .cc-stage on the
    home page only. The stage provides the border, background, grid, and
    box-shadow — .companions just needs to fill it and host the robots. */

@@ -2011,9 +2011,15 @@ import { FRAME_ORDER, fIdx, CLIPS, STATE_TO_CLIP } from './frames.data.js';
           p.x  += p.vx * dt;
           p.y  += p.vy * dt;
           if (Math.abs(p.vx) > 20) p.facing = p.vx > 0 ? 'right' : 'left';
-          // Walls — damped bounce keeps the hitbox inside the canvas.
-          if (p.x < minX)      { p.x = minX;  p.vx = -p.vx * this.BOUNCE; }
-          else if (p.x > maxX) { p.x = maxX;  p.vx = -p.vx * this.BOUNCE; }
+          // Toroidal horizontal world — bot flying off the left edge
+          // reappears on the right and vice versa. Uses the FULL container
+          // width (not the SIDE_M-padded walkable range) so the wrap is
+          // invisible: the sprite smoothly disappears past one edge while
+          // the mirrored copy slides in on the other. Dragged bot is
+          // already excluded earlier in this branch via the pointer
+          // position, so no drag clamp to worry about here.
+          if (p.x < -this.S)       { p.x += cw + this.S; p._wrappedAt = performance.now(); }
+          else if (p.x > cw)       { p.x -= cw + this.S; p._wrappedAt = performance.now(); }
           // Ceiling: hitbox.top must stay >= 0. sprite.y = -padT would put
           // hitbox.top at 0. Bounce off the ceiling when reached.
           if (p.y < -pad.padT) { p.y = -pad.padT; p.vy = Math.abs(p.vy) * this.BOUNCE; }
@@ -2263,6 +2269,16 @@ import { FRAME_ORDER, fIdx, CLIPS, STATE_TO_CLIP } from './frames.data.js';
     positionBubble(who) {
       const bubble = this.bubbles[who];
       if (!bubble || !bubble.classList.contains('visible')) return;
+      // During screen-wrap (toroidal world jump) the bubble would be
+      // torn across the stage — hide it briefly so the visual pop is
+      // invisible. 300 ms covers the moment the bot re-enters from
+      // the other edge.
+      const wrappedAt = this.pos[who]?._wrappedAt;
+      if (wrappedAt && performance.now() - wrappedAt < 300) {
+        bubble.style.opacity = '0';
+        return;
+      }
+      if (bubble.style.opacity === '0') bubble.style.opacity = '';
       // Reset prior shift so the measurement below reflects "natural"
       // position — otherwise we'd chase our own tail when text grows.
       bubble.style.setProperty('--bubble-x', '0px');

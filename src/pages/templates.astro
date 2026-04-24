@@ -15,7 +15,7 @@ const { Content } = await render(entry);
       <CompanionBot bot="craft" anim="hammer" size={56} />
       <CompanionBot bot="code" anim="progress" size={56} />
     </div>
-    <h1 class="mdx-article__title">{entry.data.title}</h1>
+    <h1 class="mdx-article__title" data-i18n="site.templates.title">{entry.data.title}</h1>
     <Content components={mdxComponents} />
   </article>
 </Base>

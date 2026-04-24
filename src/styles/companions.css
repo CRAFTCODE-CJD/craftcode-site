@@ -200,6 +200,33 @@
   pointer-events: none;
   opacity: 0.85;
 }
+/* Neon top-edge for small platforms — drawn 2 px ABOVE the box so the
+   bright line sits exactly on the physics feet plane (feet = top - PLATFORM_M,
+   PLATFORM_M = 2). Mirrors .cc-floor::after. Applied on every data-ob
+   platform except .cc-floor (which has its own ::after). */
+.companions-obstacle:not(.cc-floor) > .obstacle-edge,
+.companions-obstacle:not(.cc-floor)::before {
+  /* placeholder — ::before already used for grounding shadow, so we
+     draw the neon edge through a dedicated pseudo on a child below. */
+}
+/* Use a second pseudo: we piggy-back on the existing ::after (under-glow
+   at bottom:-2px) by adding a box-shadow on the obstacle itself that
+   projects a solid 2 px line 2 px above the top edge. */
+.companions-obstacle:not(.cc-floor) {
+  /* Solid 2 px neon line at y = -2 px, plus a soft glow. This layers on
+     TOP of the existing box-shadow stack (defined on .companions-obstacle
+     above) without overriding it. */
+  box-shadow:
+    0 -2px 0 0 var(--accent-2),
+    0 -4px 8px color-mix(in oklab, var(--accent-2) 70%, transparent),
+    0 -2px 12px color-mix(in oklab, var(--accent) 45%, transparent),
+    0 0 0 1px color-mix(in oklab, var(--accent) 18%, transparent),
+    0 6px 14px rgba(0, 0, 0, 0.4),
+    0 2px 10px color-mix(in oklab, var(--accent) 28%, transparent),
+    inset 0 1px 0 color-mix(in oklab, var(--accent-2) 40%, transparent),
+    inset 0 -1px 0 color-mix(in oklab, var(--accent) 40%, transparent);
+}
+
 .companions-obstacle .obstacle-lbl {
   position: absolute;
   top: -14px;
@@ -500,6 +527,16 @@
 @media (prefers-reduced-motion: reduce) {
   .companion { animation: none !important; }
   .companion-bubble { transition: opacity 0.1s !important; }
+}
+
+/* RU typography — Cyrillic compound words ("оптимизировать") are wider
+   than equivalent EN phrases. Trim font-size and max-width so RU bubbles
+   don't overflow the stage or wrap into tall columns.
+   <html lang> is toggled by Topbar on language switch, so :lang(ru)
+   applies reactively. */
+:lang(ru) .companion-bubble {
+  font-size: clamp(11px, 2.2vw, 14px);
+  max-width: min(220px, calc(100vw - 24px));
 }
 
 /* Tablet — slightly tighter max-width so bubbles don't cross the stage edge */

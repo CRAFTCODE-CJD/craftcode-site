@@ -71,9 +71,15 @@ import TypingText from '~/components/TypingText.astro';
         <span class="obstacle-lbl">// crate_03</span>
       </div>
       
-      <!-- Interactive floor button -->
+      <!-- Interactive floor button — visually sits ON the neon floor surface.
+           .cc-floor is at `bottom: -40px; height: 50px` → its visible top
+           (neon line at cc-floor::after { top: -2px }) is at
+           `bottom = 50 - 40 - 2 = 8px` within .companions. We place the
+           button's BOTTOM at that same line (bottom: 8px) so the button
+           rests squarely on the lit ground plane. z-index above the floor
+           (z:1) but below obstacles (z:2) and bots (z:10). -->
       <div class="companions-button" id="cc-floor-btn"
-           style="position: absolute; left: 50%; bottom: 0; width: 40px; height: 10px; background: var(--accent); border-radius: 5px 5px 0 0; z-index: 1;">
+           style="position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%); width: 40px; height: 10px; background: var(--accent); border-radius: 5px 5px 0 0; z-index: 1; box-shadow: 0 0 10px color-mix(in oklab, var(--accent) 60%, transparent);">
       </div>
       <div class="companion" data-who="craft" role="button" tabindex="0"
            aria-label="CRAFT — press Enter to talk.">

@@ -19,6 +19,7 @@
     "@astrojs/react": "^4.4.2",
     "astro": "^5.0.0",
     "framer-motion": "^12.38.0",
+    "kaplay": "^3001.0.19",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "sharp": "^0.33.5",

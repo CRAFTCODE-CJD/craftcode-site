@@ -1,0 +1,335 @@
+---
+/**
+ * KaplayPlayground — WebGL 2D playground powered by KAPLAY 3001.
+ *
+ * Replacement target for BootToPlayground.astro (the legacy DOM-based
+ * playground driven by engine.legacy.js). Currently OPT-IN: the home
+ * page still mounts the legacy component by default; switch by editing
+ * src/pages/index.astro to import this component instead.
+ *
+ * Boot flow mirrors the legacy stage:
+ *   1. CRT typewriter phase (phase="boot")
+ *   2. Phase morphs to "playground" → canvas mounts + KAPLAY inits
+ *
+ * Public JS globals:
+ *   window.__kaplayBots   — KaplayHandle (destroy, showBubble, pause, resume)
+ *   window.__dialogue     — shim forwarding to the KAPLAY bubble renderer
+ *   window.__companions   — shim forwarding to the KAPLAY bubble renderer
+ *                           (keeps bot.ai.ts / bot.terminal.ts happy)
+ */
+
+import TypingText from '~/components/TypingText.astro';
+---
+
+<section class="kc-stage" id="cc-stage" data-phase="boot" aria-label="Workshop boot">
+  <div class="kc-stage-log" aria-hidden="true">
+    <pre id="boot-log"></pre>
+  </div>
+
+  <div class="kc-stage-play" aria-hidden="true">
+    <div class="companions-caption" data-i18n="home.stage.caption">
+      // workshop · drag a robot and toss it · they bump into things
+    </div>
+    <div class="companions-hud">
+      <span><span class="k">bots</span> <span class="v">2</span></span>
+      <span><span class="k">rapport</span> <span class="v" id="hud-rapport">50</span></span>
+      <span><span class="k">bumps</span> <span class="v" id="hud-bumps">0</span></span>
+      <span class="hud-hint" data-i18n="home.stage.hud.hint">press <kbd>/</kbd> for terminal</span>
+    </div>
+
+    <div class="kc-stage-sign" aria-hidden="true">
+      <span class="kc-stage-sign-word glitch-hover"><span class="sign-pink">CRAFT</span><span class="sign-yell">CODE</span></span>
+      <div class="kc-stage-sign-tag opacity-80">
+        <TypingText text="Инструменты и шаблоны для UE" speed={70} delay={1500} i18nKey="home.stage.tag" />
+      </div>
+    </div>
+
+    <div class="kc-canvas-wrap">
+      <canvas id="cc-canvas" width="1200" height="420" aria-label="Workshop playground"></canvas>
+      <div class="kc-bubble-layer" id="kc-bubble-layer" aria-live="polite"></div>
+    </div>
+  </div>
+</section>
+
+<script>
+  // Boot typewriter — identical to BootToPlayground.astro so the brand
+  // read is preserved. Morph fires `cc:playground-ready` which the
+  // KAPLAY init listens for.
+  (() => {
+    const stage = document.getElementById('cc-stage');
+    const log = document.getElementById('boot-log');
+    if (!stage || !log) return;
+    const lines = [
+      '> BOOT SEQUENCE ................... [OK]',
+      '> LOADING /craft/...............  [OK]',
+      '> LOADING /code/................  [OK]',
+      '> LINK SPRITE_SHEETS ...........  [OK]',
+      '> MOUNT DIALOGUE_ENGINE ........  [OK]',
+      '> ACCENT.PIGMENT == MAGENTA ....  [OK]',
+      '> ROBOTS.READY ................. true',
+    ];
+    const toPlayground = () => {
+      stage.dataset.phase = 'playground';
+      document.dispatchEvent(new CustomEvent('cc:playground-ready'));
+    };
+    let i = 0, j = 0;
+    const type = () => {
+      if (i >= lines.length) { setTimeout(toPlayground, 650); return; }
+      const full = lines[i];
+      if (j <= full.length) {
+        log.textContent = lines.slice(0, i).join('\n') + (i ? '\n' : '') + full.slice(0, j);
+        j++;
+        const ch = full[j] || '';
+        setTimeout(type, ch === '.' ? 10 : 18);
+      } else {
+        i++; j = 0;
+        setTimeout(type, 120);
+      }
+    };
+    setTimeout(type, 200);
+  })();
+</script>
+
+<script>
+  import { initKaplayPlayground } from '~/bots/kaplay.engine';
+  import { installDialogueBridge } from '~/bots/kaplay.dialogue-bridge';
+
+  const boot = () => {
+    const canvas = document.getElementById('cc-canvas') as HTMLCanvasElement | null;
+    const host = document.getElementById('kc-bubble-layer');
+    if (!canvas || !host) return;
+    if ((window as unknown as { __kaplayBots?: unknown }).__kaplayBots) return; // already mounted
+
+    const reduced =
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const handle = initKaplayPlayground({ canvas, bubbleHost: host, reducedMotion: reduced });
+    installDialogueBridge(handle);
+
+    // Pause / resume with tab visibility.
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) handle.pause();
+      else handle.resume();
+    });
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      document.addEventListener('cc:playground-ready', boot, { once: true });
+    });
+  } else {
+    document.addEventListener('cc:playground-ready', boot, { once: true });
+  }
+</script>
+
+<style>
+  .kc-stage {
+    position: relative;
+    margin: 0 auto 40px;
+    width: 100%;
+    height: 420px;
+    border: 2px solid color-mix(in oklab, var(--accent) 55%, var(--border));
+    border-radius: 12px;
+    overflow: hidden;
+    background:
+      radial-gradient(ellipse 90% 70% at 50% 100%,
+        color-mix(in oklab, var(--accent-2) 15%, transparent), transparent 75%),
+      repeating-linear-gradient(to right,
+        color-mix(in oklab, var(--accent-2) 6%, transparent) 0 1px,
+        transparent 1px 40px),
+      repeating-linear-gradient(to bottom,
+        color-mix(in oklab, var(--accent) 6%, transparent) 0 1px,
+        transparent 1px 40px),
+      linear-gradient(to bottom, var(--surface), var(--code-bg));
+    box-shadow:
+      inset 0 0 80px rgba(0, 0, 0, 0.6),
+      0 0 40px color-mix(in oklab, var(--accent) 15%, transparent);
+  }
+
+  .kc-stage-log,
+  .kc-stage-play {
+    position: absolute;
+    inset: 0;
+    transition: opacity 0.55s ease, transform 0.55s ease;
+  }
+
+  .kc-stage-log {
+    padding: 28px 32px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    opacity: 1;
+    text-align: center;
+  }
+  .kc-stage[data-phase='playground'] .kc-stage-log {
+    opacity: 0;
+    transform: scale(0.98);
+    pointer-events: none;
+  }
+
+  #boot-log {
+    margin: 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--accent-2);
+    white-space: pre;
+    text-align: left;
+    text-shadow: 0 0 6px color-mix(in oklab, var(--accent-2) 60%, transparent);
+    display: inline-block;
+  }
+  #boot-log::after {
+    content: '▮';
+    color: var(--accent);
+    animation: kc-cursor-blink 0.9s steps(2) infinite;
+  }
+  @keyframes kc-cursor-blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+  }
+
+  .kc-stage-play {
+    opacity: 0;
+    transform: scale(1.02);
+    pointer-events: none;
+  }
+  .kc-stage[data-phase='playground'] .kc-stage-play {
+    opacity: 1;
+    transform: scale(1);
+    transition-delay: 0.15s;
+    pointer-events: auto;
+  }
+
+  .kc-stage-sign {
+    position: absolute;
+    top: 34px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    pointer-events: none;
+    z-index: 2;
+    text-align: center;
+    opacity: 0.92;
+  }
+  .kc-stage-sign-word {
+    font-family: 'Press Start 2P', 'Rubik Pixels', monospace;
+    font-size: clamp(28px, 4.4vw, 48px);
+    line-height: 1.05;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    text-shadow:
+      0 0 14px color-mix(in oklab, var(--accent) 60%, transparent),
+      2px 2px 0 rgba(0, 0, 0, 0.55);
+  }
+  .kc-stage-sign-word .sign-pink { color: var(--accent); margin-right: 2px; }
+  .kc-stage-sign-word .sign-yell { color: var(--accent-2); }
+  .kc-stage-sign-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    text-transform: lowercase;
+  }
+
+  /* Canvas wrapper — maintains 1200:420 aspect ratio, responsive width. */
+  .kc-canvas-wrap {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    z-index: 3;
+  }
+  #cc-canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+  }
+
+  /* Bubble overlay — absolutely positioned DOM children projected from
+     world coords by kaplay.engine.ts. */
+  .kc-bubble-layer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 5;
+  }
+  :global(.kc-bubble) {
+    position: absolute;
+    top: 0;
+    left: 0;
+    padding: 6px 10px;
+    max-width: 260px;
+    background: color-mix(in oklab, var(--surface) 92%, transparent);
+    border: 1px solid color-mix(in oklab, var(--accent) 55%, transparent);
+    border-radius: 8px;
+    color: var(--fg);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    line-height: 1.4;
+    opacity: 0;
+    transition: opacity 180ms ease;
+    box-shadow: 0 0 18px color-mix(in oklab, var(--accent) 25%, transparent);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  :global(.kc-bubble.visible) { opacity: 1; }
+
+  /* HUD + caption visuals match the legacy stage. */
+  .companions-caption {
+    position: absolute;
+    top: 10px;
+    left: 12px;
+    right: 12px;
+    z-index: 4;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    pointer-events: none;
+  }
+  .companions-hud {
+    position: absolute;
+    bottom: 10px;
+    right: 12px;
+    z-index: 4;
+    display: flex;
+    gap: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    pointer-events: none;
+  }
+  .companions-hud .k { color: var(--accent); margin-right: 4px; }
+  .companions-hud .v { color: var(--accent-2); }
+  .companions-hud kbd {
+    font-family: inherit;
+    padding: 0 4px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+  }
+
+  @media (max-width: 760px) {
+    .kc-stage { height: 320px; margin-top: 16px; }
+    #boot-log { font-size: 11px; }
+    .kc-stage-sign { top: 20px; }
+    .kc-stage-sign-word { font-size: clamp(22px, 8vw, 32px); }
+    .kc-stage-sign-tag { font-size: 10px; }
+  }
+  @media (max-width: 480px) {
+    .kc-stage { height: 280px; }
+    .companions-hud { font-size: 9px; gap: 8px; bottom: 6px; right: 8px; }
+    .companions-caption { font-size: 10px; top: 6px; left: 8px; right: 8px; }
+  }
+  @media (max-width: 320px) {
+    .kc-stage { min-width: 320px; }
+  }
+</style>

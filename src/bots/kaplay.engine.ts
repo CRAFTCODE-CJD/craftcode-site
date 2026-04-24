@@ -587,15 +587,13 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
     const cx = (craft.pos.x + code.pos.x) / 2;
     const cy = (craft.pos.y + code.pos.y) / 2;
 
-    // Target zoom first so we can clamp translate using the right scale.
-    // Lower bound is 1.0 — anything less would let the camera reveal the
-    // void beyond the canvas bottom (the stage height is finite, so a
-    // zoomed-out view would show empty space below the floor hatch).
-    // Upper bound 1.15 for the gentle close-in when bots are near.
-    const dist = craft.pos.dist(code.pos);
-    const targetScale = Math.max(1.0, Math.min(1.15, 220 / Math.max(120, dist)));
-    const curScale = k.getCamScale().x;
-    const nextScale = k.lerp(curScale, targetScale, 0.04);
+    // Camera zoom is DISABLED — locked at 1.0 scale. Non-integer scales
+    // like 1.15 multiply the 24-px floor hatch tile by 27.6 px, so tile
+    // edges land on fractional pixels and the browser shows a visible
+    // shimmering seam between them. With scale pinned at 1.0 the tile
+    // math stays integer → clean render. Camera still PANS (translate)
+    // which is the part that made the follow feel alive anyway.
+    const nextScale = 1.0;
     k.setCamScale(nextScale);
 
     // Visible extents at the upcoming scale (in world units). When the
@@ -615,7 +613,10 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
     const cyT = visH >= LOGICAL_H
       ? LOGICAL_H / 2
       : Math.max(visH / 2, Math.min(LOGICAL_H - visH / 2, rawY));
-    k.setCamPos(cxT, cyT);
+    // Snap to whole pixels — sub-pixel camera translates cause visible
+    // seams in tiled sprites (floor hatch showed a vertical shimmer at
+    // tile boundaries). Integer pos + stable scale = clean render.
+    k.setCamPos(Math.round(cxT), Math.round(cyT));
   });
 
   // ── §6 Bubble bridge (DOM overlay above canvas) ───────

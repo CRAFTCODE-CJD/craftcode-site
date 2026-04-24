@@ -593,13 +593,22 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
     const cx = (craft.pos.x + code.pos.x) / 2;
     const cy = (craft.pos.y + code.pos.y) / 2;
 
-    // Fixed scale 1.5 — hatch tile 24 × 1.5 = 36 and sprite 48 × 1.5 =
-    // 72, both integer pixels, so no sub-pixel seams. Bots read at
-    // ~1.5× their logical size; visible window 800 × 320 out of the
-    // 1200 × 480 world, so the camera actually has room to pan with
-    // the bots. 2.0 would make step_01 / crate_03 unreachable in-frame;
-    // non-integer scales like 1.3/1.7 bring the hatch shimmer back.
-    const nextScale = 1.5;
+    // Discrete, tile-safe zoom. Only integer × tile (24) and × sprite
+    // (48) ratios render without shimmer, so we switch the scale in
+    // steps instead of lerping through fractional values.
+    //   < 180 px apart → 2.0×   (bots close, read big)
+    //   < 360 px apart → 1.75×  (middle)
+    //   otherwise      → 1.5×   (distant, more of the stage visible)
+    // 20-px hysteresis band around each threshold keeps the scale
+    // from flipping when bots pace right on the boundary.
+    const dist = craft.pos.dist(code.pos);
+    const curS = k.getCamScale().x;
+    const wasClose = curS >= 1.95;
+    const wasMid = curS >= 1.7 && curS < 1.95;
+    let nextScale: number;
+    if (wasClose)      nextScale = dist > 200 ? 1.75 : 2.0;
+    else if (wasMid)   nextScale = dist < 160 ? 2.0 : (dist > 380 ? 1.5 : 1.75);
+    else               nextScale = dist < 340 ? 1.75 : 1.5;
     k.setCamScale(nextScale);
 
     // Visible extents at the upcoming scale (in world units). When the

@@ -3,16 +3,16 @@
  * Companions — site-wide terminal mount + bot engine wiring.
  *
  * Runtime is split across src/bots/:
- *   · engine.legacy.js  — physics + scene playback
- *   · bot.engine.ts     — typed facade + BotState machine
- *   · bot.ai.ts         — simulated AI keyword dispatcher
- *   · bot.terminal.ts   — fake terminal overlay (hotkey: `/`)
+ *   · kaplay.engine.ts          — KAPLAY physics + rendering (home only)
+ *   · kaplay.dialogue-bridge.ts — installs window.__dialogue / __companions
+ *   · bot.engine.ts             — typed facade + BotState machine
+ *   · bot.ai.ts                 — simulated AI keyword dispatcher
+ *   · bot.terminal.ts           — fake terminal overlay (hotkey: `/`)
  *
- * On the home page BootToPlayground.astro renders the interactive
- * playground (obstacles + HUD + live sprites). Everywhere else only the
- * fake-terminal overlay is exposed — sprite positions were tuned for the
- * home stage and would float over article content otherwise. The JS APIs
- * (window.__companions / window.__bots) stay live on every page.
+ * On the home page <KaplayPlayground /> renders the interactive workshop.
+ * Everywhere else only the fake-terminal overlay is exposed — the KAPLAY
+ * surface is not mounted, and window.__companions stays undefined (terminal
+ * dispatch paths gracefully no-op). The JS API on window.__bots stays live.
  */
 ---
 

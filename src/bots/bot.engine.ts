@@ -1,14 +1,15 @@
 /* ══════════════════════════════════════════════════════
-   CRAFTCODE — Bot engine facade (Read.txt §1.2–1.4)
+   CRAFTCODE — Bot engine facade
    ══════════════════════════════════════════════════════
-   Thin TypeScript layer on top of engine.legacy.js. Keeps the
-   proven 2,380-line physics + dialogue runtime intact while
-   adding:
+   Typed TypeScript facade over the KAPLAY dialogue bridge
+   (kaplay.dialogue-bridge.ts), which installs
+   window.__companions / window.__dialogue on the home page.
+   Provides:
      · explicit BotState machine (idle / greeting / explaining /
        thinking / glitch / easter)
-     · typed say() / fire() API
-     · state-change subscription for external UI (e.g. the fake
-       terminal, CSS class sync on .companions host)             */
+     · typed say() / fire() API that forwards to __companions
+     · state-change subscription for external UI (fake terminal,
+       CSS class sync on .companions host)                        */
 
 import type {
   BotEngineHandle,
@@ -18,15 +19,14 @@ import type {
   LegacyCompanionsGlobal,
 } from './bot.types';
 
-// Side-effect import — engine.legacy.js attaches its API to window.__companions
-// once the DOM is ready. Astro's <script> bundles this into a defer module.
-import './engine.legacy.js';
-// Virtual camera — auto-initialises on DOM ready. Keeps both robots framed.
-import './bot.camera';
-// Random playground events (item/platform spawn, obstacle moves).
-// Self-inits on DOM ready + waits for __companions._started. Opts out
-// under prefers-reduced-motion.
-import './bot.events';
+// Legacy side-effect modules (engine.legacy.js / bot.camera / bot.events)
+// were removed with the KAPLAY migration. The KAPLAY surface now owns:
+//   · physics + rendering (kaplay.engine.ts)
+//   · camera follow         (built into kaplay.engine.ts)
+//   · random events         (kaplay.events.ts)
+// `window.__companions` and `window.__dialogue` are now installed by
+// kaplay.dialogue-bridge.ts on the home page. On non-home pages those
+// globals stay undefined — say()/fire() below gracefully no-op.
 
 type Listener = (s: BotState) => void;
 

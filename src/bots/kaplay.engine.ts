@@ -86,7 +86,7 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
     height: LOGICAL_H,
     crisp: true,
     debug: false,
-    background: [10, 10, 15, 0], // transparent — CSS background shows through
+    background: [0, 0, 0, 0], // transparent — DOM overlay provides visuals
     global: false,
     touchToMouse: true,
     // Kill KAPLAY's built-in debug keys so "/" terminal hotkey works.
@@ -108,13 +108,17 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
   });
 
   // ── Floor ─────────────────────────────────────────────
+  // Physics-only body; DOM overlay (.cc-floor-decor) renders the visual.
+  // The body is 3× the logical width and offset to the left so the
+  // horizontal screen-wrap (below) can teleport a bot past the edge
+  // without a one-frame gap where the bot is outside the floor box
+  // and would plummet into the void.
   k.add([
-    k.rect(LOGICAL_W, 12),
-    k.pos(0, LOGICAL_H - 12),
+    k.rect(LOGICAL_W * 3, 12),
+    k.pos(-LOGICAL_W, LOGICAL_H - 12),
     k.area(),
     k.body({ isStatic: true }),
-    k.color(236, 72, 153),
-    k.opacity(0.9),
+    k.opacity(0),
     'platform',
     'floor',
   ]);
@@ -144,14 +148,13 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
     label: 'crate_03',
   };
   [step_01, floating_02, crate_03].forEach((p) => {
+    // Physics body only — visuals live in the DOM overlay (.cc-plat-decor).
     k.add([
       k.rect(p.w, p.h),
       k.pos(p.x, p.y),
       k.area(),
       k.body({ isStatic: true }),
-      k.color(255, 207, 63),
-      k.opacity(0.7),
-      k.outline(1, k.rgb(255, 207, 63)),
+      k.opacity(0),
       'platform',
       { label: p.label },
     ]);

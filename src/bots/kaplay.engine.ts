@@ -28,12 +28,21 @@ import type { KAPLAYCtx, GameObj } from 'kaplay';
 
 export type BotWho = 'craft' | 'code';
 
+export type KaplayBotsMap = Record<BotWho, GameObj>;
+
 export interface KaplayHandle {
   destroy(): void;
   showBubble(who: BotWho, text: string, holdMs?: number): void;
   hideBubbles(): void;
   pause(): void;
   resume(): void;
+  /** KAPLAY context — exposed so companion modules (events, etc.) can add objects. */
+  k: KAPLAYCtx;
+  /** Live references to the two bot GameObjs. Consumers use `bot.play(clip)`
+   *  for animation changes and `bot.pos`/`bot.isGrounded()` for queries. */
+  bots: KaplayBotsMap;
+  /** Logical stage size (KAPLAY world units). */
+  logical: { w: number; h: number };
 }
 
 // Base logical resolution. Canvas DOM size scales via CSS; KAPLAY keeps
@@ -403,12 +412,26 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
       paused = false;
       try { k.setGravity(1450); } catch (_) {}
     },
+    k,
+    bots: { craft, code },
+    logical: { w: LOGICAL_W, h: LOGICAL_H },
   };
 
   // Expose for ad-hoc debugging (parallel to window.__companions).
   if (typeof window !== 'undefined') {
     (window as unknown as { __kaplayBots?: KaplayHandle }).__kaplayBots = handle;
   }
+
+  // Kick off random events (item spawns, moving platforms, new platforms).
+  // Imported lazily so SSR-free tree-shaking still works; the module is a
+  // side-effect-free default export that we call with the handle.
+  try {
+    // Dynamic import keeps the events module separate in the bundle and
+    // won't block engine init if the file fails to resolve.
+    import('./kaplay.events').then((m) => {
+      try { m.initKaplayEvents(handle, { reducedMotion }); } catch (_) { /* graceful */ }
+    }).catch(() => { /* graceful */ });
+  } catch (_) { /* graceful */ }
 
   return handle;
 }

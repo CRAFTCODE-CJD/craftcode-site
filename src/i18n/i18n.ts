@@ -25,6 +25,7 @@ type Dict = Record<string, string>;
 const TABLE: Record<Lang, Dict> = { en: en as Dict, ru: ru as Dict };
 const LANG_KEY = 'lang';
 
+
 /** Resolve current language from storage → navigator → default. */
 export function getLang(): Lang {
   if (typeof localStorage !== 'undefined') {
@@ -142,12 +143,15 @@ export function onLangChange(cb: (lang: Lang) => void): () => void {
  *  `.cc-lang-btn` toggle. Safe to call multiple times. */
 export function initI18n(): void {
   if (typeof document === 'undefined') return;
+
+  // Expose a minimal runtime API for non-module consumers (KAPLAY bridge,
+  // engine.legacy.js, etc). Must happen on EVERY call — the ready-guard
+  // below can bail out a second time, and we can't leave the API missing
+  // just because initI18n was re-imported in a view-transition scenario.
+  (window as unknown as { __i18n?: unknown }).__i18n = { t, getLang, onLangChange };
+
   if ((window as typeof window & { __i18nReady?: boolean }).__i18nReady) return;
   (window as typeof window & { __i18nReady?: boolean }).__i18nReady = true;
-
-  // Expose a minimal runtime API for non-module consumers (engine.legacy.js
-  // bubble rendering, etc). Mirrors `t` + `getLang` + `onLangChange`.
-  (window as unknown as { __i18n?: unknown }).__i18n = { t, getLang, onLangChange };
 
   const lang = getLang();
   document.documentElement.lang = lang;
@@ -179,4 +183,12 @@ export function initI18n(): void {
     });
     mo.observe(document.body, { childList: true, subtree: true });
   }
+}
+
+// Expose the runtime API at module-import time so consumers (KAPLAY
+// bridge, legacy engine) can call `window.__i18n.t()` without waiting
+// for initI18n() to run. initI18n() re-publishes the same object —
+// this just plugs the window between module-load and init().
+if (typeof window !== 'undefined') {
+  (window as unknown as { __i18n?: unknown }).__i18n = { t, getLang, onLangChange };
 }

@@ -33,6 +33,9 @@ export interface BotLine {
   clip?: string;
   /** Extra ms to hold bubble after typewriter finishes. */
   hold?: number;
+  /** i18n key stamped at play-time — `dialogue.<scene.id>.l<N>` (1-based).
+   *  Used by bubble renderers to resolve the localized string. */
+  _key?: string;
 }
 
 export interface DialogueContext {

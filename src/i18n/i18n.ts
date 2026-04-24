@@ -145,6 +145,10 @@ export function initI18n(): void {
   if ((window as typeof window & { __i18nReady?: boolean }).__i18nReady) return;
   (window as typeof window & { __i18nReady?: boolean }).__i18nReady = true;
 
+  // Expose a minimal runtime API for non-module consumers (engine.legacy.js
+  // bubble rendering, etc). Mirrors `t` + `getLang` + `onLangChange`.
+  (window as unknown as { __i18n?: unknown }).__i18n = { t, getLang, onLangChange };
+
   const lang = getLang();
   document.documentElement.lang = lang;
   document.documentElement.dataset.lang = lang;

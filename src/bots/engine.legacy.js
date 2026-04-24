@@ -118,7 +118,9 @@ import { FRAME_ORDER, fIdx, CLIPS, STATE_TO_CLIP } from './frames.data.js';
       this.history.push({ id: scene.id, t: performance.now() });
       if (this.history.length > 32) this.history.shift();
       if (scene.effect) try { scene.effect(this); } catch (_) {}
-      return scene.lines;
+      // Stamp each line with its i18n key (`dialogue.<scene.id>.l<N>`, 1-based).
+      // Cloning so we don't mutate the SCENES database.
+      return scene.lines.map((l, i) => ({ ...l, _key: `dialogue.${scene.id}.l${i + 1}` }));
     },
     // Map a scene's 'craft' placeholder lines to whoever the event is about,
     // so who-agnostic scenes can play for either character.
@@ -129,6 +131,19 @@ import { FRAME_ORDER, fIdx, CLIPS, STATE_TO_CLIP } from './frames.data.js';
         ...l,
         who: l.who === 'craft' ? targetWho : (l.who === 'code' ? other : l.who),
       }));
+    },
+    // Runtime i18n lookup — reads line text via window.__i18n.t() if the
+    // line was stamped with `_key` (see play()). Falls back to raw source.
+    // Also used for ad-hoc keys (inner-monologue pool).
+    _i18nText(key, fallback) {
+      try {
+        const api = typeof window !== 'undefined' ? window.__i18n : null;
+        if (api && typeof api.t === 'function') {
+          const v = api.t(key);
+          if (typeof v === 'string' && v.length) return v;
+        }
+      } catch (_) {}
+      return fallback;
     },
     // Rapport clamps 0-100. Events bump it; decays via scene count are implicit.
     adjustRapport(delta) {
@@ -953,12 +968,15 @@ import { FRAME_ORDER, fIdx, CLIPS, STATE_TO_CLIP } from './frames.data.js';
         const dialogueIdle = this.dialogueState === 'idle';
         const botsQuiet    = this.pos.craft.grounded && this.pos.code.grounded && !this.activeDrag;
         if (roll < 0.20 && dialogueIdle && botsQuiet && !this.muted) {
+          // Keep POOL as the RU source-of-truth / fallback; translations
+          // are keyed `bot.monologue.<1-based idx>` in the dictionaries.
           const POOL = ['...hmm', 'почти готово', 'крч', 'lol', 'brb', 'zzz',
                         'o_O', 'wait what', 'ага', 'ок', '...', 'чёт', 'hm',
                         'meh', 'ну-ну'];
           const who  = Math.random() < 0.5 ? 'craft' : 'code';
-          const text = POOL[Math.floor(Math.random() * POOL.length)];
-          try { this.quickBubble(who, text, 1500); } catch (_) {}
+          const idx  = Math.floor(Math.random() * POOL.length);
+          const text = POOL[idx];
+          try { this.quickBubble(who, text, 1500, `bot.monologue.${idx + 1}`); } catch (_) {}
         }
       }
     },
@@ -1973,18 +1991,26 @@ import { FRAME_ORDER, fIdx, CLIPS, STATE_TO_CLIP } from './frames.data.js';
     },
 
     // ── Quick reaction helpers ──────────────────────────
-    quickBubble(who, text, holdMs) {
+    // Optional 4th arg `i18nKey` lets callers request a translated string
+    // (inner-monologue pool, reactFromScene single-liners, etc).
+    quickBubble(who, text, holdMs, i18nKey) {
       const bubble = this.bubbles[who];
+      const shown = i18nKey ? dialogue._i18nText(i18nKey, text) : text;
       while (bubble.firstChild) bubble.removeChild(bubble.firstChild);
       const whoEl = document.createElement('span');
       whoEl.className = 'who'; whoEl.textContent = who + ':';
       const textEl = document.createElement('span');
-      textEl.className = 'text'; textEl.textContent = text;
+      textEl.className = 'text'; textEl.textContent = shown;
       bubble.appendChild(whoEl); bubble.appendChild(textEl);
       bubble.classList.add('visible');
       this.positionBubble(who);
+      // Track as active so langchange can re-render the text node.
+      this._activeBubble = { who, key: i18nKey || null, fallback: text };
       clearTimeout(bubble._hideTimer);
-      bubble._hideTimer = setTimeout(() => bubble.classList.remove('visible'), holdMs);
+      bubble._hideTimer = setTimeout(() => {
+        bubble.classList.remove('visible');
+        if (this._activeBubble && this._activeBubble.who === who) this._activeBubble = null;
+      }, holdMs);
     },
 
     // Keep a visible bubble inside the STAGE (not the viewport). The
@@ -2045,7 +2071,7 @@ import { FRAME_ORDER, fIdx, CLIPS, STATE_TO_CLIP } from './frames.data.js';
         : dialogue.resolveLines(rawLines, remapWho);
       const line = lines[0];
       if (!line) return false;
-      this.quickBubble(line.who, line.text, holdMs || 1400);
+      this.quickBubble(line.who, line.text, holdMs || 1400, line._key);
       if (line.act)  this.applyLineAct(line.who, line.act, 650);
       if (line.clip) this.applyLineClip(line.who, line.clip, 900);
       return true;
@@ -2365,13 +2391,23 @@ import { FRAME_ORDER, fIdx, CLIPS, STATE_TO_CLIP } from './frames.data.js';
       }, line);                          // pass the full line so showBubble can read .act/.hold
     },
 
-    // line object shape: { who, text, act?, hold? }
+    // line object shape: { who, text, act?, hold?, _key? }
     showBubble(who, text, onDone, line) {
       const bubble = this.bubbles[who];
       const otherWho = this.partnerOf(who);
       const other = this.bubbles[otherWho];
       other.classList.remove('visible');
       if (this.pos[otherWho].state === 'talking') this.setCharState(otherWho, 'idle');
+
+      // ── i18n ── Resolve display text via window.__i18n if line has a key.
+      // `text` arg may be the raw RU; we prefer a translated string when
+      // available for the current language.
+      const i18nKey = line && line._key;
+      if (i18nKey) {
+        text = dialogue._i18nText(i18nKey, text);
+      }
+      // Track the active bubble so langchange can re-render it mid-typewriter.
+      this._activeBubble = { who, key: i18nKey || null, fallback: line ? line.text : text };
 
       while (bubble.firstChild) bubble.removeChild(bubble.firstChild);
       const whoEl = document.createElement('span');
@@ -2555,6 +2591,23 @@ import { FRAME_ORDER, fIdx, CLIPS, STATE_TO_CLIP } from './frames.data.js';
     window.__companions = companions;
     window.__dialogue = dialogue;
     window.__SCENES = SCENES;
+
+    // Re-render the currently-visible bubble when the user toggles language.
+    // We don't restart the typewriter — just swap the final text of the
+    // active bubble (post-typewriter) or overwrite what's been typed. The
+    // latter is fine: the hold timeout still fires.
+    try {
+      window.addEventListener('langchange', () => {
+        const active = companions._activeBubble;
+        if (!active || !active.key) return;
+        const bubble = companions.bubbles && companions.bubbles[active.who];
+        if (!bubble) return;
+        const textEl = bubble.querySelector('.text');
+        if (!textEl) return;
+        const next = dialogue._i18nText(active.key, active.fallback);
+        if (typeof next === 'string') textEl.textContent = next;
+      });
+    } catch (_) {}
   }
 
   // Safe auto-init: bail out if the .companions container is missing

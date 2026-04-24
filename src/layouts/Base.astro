@@ -18,6 +18,7 @@ import '~/styles/site.css';
 import Topbar from '~/components/Topbar.astro';
 import Companions from '~/components/Companions.astro';
 import BootSplash from '~/components/BootSplash.astro';
+import Lightbox from '~/components/Lightbox.astro';
 
 interface Props {
   title: string;
@@ -55,14 +56,15 @@ const ogImage = image ?? '/logo/craftcode_wide.png';
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
     <!-- Font stack:
-         · Press Start 2P + VT323  — pixel/CRT display fonts, Latin-only.
-         · IBM Plex Mono + Roboto Mono — cyberpunk mono with full Cyrillic.
-         · Inter + JetBrains Mono  — body + inline code (both scripts).
-         CSS rule order uses Cyrillic-capable fonts first for runs that
-         contain Cyrillic, with pixel fonts as fallback for Latin flavor. -->
+         · Press Start 2P + VT323    — pixel/CRT display fonts, Latin-only.
+         · Rubik Pixels              — pixel display with Cyrillic (H1).
+         · Russo One                 — blocky futuristic Cyrillic (H2/H3).
+         · Play                      — techno-mono backup with Cyrillic.
+         · Inter + JetBrains Mono    — body + inline code (both scripts).
+         CSS stacks: Latin pixel first, Cyrillic-capable display second. -->
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@600;700&family=Roboto+Mono:wght@500;700&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&family=Press+Start+2P&family=VT323&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Rubik+Pixels&family=Russo+One&family=Play:wght@400;700&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&family=Press+Start+2P&family=VT323&display=swap"
     />
 
     <meta property="og:title" content={siteTitle} />
@@ -81,6 +83,7 @@ const ogImage = image ?? '/logo/craftcode_wide.png';
     </main>
 
     <Companions />
+    <Lightbox />
 
     <!-- Client-side i18n + lang toggle wiring. Imported here so every page
          gets the behavior without having to opt in. -->

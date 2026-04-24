@@ -57,7 +57,7 @@ body {
 }
 .plugin-card .tag {
   display: inline-block;
-  font-family: 'Press Start 2P', 'IBM Plex Mono', monospace;
+  font-family: 'Press Start 2P', 'Rubik Pixels', monospace;
   font-size: 9px;
   padding: 3px 6px;
   border: 1px solid var(--accent);
@@ -67,7 +67,7 @@ body {
 }
 .plugin-card h3 {
   margin: 4px 0 8px;
-  font-family: 'VT323', 'Roboto Mono', monospace;
+  font-family: 'VT323', 'Russo One', monospace;
   font-size: 28px;
   color: var(--ink);
 }
@@ -107,7 +107,7 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-family: 'VT323', 'Roboto Mono', monospace;
+  font-family: 'VT323', 'Russo One', monospace;
   font-size: 18px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -146,7 +146,7 @@ body {
   box-shadow: none;
 }
 .btn.pixel {
-  font-family: 'Press Start 2P', 'IBM Plex Mono', monospace;
+  font-family: 'Press Start 2P', 'Rubik Pixels', monospace;
   font-size: 10px;
   padding: 9px 12px 8px;
   letter-spacing: 0;
@@ -191,7 +191,7 @@ a.ds-card:hover {
   box-shadow: 0 12px 32px -14px var(--accent);
 }
 .ds-card h3 {
-  font-family: 'VT323', 'Roboto Mono', monospace;
+  font-family: 'VT323', 'Russo One', monospace;
   font-size: 24px;
   color: var(--ink);
   margin: 6px 0 4px;
@@ -206,7 +206,7 @@ a.ds-card:hover {
 }
 .ds-card .tag {
   display: inline-block;
-  font-family: 'Press Start 2P', 'IBM Plex Mono', monospace;
+  font-family: 'Press Start 2P', 'Rubik Pixels', monospace;
   font-size: 9px;
   padding: 3px 6px;
   border: 1px solid var(--accent);

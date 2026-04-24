@@ -247,7 +247,7 @@ import TypingText from '~/components/TypingText.astro';
     opacity: 0.92;
   }
   .cc-stage-sign-word {
-    font-family: 'Press Start 2P', 'IBM Plex Mono', monospace;
+    font-family: 'Press Start 2P', 'Rubik Pixels', monospace;
     font-size: clamp(28px, 4.4vw, 48px);
     line-height: 1.05;
     letter-spacing: 0.02em;
@@ -281,8 +281,20 @@ import TypingText from '~/components/TypingText.astro';
   }
 
   @media (max-width: 760px) {
-    .cc-stage { height: 260px; margin-top: 16px; }
-    #boot-log { font-size: 12px; min-height: 120px; }
+    .cc-stage { height: 320px; margin-top: 16px; }
+    #boot-log { font-size: 11px; min-height: 120px; }
     .cc-stage-tag { font-size: 11px; }
+    /* Hide obstacles' text labels on mobile — they clip into captions */
+    .companions-obstacle .obstacle-lbl { display: none; }
+    /* Lift obstacles higher so they don't overlap the wordmark */
+    .cc-stage-sign { top: 20px; }
+    .cc-stage-sign-word { font-size: clamp(22px, 8vw, 32px); }
+    .cc-stage-sign-tag { font-size: 10px; }
+  }
+  @media (max-width: 480px) {
+    .cc-stage { height: 280px; }
+    /* Companions HUD on very narrow screens: compact layout */
+    .companions-hud { font-size: 9px; gap: 8px; bottom: 6px; right: 8px; }
+    .companions-caption { font-size: 10px; top: 6px; left: 8px; right: 8px; }
   }
 </style>

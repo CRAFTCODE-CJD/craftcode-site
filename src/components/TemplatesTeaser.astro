@@ -5,37 +5,37 @@ import CompanionBot from './CompanionBot.astro';
  */
 ---
 
-<section class="tmpl-teaser group" aria-label="Шаблоны — скоро">
+<section class="tmpl-teaser" aria-label="Шаблоны — скоро">
   <div class="tmpl-grid">
-    <div class="flex flex-col gap-3">
-      <span class="text-neon-yellow font-mono text-[10px] tracking-[0.2em] uppercase opacity-70">// TERMINAL::TEMPLATES_SOON</span>
+    <div class="tmpl-col">
+      <span class="tmpl-kicker">// terminal::templates_soon</span>
       <h3 class="tmpl-heading">Шаблоны проектов и геймплея</h3>
       <p class="tmpl-pitch">
         UE-шаблоны с готовой архитектурой: спрайтовый рогалик, top-down
         стрелялка, инвентарь, диалоговая система. Распаковал — работает.
       </p>
-      <a class="btn ghost self-start group-hover:border-neon-yellow transition-colors" href="/templates/">
-        INITIALIZE_TEMPLATES() <span class="ml-1">→</span>
+      <a class="tmpl-cta" href="/templates/">
+        <span>INITIALIZE_TEMPLATES()</span><span class="tmpl-cta__arrow">→</span>
       </a>
     </div>
 
     <div class="tmpl-status" aria-hidden="true">
       <div class="tmpl-bot-box">
-        <CompanionBot bot="craft" anim="hammer" />
+        <CompanionBot bot="craft" anim="hammer" size={64} />
       </div>
-      <div class="flex flex-col gap-1 border-t border-white/5 pt-4">
-        <span class="tmpl-status-label">SYS_STATUS</span>
-        <span class="tmpl-status-value uppercase font-bold tracking-widest text-neon-yellow">ПРОТОТИПЫ_V0.7</span>
-        <div class="tmpl-progress-bar">
-          <span class="p-on">■</span>
-          <span class="p-on">■</span>
-          <span class="p-on opacity-50">■</span>
-          <span class="p-off">□</span>
-          <span class="p-off text-[8px] opacity-20">NULL</span>
+      <div class="tmpl-status-body">
+        <span class="tmpl-status-label">sys_status</span>
+        <span class="tmpl-status-value">прототипы_v0.7</span>
+        <div class="tmpl-progress">
+          <span class="p p-on"></span>
+          <span class="p p-on"></span>
+          <span class="p p-on p-dim"></span>
+          <span class="p p-off"></span>
+          <span class="p p-off"></span>
         </div>
-        <div class="flex justify-between items-center mt-2 group-hover:scale-x-105 origin-left transition-transform">
-          <span class="tmpl-status-hint">~65% COMPLETED</span>
-          <div class="w-1.5 h-1.5 bg-neon-yellow animate-pulse rounded-full shadow-[0_0_8px_var(--color-neon-yellow)]"></div>
+        <div class="tmpl-status-foot">
+          <span class="tmpl-status-hint">~65% completed</span>
+          <span class="tmpl-status-dot"></span>
         </div>
       </div>
     </div>
@@ -56,8 +56,8 @@ import CompanionBot from './CompanionBot.astro';
     content: '';
     position: absolute;
     top: 0; left: 0; width: 4px; height: 100%;
-    background: var(--neon-yellow);
-    opacity: 0.3;
+    background: var(--accent-2);
+    opacity: 0.6;
   }
   .tmpl-grid {
     display: grid;
@@ -65,12 +65,28 @@ import CompanionBot from './CompanionBot.astro';
     gap: 40px;
     align-items: center;
   }
+  .tmpl-col {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .tmpl-kicker {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent-2);
+    opacity: 0.75;
+  }
   .tmpl-heading {
     margin: 0;
-    font-family: var(--font-terminal);
+    font-family: 'VT323', 'Russo One', monospace;
     font-size: 32px;
     color: var(--ink);
-    line-height: 1;
+    line-height: 1.1;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
   }
   .tmpl-pitch {
     margin: 0;
@@ -79,51 +95,111 @@ import CompanionBot from './CompanionBot.astro';
     line-height: 1.6;
     max-width: 50ch;
   }
+  .tmpl-cta {
+    margin-top: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 18px;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink);
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    text-decoration: none;
+    transition: color 150ms, border-color 150ms, box-shadow 150ms, transform 150ms;
+  }
+  .tmpl-cta:hover {
+    color: var(--accent-2);
+    border-color: var(--accent-2);
+    box-shadow: 0 0 18px color-mix(in oklab, var(--accent-2) 45%, transparent);
+    transform: translateY(-1px);
+  }
+  .tmpl-cta__arrow { transition: transform 150ms; }
+  .tmpl-cta:hover .tmpl-cta__arrow { transform: translateX(4px); }
 
   .tmpl-status {
-    display: grid;
-    padding: 24px;
-    background: rgba(0,0,0,0.3);
-    border: 1px solid rgba(240, 230, 69, 0.1);
-    border-radius: 4px;
-    font-family: var(--font-mono);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 20px;
+    background: color-mix(in oklab, var(--code-bg) 90%, transparent);
+    border: 1px solid color-mix(in oklab, var(--accent-2) 20%, var(--border));
+    border-radius: var(--radius);
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+  }
+  .tmpl-bot-box {
+    display: flex;
+    justify-content: flex-end;
+  }
+  .tmpl-status-body {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    border-top: 1px solid color-mix(in oklab, var(--accent-2) 20%, var(--border));
+    padding-top: 12px;
   }
   .tmpl-status-label {
     font-size: 10px;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.15em;
     color: var(--muted);
-    opacity: 0.6;
+    text-transform: uppercase;
   }
   .tmpl-status-value {
-    font-size: 18px;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent-2);
+    text-shadow: 0 0 12px color-mix(in oklab, var(--accent-2) 60%, transparent);
   }
-  .tmpl-progress-bar {
+
+  .tmpl-progress {
     display: flex;
-    gap: 6px;
-    margin-top: 8px;
-    font-size: 20px;
-    line-height: 1;
+    gap: 4px;
+    margin-top: 4px;
+  }
+  .p {
+    width: 26px; height: 12px;
+    border-radius: 2px;
+    border: 1px solid color-mix(in oklab, var(--accent-2) 40%, var(--border));
   }
   .p-on {
-    color: var(--neon-yellow);
-    text-shadow: 0 0 12px var(--neon-yellow);
+    background: var(--accent-2);
+    box-shadow: 0 0 8px color-mix(in oklab, var(--accent-2) 70%, transparent);
   }
-  .p-off {
-    color: var(--faint);
-  }
-  .tmpl-bot-box {
-    margin-bottom: 12px;
+  .p-dim { opacity: 0.45; }
+  .p-off { background: transparent; }
+
+  .tmpl-status-foot {
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 4px;
   }
   .tmpl-status-hint {
     font-size: 11px;
     color: var(--muted);
     letter-spacing: 0.05em;
   }
+  .tmpl-status-dot {
+    width: 8px; height: 8px;
+    background: var(--accent-2);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--accent-2);
+    animation: tmpl-pulse 1.5s ease-in-out infinite;
+  }
+  @keyframes tmpl-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%      { opacity: 0.5; transform: scale(0.85); }
+  }
 
   @media (max-width: 900px) {
-    .tmpl-grid { grid-template-columns: 1fr; gap: 32px; }
+    .tmpl-grid { grid-template-columns: 1fr; gap: 24px; }
     .tmpl-teaser { padding: 24px; }
+    .tmpl-heading { font-size: 26px; }
   }
 </style>

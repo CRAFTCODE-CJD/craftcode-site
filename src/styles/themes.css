@@ -66,7 +66,7 @@
  * IBM Plex Mono / Roboto Mono (full Cyrillic) so Russian headings don't
  * collapse into a system serif. Both styles read as cyberpunk. */
 h1 {
-  font-family: 'Press Start 2P', 'IBM Plex Mono', ui-monospace, monospace;
+  font-family: 'Press Start 2P', 'Rubik Pixels', ui-monospace, monospace;
   font-weight: 700;
   font-size: 34px;
   line-height: 1.45;
@@ -80,7 +80,7 @@ h1 {
   padding-top: 6px;
 }
 h2 {
-  font-family: 'VT323', 'Roboto Mono', ui-monospace, monospace;
+  font-family: 'VT323', 'Russo One', ui-monospace, monospace;
   font-weight: 500;
   font-size: 32px;
   letter-spacing: 0.02em;
@@ -88,7 +88,7 @@ h2 {
   color: var(--accent-2);
 }
 h3 {
-  font-family: 'VT323', 'Roboto Mono', ui-monospace, monospace;
+  font-family: 'VT323', 'Russo One', ui-monospace, monospace;
   font-weight: 500;
   font-size: 24px;
   color: var(--ink);

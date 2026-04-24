@@ -1,9 +1,7 @@
 ---
 import Base from '~/layouts/Base.astro';
 import BootToPlayground from '~/components/BootToPlayground.astro';
-import FabCard from '~/components/FabCard.astro';
-import YoutubeCard from '~/components/YoutubeCard.astro';
-import BoostyCard from '~/components/BoostyCard.astro';
+import SocialLink from '~/components/SocialLink.astro';
 import TemplatesTeaser from '~/components/TemplatesTeaser.astro';
 import DonateSection from '~/components/DonateSection.astro';
 import IdleEasterEgg from '~/components/IdleEasterEgg.astro';
@@ -16,11 +14,35 @@ import LatestReleases from '~/components/LatestReleases.astro';
   <section class="home-wrap">
     <LatestReleases />
 
-    <div class="community-grid">
-      <FabCard />
-      <YoutubeCard />
-      <BoostyCard />
-    </div>
+    <section class="home-social" aria-label="CRAFTCODE caналы">
+      <header class="home-social__head">
+        <p class="home-social__kicker" data-i18n="home.social.kicker">// channels</p>
+        <h2 class="home-social__title" data-i18n="home.social.title">Где меня найти</h2>
+      </header>
+      <div class="home-social__grid">
+        <SocialLink
+          brand="fab"
+          href="https://www.fab.com/sellers/CRAFTCODE"
+          title="FAB Marketplace"
+          subtitle="Плагины и ассеты для Unreal Engine"
+          cta="Marketplace"
+        />
+        <SocialLink
+          brand="youtube"
+          href="https://www.youtube.com/@jonathandeveloper6723"
+          title="YouTube"
+          subtitle="Devlog, разборы и футажи проделанной работы"
+          cta="Latest video"
+        />
+        <SocialLink
+          brand="boosty"
+          href="https://boosty.to/channel-jonathan-developer"
+          title="Boosty"
+          subtitle="Эксклюзивный контент для подписчиков"
+          cta="Subscribe"
+        />
+      </div>
+    </section>
 
     <DonateSection />
     <TemplatesTeaser />
@@ -34,5 +56,34 @@ import LatestReleases from '~/components/LatestReleases.astro';
     max-width: 1080px;
     margin-inline: auto;
     padding: 0 16px 48px;
+  }
+
+  .home-social { margin: 56px 0 32px; }
+  .home-social__head {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  .home-social__kicker {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: lowercase;
+    color: var(--muted);
+    margin: 0 0 6px;
+  }
+  .home-social__title {
+    font-family: 'VT323', 'Russo One', monospace;
+    font-size: clamp(26px, 4vw, 34px);
+    color: var(--accent-2);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin: 0;
+    text-shadow: 0 0 12px color-mix(in oklab, var(--accent-2) 45%, transparent);
+  }
+
+  .home-social__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 18px;
   }
 </style>

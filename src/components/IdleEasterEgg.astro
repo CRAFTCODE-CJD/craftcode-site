@@ -1,36 +1,96 @@
 ---
+/**
+ * Idle easter egg — a sleeping CODE bot pops up in the bottom-right
+ * corner after 60s of inactivity with a "Zzz" bubble. Any user activity
+ * hides it again.
+ */
 import CompanionBot from './CompanionBot.astro';
 ---
 
-<div id="idle-bot-container" class="fixed bottom-4 right-4 pointer-events-none opacity-0 transition-opacity duration-500 z-[9999]">
-  <div class="flex flex-col items-center">
-    <div class="bg-black/80 border border-[var(--neon-pink)] p-2 rounded text-[10px] font-mono text-[var(--neon-pink)] mb-2">
-      Z-z-z... System idle.
-    </div>
-    <CompanionBot bot="code" anim="sleep" />
+<div id="idle-bot-container" class="idle-bot" data-hidden>
+  <div class="idle-bot__bubble" aria-hidden="true">
+    <span class="idle-bot__zzz"><span>Z</span><span>z</span><span>z</span></span>
+    <span class="idle-bot__text">system idle</span>
   </div>
+  <CompanionBot bot="code" anim="sleep" size={48} />
 </div>
 
 <script is:inline>
   (() => {
-    let idleTime = 0;
     const container = document.getElementById('idle-bot-container');
-    
-    const resetTimer = () => {
+    if (!container) return;
+    let idleTime = 0;
+
+    const reset = () => {
       idleTime = 0;
-      if (container) container.classList.add('opacity-0');
+      container.setAttribute('data-hidden', '');
     };
 
-    document.addEventListener('mousemove', resetTimer);
-    document.addEventListener('keypress', resetTimer);
-    document.addEventListener('scroll', resetTimer);
-    document.addEventListener('touchstart', resetTimer);
+    ['mousemove', 'keypress', 'scroll', 'touchstart', 'click'].forEach((ev) =>
+      document.addEventListener(ev, reset, { passive: true })
+    );
 
     setInterval(() => {
-      idleTime++;
-      if (idleTime >= 60) {
-        if (container) container.classList.remove('opacity-0');
-      }
+      idleTime += 1;
+      if (idleTime >= 60) container.removeAttribute('data-hidden');
     }, 1000);
   })();
 </script>
+
+<style>
+  .idle-bot {
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+    pointer-events: none;
+    z-index: 50;
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 380ms ease, transform 380ms ease;
+  }
+  .idle-bot[data-hidden] {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  .idle-bot__bubble {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+    padding: 4px 10px;
+    background: var(--code-bg);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius);
+    color: var(--accent);
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: lowercase;
+    box-shadow: var(--glow-sm);
+  }
+  .idle-bot__zzz {
+    font-family: 'VT323', 'Russo One', monospace;
+    color: var(--accent-2);
+    letter-spacing: 0;
+  }
+  .idle-bot__zzz span {
+    display: inline-block;
+    animation: zzz-bob 1.4s ease-in-out infinite;
+  }
+  .idle-bot__zzz span:nth-child(1) { font-size: 16px; animation-delay: 0s; }
+  .idle-bot__zzz span:nth-child(2) { font-size: 13px; animation-delay: 0.18s; }
+  .idle-bot__zzz span:nth-child(3) { font-size: 11px; animation-delay: 0.36s; }
+  .idle-bot__text { color: var(--muted); }
+
+  @keyframes zzz-bob {
+    0%, 100% { transform: translateY(0); opacity: 1; }
+    50%      { transform: translateY(-4px); opacity: 0.4; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .idle-bot__zzz span { animation: none !important; }
+  }
+</style>

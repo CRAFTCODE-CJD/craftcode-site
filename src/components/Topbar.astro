@@ -144,7 +144,7 @@ const activeKey =
       drop-shadow(0 0 16px color-mix(in oklab, var(--accent-2) 60%, transparent));
   }
   .cc-brand-word {
-    font-family: 'Press Start 2P', 'IBM Plex Mono', monospace;
+    font-family: 'Press Start 2P', 'Rubik Pixels', monospace;
     font-size: 13px;
     text-transform: uppercase;
     letter-spacing: 0;
@@ -171,7 +171,7 @@ const activeKey =
     position: relative;
     /* Set everything directly — Starlight has higher-specificity base rules
        on generic <nav a> selectors that would otherwise override us. */
-    font-family: 'VT323', 'Roboto Mono', monospace !important;
+    font-family: 'VT323', 'Russo One', monospace !important;
     font-size: 18px !important;
     font-weight: 400 !important;
     text-transform: uppercase;
@@ -205,34 +205,51 @@ const activeKey =
     font-size: 12px;
     color: var(--muted);
   }
-  .cc-lang :global(starlight-lang-select select) {
-    background: transparent;
+  /* ─── EN / RU language toggle (terminal-style pill) ─── */
+  .cc-lang {
+    display: inline-flex;
+    align-items: stretch;
+    padding: 2px;
+    background: var(--code-bg);
     border: 1px solid var(--border);
-    color: var(--muted);
-    /* Wider right padding so full locale name ("Русский", "English")
-       fits without being truncated by the caret. */
-    padding: 4px 34px 4px 30px;
-    min-width: 120px;
-    font: inherit;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
     border-radius: var(--radius, 4px);
+    box-shadow: inset 0 0 8px color-mix(in oklab, var(--accent) 12%, transparent);
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .cc-lang-btn {
+    background: transparent;
+    border: 0;
+    color: var(--faint);
+    padding: 4px 10px;
+    font: inherit;
     cursor: pointer;
-    /* Prevent "…" ellipsis inside the native select when text is long. */
-    text-overflow: initial;
-    overflow: visible;
+    border-radius: 3px;
+    transition: color 120ms, background 120ms, text-shadow 120ms;
+    position: relative;
   }
-  .cc-lang :global(starlight-lang-select select:hover) {
+  .cc-lang-btn:hover {
+    color: var(--ink);
+  }
+  .cc-lang-btn.active {
     color: var(--accent);
-    border-color: var(--accent);
+    background: color-mix(in oklab, var(--accent) 18%, transparent);
+    text-shadow: var(--glow-sm);
   }
-  .cc-lang :global(starlight-lang-select .label-icon),
-  .cc-lang :global(starlight-lang-select .caret) {
-    color: var(--muted);
+  .cc-lang-btn.active::before {
+    content: '>';
+    margin-right: 4px;
+    color: var(--accent-3);
+    font-weight: 700;
   }
-  .cc-lang :global(starlight-lang-select:hover .label-icon),
-  .cc-lang :global(starlight-lang-select:hover .caret) {
-    color: var(--accent);
+  .cc-lang-sep {
+    display: grid;
+    place-items: center;
+    color: var(--faint);
+    padding: 0 1px;
+    pointer-events: none;
   }
 
   /* ─── Burger button (mobile only) ─── */
@@ -281,7 +298,7 @@ const activeKey =
   }
   .cc-mobile-nav[hidden] { display: none !important; }
   .cc-mobile-nav a {
-    font-family: 'VT323', 'Roboto Mono', monospace;
+    font-family: 'VT323', 'Russo One', monospace;
     font-size: 22px;
     text-transform: uppercase;
     letter-spacing: 0.04em;

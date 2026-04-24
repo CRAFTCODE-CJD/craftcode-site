@@ -3,17 +3,16 @@ title: О проекте
 description: CRAFTCODE — кто стоит за инструментами, как связаться и где следить за обновлениями.
 ---
 
-**CRAFTCODE** — разработчик плагинов и игр для Unreal Engine.
+**CRAFTCODE** — я разрабатываю и продаю плагины и шаблоны для Unreal Engine.
 
 CRAFT и CODE — это пара роботов-ассистентов. Они строят всё что тут есть, спорят о форме, измеряют друг друга, иногда улетают в потолок.
 
 ## Где меня найти
 
-- **Email** — [channeljonathandeveloper@gmail.com](mailto:channeljonathandeveloper@gmail.com)
-- **YouTube** — [jonathandeveloper6723](https://www.youtube.com/@jonathandeveloper6723) — туториалы и devlog
-- **Boosty** — [channel-jonathan-developer](https://boosty.to/channel-jonathan-developer) — эксклюзивный контент для подписчиков
+- **Email** — [channeljonathandeveloper@gmail.com](mailto:channeljonathandeveloper@gmail.com) — по сотрудничеству, багам и предложениям
 - **FAB Marketplace** — [CRAFTCODE](https://www.fab.com/sellers/CRAFTCODE) — плагины для Unreal Engine
-- **GitHub** — [CRAFTCODE-CJD](https://github.com/CRAFTCODE-CJD) — исходники документации и сайта
+- **Boosty** — [channel-jonathan-developer](https://boosty.to/channel-jonathan-developer) — эксклюзивный контент для подписчиков
+- **YouTube** — [jonathandeveloper6723](https://www.youtube.com/@jonathandeveloper6723) — футажи проделанной работы и демо шаблонов
 
 ## Пасхалки сайта
 

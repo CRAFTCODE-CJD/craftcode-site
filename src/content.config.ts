@@ -50,6 +50,8 @@ export const collections = {
       version: z.string().optional(),
       tagline: z.string().optional(),
       image: z.string().optional(),
+      /** YouTube video ID for hero demo (just the 11-char id). */
+      video: z.string().optional(),
       accent: z.string().optional(),
       ctas: z.array(cta).optional(),
       meta: z.array(metaPair).optional(),

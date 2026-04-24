@@ -10,15 +10,29 @@ const { src, alt = '', caption, width, height } = Astro.props as Props;
 ---
 
 <figure class="mdx-image">
-  <img
-    src={src}
-    alt={alt}
-    width={width}
-    height={height}
-    loading="lazy"
-    decoding="async"
-    class="mdx-image__img"
-  />
+  <button
+    type="button"
+    class="mdx-image__trigger"
+    data-lightbox-src={src}
+    data-lightbox-alt={alt || caption || ''}
+    aria-label="Открыть увеличенное изображение"
+  >
+    <img
+      src={src}
+      alt={alt}
+      width={width}
+      height={height}
+      loading="lazy"
+      decoding="async"
+      class="mdx-image__img"
+    />
+    <span class="mdx-image__zoom" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="7"></circle>
+        <path d="m20 20-3-3M11 8v6M8 11h6"></path>
+      </svg>
+    </span>
+  </button>
   {caption && <figcaption class="mdx-image__caption">// {caption}</figcaption>}
 </figure>
 
@@ -26,6 +40,15 @@ const { src, alt = '', caption, width, height } = Astro.props as Props;
   .mdx-image {
     margin: 20px 0;
     padding: 0;
+  }
+  .mdx-image__trigger {
+    position: relative;
+    display: block;
+    width: 100%;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    cursor: zoom-in;
   }
   .mdx-image__img {
     display: block;
@@ -35,9 +58,28 @@ const { src, alt = '', caption, width, height } = Astro.props as Props;
     border-radius: var(--radius);
     transition: box-shadow 160ms ease, transform 160ms ease;
   }
-  .mdx-image__img:hover {
+  .mdx-image__trigger:hover .mdx-image__img,
+  .mdx-image__trigger:focus-visible .mdx-image__img {
     box-shadow: var(--glow-md);
     transform: translateY(-1px);
+  }
+  .mdx-image__zoom {
+    position: absolute;
+    top: 8px; right: 8px;
+    width: 28px; height: 28px;
+    display: grid;
+    place-items: center;
+    background: color-mix(in oklab, var(--bg) 70%, transparent);
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    color: var(--accent);
+    opacity: 0;
+    transition: opacity 160ms ease;
+    pointer-events: none;
+  }
+  .mdx-image__trigger:hover .mdx-image__zoom,
+  .mdx-image__trigger:focus-visible .mdx-image__zoom {
+    opacity: 1;
   }
   .mdx-image__caption {
     margin-top: 6px;

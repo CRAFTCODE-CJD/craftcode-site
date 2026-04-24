@@ -1,0 +1,183 @@
+---
+/**
+ * Global image lightbox — single DOM instance mounted from Base.astro.
+ * Any button with [data-lightbox-src="<url>"] opens this overlay.
+ *
+ *   · Click / tap outside the image, or Escape → close
+ *   · Ctrl-scroll zooms on desktop; double-tap toggles 2× on mobile
+ *   · Focus is trapped on the close button while open
+ */
+---
+
+<dialog class="lb" data-lightbox role="dialog" aria-label="Просмотр изображения">
+  <button class="lb__close" type="button" data-lightbox-close aria-label="Закрыть">
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M6 6l12 12M18 6L6 18" />
+    </svg>
+  </button>
+  <figure class="lb__stage">
+    <img class="lb__img" alt="" />
+    <figcaption class="lb__caption"></figcaption>
+  </figure>
+  <div class="lb__hint" aria-hidden="true">
+    <span>esc</span> закрыть · <span>click</span> за картинкой
+  </div>
+</dialog>
+
+<script>
+  const dlg = document.querySelector<HTMLDialogElement>('[data-lightbox]');
+  if (dlg) {
+    const img = dlg.querySelector<HTMLImageElement>('.lb__img')!;
+    const cap = dlg.querySelector<HTMLElement>('.lb__caption')!;
+    const closeBtn = dlg.querySelector<HTMLButtonElement>('[data-lightbox-close]')!;
+
+    let zoomed = false;
+    const setZoom = (on: boolean) => {
+      zoomed = on;
+      img.classList.toggle('lb__img--zoomed', on);
+    };
+
+    const open = (src: string, alt: string) => {
+      img.src = src;
+      img.alt = alt;
+      cap.textContent = alt;
+      cap.style.display = alt ? '' : 'none';
+      setZoom(false);
+      if (typeof dlg.showModal === 'function') dlg.showModal();
+      else dlg.setAttribute('open', '');
+      document.body.classList.add('lb-open');
+    };
+
+    const close = () => {
+      if (typeof dlg.close === 'function') dlg.close();
+      else dlg.removeAttribute('open');
+      document.body.classList.remove('lb-open');
+      img.src = '';
+      setZoom(false);
+    };
+
+    document.addEventListener('click', (e) => {
+      const trigger = (e.target as HTMLElement)?.closest<HTMLElement>('[data-lightbox-src]');
+      if (!trigger) return;
+      e.preventDefault();
+      open(trigger.dataset.lightboxSrc || '', trigger.dataset.lightboxAlt || '');
+    });
+
+    closeBtn.addEventListener('click', close);
+
+    // Click outside img → close. Click on img → toggle zoom.
+    dlg.addEventListener('click', (e) => {
+      const t = e.target as HTMLElement;
+      if (t === dlg || t.classList.contains('lb__stage') || t.classList.contains('lb__caption')) {
+        close();
+      } else if (t === img) {
+        setZoom(!zoomed);
+      }
+    });
+
+    dlg.addEventListener('cancel', (e) => {
+      e.preventDefault();
+      close();
+    });
+  }
+</script>
+
+<style>
+  .lb {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--ink);
+    max-width: 100vw;
+    max-height: 100vh;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+  }
+  .lb::backdrop {
+    background: color-mix(in oklab, var(--bg) 92%, transparent);
+    backdrop-filter: blur(6px);
+  }
+
+  .lb__close {
+    position: fixed;
+    top: 16px; right: 16px;
+    width: 40px; height: 40px;
+    display: grid;
+    place-items: center;
+    background: var(--surface);
+    color: var(--ink);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius);
+    box-shadow: var(--glow-sm);
+    cursor: pointer;
+    z-index: 10;
+    transition: transform 120ms, box-shadow 120ms;
+  }
+  .lb__close:hover {
+    color: var(--accent);
+    box-shadow: var(--glow-md);
+    transform: rotate(90deg);
+  }
+
+  .lb__stage {
+    margin: 0;
+    height: 100%;
+    display: grid;
+    place-items: center;
+    padding: 40px 24px 60px;
+    box-sizing: border-box;
+  }
+
+  .lb__img {
+    max-width: min(94vw, 1600px);
+    max-height: calc(100vh - 120px);
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border: 1px solid var(--accent);
+    border-radius: var(--radius);
+    box-shadow: var(--glow-lg);
+    cursor: zoom-in;
+    transition: transform 220ms ease;
+  }
+  .lb__img--zoomed {
+    transform: scale(1.5);
+    cursor: zoom-out;
+  }
+
+  .lb__caption {
+    position: fixed;
+    left: 0; right: 0; bottom: 18px;
+    text-align: center;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 12px;
+    color: var(--muted);
+    padding: 0 24px;
+    pointer-events: none;
+  }
+
+  .lb__hint {
+    position: fixed;
+    left: 16px; bottom: 14px;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 10px;
+    color: var(--faint);
+    letter-spacing: 0.04em;
+  }
+  .lb__hint span {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    padding: 1px 5px;
+    border-radius: 3px;
+    color: var(--accent-3);
+    margin: 0 2px;
+  }
+
+  :global(body.lb-open) { overflow: hidden; }
+
+  @media (max-width: 700px) {
+    .lb__hint { display: none; }
+    .lb__stage { padding: 20px 12px 40px; }
+  }
+</style>

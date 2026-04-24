@@ -161,11 +161,12 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
     'platform',
     'floor',
   ]);
-  // Visual-only floor tile — rendered via a tiled hatch sprite, clipped
-  // to the visible stage so screen-wrap never reveals the extended body.
+  // Visual-only floor tile — rendered via a tiled hatch sprite spanning
+  // the same 3× width as the physics body, so when the camera zooms out
+  // (scale<1) the hatch keeps covering everything that's visible.
   k.add([
-    k.sprite('hatch-floor', { tiled: true, width: LOGICAL_W, height: 12 }),
-    k.pos(0, LOGICAL_H - 12),
+    k.sprite('hatch-floor', { tiled: true, width: LOGICAL_W * 3, height: 12 }),
+    k.pos(-LOGICAL_W, LOGICAL_H - 12),
     'floor-visual',
     { _kind: 'floor' as const },
   ]);
@@ -216,16 +217,18 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
 
   k.onDraw(() => {
     // Floor neon top edge — drawn directly at floor-top (y = LOGICAL_H - 12)
-    // minus 2px so the lit line mirrors the legacy DOM ::after.
+    // minus 2px so the lit line mirrors the legacy DOM ::after. Spans the
+    // same extended (3×) range as the physics body / visual tile so zoomed-
+    // out frames never reveal a hard cutoff.
     k.drawRect({
-      pos: k.vec2(0, LOGICAL_H - 12 - 2),
-      width: LOGICAL_W,
+      pos: k.vec2(-LOGICAL_W, LOGICAL_H - 12 - 2),
+      width: LOGICAL_W * 3,
       height: 2,
       color: ACCENT,
     });
     k.drawRect({
-      pos: k.vec2(0, LOGICAL_H - 12 - 6),
-      width: LOGICAL_W,
+      pos: k.vec2(-LOGICAL_W, LOGICAL_H - 12 - 6),
+      width: LOGICAL_W * 3,
       height: 4,
       color: ACCENT,
       opacity: 0.35,
@@ -280,7 +283,16 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
       k.sprite(who, { anim: 'idle' }),
       k.pos(x, 200),
       k.area({ shape: new k.Rect(k.vec2(0), 32, 40) }),
-      k.body({ jumpForce: 520 }),
+      // Industry-standard platformer body: terminal fall velocity, mild
+      // air drag, mass=1, and stickToPlatform so bots ride moving
+      // platforms (event obstacle_move) without slipping off.
+      k.body({
+        jumpForce: 520,
+        maxVelocity: 900,
+        drag: 0.01,
+        mass: 1,
+        stickToPlatform: true,
+      }),
       k.anchor('bot'),
       'bot',
       {
@@ -290,6 +302,11 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
         isDragging: false,
         lastMouse: k.vec2(0, 0),
         throwVel: k.vec2(0, 0),
+        // Coyote time (ms timestamp until which bot can still jump after
+        // walking off an edge). 120ms grace.
+        _groundedUntil: 0,
+        // Last time the bot was snapped onto another bot's head.
+        _groundedOnBot: 0,
       },
     ]);
     return bot;
@@ -302,6 +319,8 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
     isDragging: boolean;
     lastMouse: ReturnType<typeof k.vec2>;
     throwVel: ReturnType<typeof k.vec2>;
+    _groundedUntil: number;
+    _groundedOnBot: number;
   };
   const code = makeBot('code', 360) as typeof craft;
   const bots = [craft, code];
@@ -326,6 +345,19 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
     bot.onGround(() => {
       try { bot.play('land'); } catch (_) {}
       spawnDust(bot.pos.x, bot.pos.y);
+      // Squash & stretch on landing — quick visual punch that reads as
+      // weight without altering hit-area or physics. Skipped under
+      // reduced motion for accessibility.
+      if (!reducedMotion) {
+        try {
+          bot.use(k.scale(1.15, 0.85));
+          k.wait(0.12, () => {
+            if (bot.exists()) {
+              try { bot.scale = k.vec2(1, 1); } catch (_) {}
+            }
+          });
+        } catch (_) { /* graceful — scale comp may already be present */ }
+      }
       setTimeout(() => {
         if (!bot.isDragging && bot.isGrounded()) {
           try { bot.play(bot.wanderDir !== 0 ? 'walk' : 'idle'); } catch (_) {}
@@ -336,6 +368,68 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
       // Cap upward velocity so they don't stick under platforms.
       if (bot.vel.y < 0) bot.vel.y = 0;
     });
+  });
+
+  // ── Per-frame: coyote timer, ground friction, gravity asymmetry ──
+  // Celeste-style asymmetric gravity (lighter on the rise, heavier on
+  // the fall) gives jumps a snappier, more controllable feel. We only
+  // touch gravityScale when not being dragged — drag sets it to 0.
+  k.onUpdate(() => {
+    const nowMs = performance.now();
+    for (const bot of bots) {
+      if (bot.isDragging) continue;
+
+      // Coyote: refresh grace window while grounded.
+      if (bot.isGrounded()) {
+        bot._groundedUntil = nowMs + 120;
+      }
+
+      // Asymmetric gravity — only when airborne and not held.
+      if (!bot.isGrounded()) {
+        bot.gravityScale = bot.vel.y < 0 ? 0.85 : 1.15;
+      } else {
+        bot.gravityScale = 1;
+      }
+
+      // Ground friction when wandering is idle — bleed off horizontal
+      // velocity so a thrown bot eventually settles instead of sliding.
+      if (bot.wanderDir === 0 && bot.isGrounded()) {
+        bot.vel.x *= 0.85;
+        if (Math.abs(bot.vel.x) < 5) bot.vel.x = 0;
+      }
+    }
+  });
+
+  // ── Bot-on-bot stacking snap ─────────────────────────
+  // KAPLAY's dynamic-on-dynamic resolution leaves a visible gap when one
+  // bot is dropped onto another's head; manually snap the upper bot's
+  // feet to the lower bot's hit-area top when they horizontally overlap
+  // and the upper is descending or near-rest above the lower.
+  k.onUpdate(() => {
+    const pairs = [[craft, code], [code, craft]] as const;
+    for (const [upper, lower] of pairs) {
+      if (upper.isDragging || lower.isDragging) continue;
+      const uA = upper.worldArea();
+      const lA = lower.worldArea();
+      if (!uA || !lA || !uA.pts || !lA.pts) continue;
+      // Rect.pts → [TL, TR, BR, BL] in KAPLAY.
+      const uLeft   = Math.min(uA.pts[0].x, uA.pts[3].x);
+      const uRight  = Math.max(uA.pts[1].x, uA.pts[2].x);
+      const uBottom = Math.max(uA.pts[2].y, uA.pts[3].y);
+      const lLeft   = Math.min(lA.pts[0].x, lA.pts[3].x);
+      const lRight  = Math.max(lA.pts[1].x, lA.pts[2].x);
+      const lTop    = Math.min(lA.pts[0].y, lA.pts[1].y);
+      const hOverlap = !(uRight < lLeft || uLeft > lRight);
+      if (!hOverlap) continue;
+      const gap = lTop - uBottom; // positive = upper above lower
+      if (gap > -8 && gap < 4 && upper.vel.y >= -20) {
+        // anchor='bot' → pos.y == feet/bottom of hit-area, so snapping
+        // pos.y onto the lower bot's hit-area top closes the gap exactly.
+        upper.pos.y = lTop;
+        upper.vel.y = 0;
+        upper._groundedOnBot = performance.now();
+      }
+    }
   });
 
   // ── §4 Wander AI ──────────────────────────────────────
@@ -492,25 +586,24 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
     const nextScale = k.lerp(curScale, targetScale, 0.04);
     k.setCamScale(nextScale);
 
-    // Visible half-extents at the upcoming scale (in world units).
-    const halfW = LOGICAL_W / 2 / nextScale;
-    const halfH = LOGICAL_H / 2 / nextScale;
-
-    // Clamp X so camera can't pan beyond the stage edges (no void left
-    // or right of the hatch floor).
-    const minCx = halfW;
-    const maxCx = LOGICAL_W - halfW;
-    // Clamp Y so the bottom of the stage (y=LOGICAL_H) stays in frame —
-    // i.e. camera centre ≤ LOGICAL_H − halfH. Also don't rise above
-    // halfH so the top doesn't show empty space.
-    const minCy = halfH;
-    const maxCy = LOGICAL_H - halfH;
+    // Visible extents at the upcoming scale (in world units). When the
+    // viewport is wider than the world (scale<1, common during zoom-out),
+    // a naive halfW clamp inverts (minCx > maxCx) and dragged the camera
+    // to the wrong edge. Instead lock to centre when visible >= world,
+    // clamp normally otherwise.
+    const visW = LOGICAL_W / nextScale;
+    const visH = LOGICAL_H / nextScale;
 
     const rawX = k.lerp(k.getCamPos().x, cx, 0.06);
     const rawY = k.lerp(k.getCamPos().y, cy * 0.5 + LOGICAL_H * 0.5, 0.06);
-    const clampedX = Math.min(maxCx, Math.max(minCx, rawX));
-    const clampedY = Math.min(maxCy, Math.max(minCy, rawY));
-    k.setCamPos(clampedX, clampedY);
+
+    const cxT = visW >= LOGICAL_W
+      ? LOGICAL_W / 2
+      : Math.max(visW / 2, Math.min(LOGICAL_W - visW / 2, rawX));
+    const cyT = visH >= LOGICAL_H
+      ? LOGICAL_H / 2
+      : Math.max(visH / 2, Math.min(LOGICAL_H - visH / 2, rawY));
+    k.setCamPos(cxT, cyT);
   });
 
   // ── §6 Bubble bridge (DOM overlay above canvas) ───────

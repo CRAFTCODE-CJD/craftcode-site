@@ -269,8 +269,48 @@ export function initCamera(): () => void {
     // Translate so bbox center lands on stage center post-scale.
     const stageCx = stageW / 2;
     const stageCy = stageH / 2;
-    const tx = (stageCx - bboxCx) * targetScale;
-    const ty = (stageCy - bboxCy) * targetScale;
+    let tx = (stageCx - bboxCx) * targetScale;
+    let ty = (stageCy - bboxCy) * targetScale;
+
+    // ── Edge clamp ─────────────────────────────────────────
+    // After translate+scale the stage grows by `targetScale` (origin = center).
+    // Visible inner window in stage-px is `stage / targetScale`. For the stage
+    // edges to stay inside the viewport we need |tx| ≤ (stageW - visibleW) * scale / 2
+    // and similarly for ty.  Without this clamp the camera may push the bottom
+    // dashed floor line outside the `.cc-stage-play` overflow-clip, so the
+    // floor (and FX at bots' feet) disappears.
+    if (targetScale > 1) {
+      const visibleW = stageW / targetScale;
+      const visibleH = stageH / targetScale;
+      const maxTx = ((stageW - visibleW) / 2) * targetScale;
+      const maxTy = ((stageH - visibleH) / 2) * targetScale;
+      tx = clamp(tx, -maxTx, maxTx);
+      // Bias: when floor risks leaving the frame (bots are near the top of
+      // stage, camera wants to scroll DOWN → ty would become negative), keep
+      // the bottom edge pinned. Equivalent to preferring the larger-ty end
+      // of the clamp range — this is what the normal symmetric clamp already
+      // does, but we add a small bottom-bias (+FLOOR_BIAS_PX) so the dashed
+      // floor line reads as "always in frame" rather than "clipped just inside".
+      const FLOOR_BIAS_PX = 24;
+      ty = clamp(ty, -maxTy, maxTy);
+      // Ensure floor (stage bottom after scale) sits inside the viewport bottom
+      // minus a small margin. Floor-in-world is at y=stageH; post-transform
+      // it lands at stageCy + (stageH - stageCy) * scale + ty = stageH*scale/2 + stageCy + ty... actually:
+      //   postY_of_world(stageH) = stageCy + (stageH - stageCy) * scale + ty
+      //                          = stageCy * (1 - scale) + stageH * scale + ty
+      // We want that ≤ stageH  →  ty ≤ stageH - stageCy*(1-scale) - stageH*scale
+      //                              = (stageH - stageCy)*(1 - scale) = (stageH/2)*(1-scale)  (negative for scale>1)
+      // So floor stays visible when ty ≤ -(stageH/2)*(scale-1). With our symmetric
+      // clamp, maxTy = (stageH/2)*(scale-1), and we need ty ≤ -maxTy + FLOOR_BIAS_PX
+      // to keep a small cushion. Apply as an upper cap on ty.
+      const floorCeiling = -maxTy + FLOOR_BIAS_PX;
+      if (ty > floorCeiling) ty = floorCeiling;
+    } else {
+      // scale ≤ 1: the stage is smaller than the viewport after scale, so any
+      // non-zero translate would expose empty space. Pin to center.
+      tx = 0;
+      ty = 0;
+    }
 
     return { cam: { scale: targetScale, tx, ty }, bboxCx, bboxCy };
   };

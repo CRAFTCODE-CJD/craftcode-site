@@ -42,6 +42,10 @@ const frames = c.to - c.from + 1;
 <style>
   .cb-bot {
     --cb-size: 56px;
+    /* Visible cell size after subtracting 4px padding on each side.
+       All sprite geometry (frame width, sheet width, keyframe offsets)
+       is derived from this so the sprite scales with the container. */
+    --cb-frame: calc(var(--cb-size) - 8px);
     position: relative;
     display: inline-grid;
     place-items: center;
@@ -58,14 +62,16 @@ const frames = c.to - c.from + 1;
   }
   .cb-sprite {
     display: block;
-    width: 48px;
-    height: 48px;
+    width: var(--cb-frame);
+    height: var(--cb-frame);
+    margin: auto;
     image-rendering: pixelated;
     image-rendering: crisp-edges;
     background-repeat: no-repeat;
-    /* Sheet is 92 frames × 48px = 4416px */
-    background-size: 4416px 48px;
-    background-position-x: calc(var(--cb-from, 0) * -48px);
+    /* Sheet: 92 frames × frame-size. background-size scales the sheet so
+       one frame equals --cb-frame, keeping every callsite crisp. */
+    background-size: calc(var(--cb-frame) * 92) var(--cb-frame);
+    background-position-x: calc(var(--cb-from, 0) * var(--cb-frame) * -1);
   }
   .cb-bot[data-who='craft'] .cb-sprite { background-image: url('/sprites/craft.png'); }
   .cb-bot[data-who='code']  .cb-sprite { background-image: url('/sprites/code.png'); }
@@ -75,8 +81,8 @@ const frames = c.to - c.from + 1;
      Combined with `steps(N)` on the element, this shows each of the
      N frames discretely without sub-pixel bleed. */
   @keyframes cb-sheet {
-    from { background-position-x: calc(var(--cb-from, 0) * -48px); }
-    to   { background-position-x: calc((var(--cb-to, 0) + 1) * -48px); }
+    from { background-position-x: calc(var(--cb-from, 0) * var(--cb-frame) * -1); }
+    to   { background-position-x: calc((var(--cb-to, 0) + 1) * var(--cb-frame) * -1); }
   }
 
   .cb-scan {

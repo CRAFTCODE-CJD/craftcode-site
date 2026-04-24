@@ -217,7 +217,14 @@ import { FRAME_ORDER, fIdx, CLIPS, STATE_TO_CLIP } from './frames.data.js';
                         // Kept tiny so the bot visibly "stands" on the platform
                         // rather than hovering above it. FOOT_Y is the real
                         // pixel baseline so 2 px reads as light floor contact.
-    GRAVITY: 1800,      // px/s² — gravitational pull
+    GRAVITY: 1450,      // px/s² — gravitational pull.
+                        // Lowered from 1800 for a slightly longer hang-time on
+                        // tosses & throws; makes the arc feel springy rather
+                        // than yanked-down.
+    AIR_DRAG_X: 0.985,  // horizontal air-resistance per tick (applied while airborne)
+    AIR_DRAG_Y: 0.992,  // vertical air-resistance per tick — smooths ballistic arc
+    MAX_THROW_VY: 1400, // cap on initial |vy| from pointer-release. Without this
+                        // a flicked bot could rocket straight up and off-stage.
     WALK_SPEED: 40,     // px/s — reduced from perim-based (was ~0.006/frame)
     MAX_V: 2200,        // clamp on throw velocity
     BOUNCE: 0.55,       // restitution on wall / obstacle / ceiling (matches designer spec)
@@ -1121,6 +1128,10 @@ import { FRAME_ORDER, fIdx, CLIPS, STATE_TO_CLIP } from './frames.data.js';
         const dt = Math.max(0.016, (last.t - first.t) / 1000);
         vx = Math.max(-this.MAX_V, Math.min(this.MAX_V, (last.x - first.x) / dt));
         vy = Math.max(-this.MAX_V, Math.min(this.MAX_V, (last.y - first.y) / dt));
+        // Cap upward launch velocity — prevents the "rocket into the ceiling"
+        // feel on aggressive flicks. Downward is left uncapped by MAX_V only,
+        // since slamming a bot into the floor hard is intended behavior.
+        if (vy < 0) vy = Math.max(-this.MAX_THROW_VY, vy);
       }
       p.vx = vx; p.vy = vy;
       p.grounded = false;
@@ -1761,7 +1772,7 @@ import { FRAME_ORDER, fIdx, CLIPS, STATE_TO_CLIP } from './frames.data.js';
               p.walkTarget = null;
               p._sprint = false;
               this.setCharState(who, 'falling');
-              this.emitEffect('dust', p.x + this.S / 2 - 15, p.y + this.S - 10);
+              this.emitDustAtFeet(who);
               dialogue.fire('stuck_jump:' + who);
               p._stuckFrames = 0;
             }
@@ -1785,6 +1796,14 @@ import { FRAME_ORDER, fIdx, CLIPS, STATE_TO_CLIP } from './frames.data.js';
 
         if (!p.grounded) {
           p.vy += this.GRAVITY * dt;
+          // Air-drag: small per-tick velocity damping. Smooths the otherwise
+          // linear ballistic arc into something that reads as "air resistance",
+          // giving throws a softer parabolic feel. Scaled by dt so it's
+          // frame-rate-independent (at 60fps these approximate 0.985 / 0.992).
+          const dragX = Math.pow(this.AIR_DRAG_X, dt * 60);
+          const dragY = Math.pow(this.AIR_DRAG_Y, dt * 60);
+          p.vx *= dragX;
+          p.vy *= dragY;
           p.x  += p.vx * dt;
           p.y  += p.vy * dt;
           if (Math.abs(p.vx) > 20) p.facing = p.vx > 0 ? 'right' : 'left';
@@ -1857,7 +1876,7 @@ import { FRAME_ORDER, fIdx, CLIPS, STATE_TO_CLIP } from './frames.data.js';
               p.vy = -750; // Jump up
               p.vx = (p.facing === 'right' ? 1 : -1) * 150; // Keep moving forward over the block
               this.setCharState(who, 'falling');
-              this.emitEffect('dust', p.x + this.S / 2 - 15, p.y + this.S - 10);
+              this.emitDustAtFeet(who);
               if (Math.random() < 0.5) dialogue.fire('jump_over:' + who);
             } else {
               this.setCharState(who, 'idle'); 
@@ -1964,15 +1983,19 @@ import { FRAME_ORDER, fIdx, CLIPS, STATE_TO_CLIP } from './frames.data.js';
     // Dust at the FEET of the companion. .fx-dust has transform-origin:
     // bottom-center, so we align the element's BOTTOM edge with the
     // character's floor-line. Element is 10 px tall → top = bottom - 10.
+    // Y anchor is the ACTUAL feet pixel (FOOT_Y), not sprite-box bottom —
+    // the sprite's legs don't reach p.y + S because of transparent padding.
     emitDustAtFeet(who, big) {
       const p = this.pos[who];
-      this.emitEffect('dust', p.x + this.S / 2 - 15, p.y + this.S - 10, { big });
+      const feetY = p.y + this.FOOT_Y[who];
+      this.emitEffect('dust', p.x + this.S / 2 - 15, feetY - 10, { big });
     },
 
     // Shock ring centred exactly on the floor line under the feet.
     emitShockAtFeet(who) {
       const p = this.pos[who];
-      this.emitEffect('shock', p.x + this.S / 2, p.y + this.S - 2);
+      const feetY = p.y + this.FOOT_Y[who];
+      this.emitEffect('shock', p.x + this.S / 2, feetY - 2);
     },
 
     // Shake only the .companions container, and only if it's on screen.

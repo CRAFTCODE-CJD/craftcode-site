@@ -9,13 +9,6 @@
   "home.social.kicker": "// channels",
   "home.social.title": "Where to find me",
 
-  "home.community.fab.title": "// FAB Marketplace",
-  "home.community.fab.cta": "Marketplace →",
-  "home.community.youtube.title": "// YouTube",
-  "home.community.youtube.cta": "Latest video →",
-  "home.community.boosty.title": "// Boosty",
-  "home.community.boosty.cta": "Subscribe →",
-
   "latest.title": "// latest releases",
   "latest.sub": "pulled live from github · manifest.json per repo",
   "latest.empty": "no manifests available. network offline or registry empty.",

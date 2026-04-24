@@ -9,13 +9,6 @@
   "home.social.kicker": "// каналы",
   "home.social.title": "Где меня найти",
 
-  "home.community.fab.title": "// FAB Marketplace",
-  "home.community.fab.cta": "Маркетплейс →",
-  "home.community.youtube.title": "// YouTube",
-  "home.community.youtube.cta": "Последнее видео →",
-  "home.community.boosty.title": "// Boosty",
-  "home.community.boosty.cta": "Подписаться →",
-
   "latest.title": "// последние релизы",
   "latest.sub": "данные из github · manifest.json в каждом репо",
   "latest.empty": "нет манифестов. сеть недоступна или реестр пуст.",

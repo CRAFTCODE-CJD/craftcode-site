@@ -341,19 +341,20 @@ export function initCamera(): () => void {
       : MAX_DSCALE_PER_TICK;
     prevTargetScale = computed.cam.scale;
     // Translate-jump guard — see MODE_FLIP_TRANSLATE_DELTA comment.
-    const rawTxJump = Math.abs(computed.cam.tx - prevTargetTx);
-    const rawTyJump = Math.abs(computed.cam.ty - prevTargetTy);
-    const txStep = rawTxJump > MODE_FLIP_TRANSLATE_DELTA
-      ? Math.min(MODE_FLIP_MAX_DTRANSLATE, MAX_DTRANSLATE_PER_TICK)
-      : MAX_DTRANSLATE_PER_TICK;
-    const tyStep = rawTyJump > MODE_FLIP_TRANSLATE_DELTA
+    // Revision #5: use joint magnitude sqrt(dx²+dy²) instead of per-axis
+    // clamps to avoid diagonal asymmetry (e.g. a big diagonal teleport
+    // getting clamped on x but not y, producing a curved path).
+    const rawDx = computed.cam.tx - prevTargetTx;
+    const rawDy = computed.cam.ty - prevTargetTy;
+    const rawJump = Math.hypot(rawDx, rawDy);
+    const translateStep = rawJump > MODE_FLIP_TRANSLATE_DELTA
       ? Math.min(MODE_FLIP_MAX_DTRANSLATE, MAX_DTRANSLATE_PER_TICK)
       : MAX_DTRANSLATE_PER_TICK;
     prevTargetTx = computed.cam.tx;
     prevTargetTy = computed.cam.ty;
     state.scale = approach(state.scale, target.scale, scaleStep);
-    state.tx = approach(state.tx, target.tx, txStep);
-    state.ty = approach(state.ty, target.ty, tyStep);
+    state.tx = approach(state.tx, target.tx, translateStep);
+    state.ty = approach(state.ty, target.ty, translateStep);
     applyTransform();
   };
 

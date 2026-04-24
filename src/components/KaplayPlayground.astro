@@ -299,22 +299,73 @@ import TypingText from '~/components/TypingText.astro';
     position: absolute;
     top: 0;
     left: 0;
-    padding: 6px 10px;
+    padding: 7px 11px 8px;
     max-width: 260px;
-    background: color-mix(in oklab, var(--surface) 92%, transparent);
-    border: 1px solid color-mix(in oklab, var(--accent) 55%, transparent);
-    border-radius: 8px;
-    color: var(--fg);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 12px;
-    line-height: 1.4;
+    /* Bright pixel-arcade bubble — legacy style. Solid bg, square
+       corners, 1-px neon border with accent glow. VT323 gives the
+       speech text a proper sign-lettering feel that matches the
+       CRAFTCODE wordmark. */
+    background: var(--bg);
+    border: 1px solid var(--accent);
+    border-radius: 0;
+    color: var(--ink);
+    font-family: 'VT323', 'Russo One', monospace;
+    font-size: 16px;
+    line-height: 1.25;
+    letter-spacing: 0.02em;
     opacity: 0;
+    transform: translate(-50%, -100%) translateY(-12px);
+    transform-origin: 50% 100%;
     transition: opacity 180ms ease;
-    box-shadow: 0 0 18px color-mix(in oklab, var(--accent) 25%, transparent);
+    box-shadow:
+      0 0 0 1px color-mix(in oklab, var(--accent) 30%, transparent),
+      0 4px 0 rgba(0, 0, 0, 0.45),
+      0 0 18px color-mix(in oklab, var(--accent) 35%, transparent);
     white-space: pre-wrap;
-    word-break: break-word;
+    overflow-wrap: anywhere;
+    hyphens: auto;
+    z-index: 5;
   }
   :global(.kc-bubble.visible) { opacity: 1; }
+  :global(.kc-bubble::after) {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: -5px;
+    width: 8px;
+    height: 8px;
+    background: var(--bg);
+    border-right: 1px solid var(--accent);
+    border-bottom: 1px solid var(--accent);
+    transform: translateX(-50%) rotate(45deg);
+  }
+  :global(.kc-bubble--craft) { border-color: var(--accent); }
+  :global(.kc-bubble--code) {
+    border-color: var(--accent-2);
+    box-shadow:
+      0 0 0 1px color-mix(in oklab, var(--accent-2) 30%, transparent),
+      0 4px 0 rgba(0, 0, 0, 0.45),
+      0 0 18px color-mix(in oklab, var(--accent-2) 35%, transparent);
+  }
+  :global(.kc-bubble--code::after) {
+    border-right-color: var(--accent-2);
+    border-bottom-color: var(--accent-2);
+  }
+  /* "WHO:" prefix inline marker — injected by bridge as <span class="who">CRAFT</span> */
+  :global(.kc-bubble .who) {
+    display: inline;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--accent-2);
+    margin-right: 6px;
+  }
+  :global(.kc-bubble--code .who) { color: var(--accent); }
+  :lang(ru) :global(.kc-bubble) { font-size: 14px; max-width: 220px; }
+  @media (max-width: 500px) {
+    :global(.kc-bubble) { font-size: 13px; max-width: 180px; padding: 5px 9px; }
+  }
 
   /* HUD + caption visuals match the legacy stage. */
   .companions-caption {

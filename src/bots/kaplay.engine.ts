@@ -384,55 +384,94 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
   });
 
   // ── §5 Drag & throw ───────────────────────────────────
+  // Direct DOM pointer listeners on the canvas — k.onMousePress proved
+  // unreliable under certain touch/pointer event fallbacks, and going
+  // straight to the canvas element gives us a single, predictable
+  // coordinate pipeline: screen → canvas-internal (1200×420) → world
+  // (undo the camera transform). Works for mouse + touch uniformly.
   let dragged: typeof craft | null = null;
   const dragHistory: { x: number; y: number; t: number }[] = [];
+  let activePointerId: number | null = null;
 
-  k.onMousePress(() => {
-    const m = k.mousePos();
+  const toWorld = (ev: PointerEvent): { x: number; y: number } => {
+    const rect = canvas.getBoundingClientRect();
+    // Canvas is rendered at CSS size rect.width × rect.height, internal
+    // resolution LOGICAL_W × LOGICAL_H. Scale the event coord first.
+    const ix = ((ev.clientX - rect.left) / rect.width) * LOGICAL_W;
+    const iy = ((ev.clientY - rect.top) / rect.height) * LOGICAL_H;
+    // Then invert camera transform (translate + uniform scale).
+    const cam = k.getCamPos();
+    const s = k.getCamScale().x || 1;
+    return {
+      x: (ix - LOGICAL_W / 2) / s + cam.x,
+      y: (iy - LOGICAL_H / 2) / s + cam.y,
+    };
+  };
+
+  const pickBotAt = (wx: number, wy: number) => {
+    // Generous hit area — bot sprite is 48×48 rendered but the collision
+    // shape is 32×40. For drag we want a comfortable grab box, not the
+    // exact collision rect, so use a 56-px square centred on bot.pos
+    // (anchor='bot' → pos is feet).
     for (const bot of bots) {
-      if (bot.hasPoint?.(m)) {
-        dragged = bot;
-        bot.isDragging = true;
-        bot.gravityScale = 0;
-        bot.vel.x = 0;
-        bot.vel.y = 0;
-        dragHistory.length = 0;
-        try { bot.play('wave'); } catch (_) {}
-        break;
-      }
+      const dx = wx - bot.pos.x;
+      const dy = wy - (bot.pos.y - 24); // centre above feet
+      if (Math.abs(dx) < 28 && Math.abs(dy) < 28) return bot;
     }
+    return null;
+  };
+
+  canvas.addEventListener('pointerdown', (ev) => {
+    if (ev.button !== undefined && ev.button !== 0) return;
+    const { x, y } = toWorld(ev);
+    const bot = pickBotAt(x, y);
+    if (!bot) return;
+    ev.preventDefault();
+    try { canvas.setPointerCapture(ev.pointerId); } catch (_) {}
+    activePointerId = ev.pointerId;
+    dragged = bot;
+    bot.isDragging = true;
+    bot.gravityScale = 0;
+    bot.vel.x = 0;
+    bot.vel.y = 0;
+    dragHistory.length = 0;
+    dragHistory.push({ x, y, t: performance.now() });
+    try { bot.play('wave'); } catch (_) {}
   });
 
-  k.onMouseMove(() => {
-    if (!dragged) return;
-    const m = k.mousePos();
-    dragged.pos.x = m.x;
-    dragged.pos.y = m.y;
-    const now = k.time() * 1000;
-    dragHistory.push({ x: m.x, y: m.y, t: now });
+  canvas.addEventListener('pointermove', (ev) => {
+    if (!dragged || ev.pointerId !== activePointerId) return;
+    const { x, y } = toWorld(ev);
+    dragged.pos.x = x;
+    dragged.pos.y = y;
+    const now = performance.now();
+    dragHistory.push({ x, y, t: now });
     while (dragHistory.length > 0 && now - dragHistory[0].t > 120) {
       dragHistory.shift();
     }
   });
 
-  k.onMouseRelease(() => {
-    if (!dragged) return;
+  const endDrag = (ev: PointerEvent) => {
+    if (!dragged || ev.pointerId !== activePointerId) return;
     const bot = dragged;
+    try { canvas.releasePointerCapture(ev.pointerId); } catch (_) {}
+    activePointerId = null;
     bot.isDragging = false;
     bot.gravityScale = 1;
-    // Impulse from last ~120ms of motion.
     if (dragHistory.length >= 2) {
       const first = dragHistory[0];
       const last = dragHistory[dragHistory.length - 1];
       const dt = Math.max(16, last.t - first.t);
       const vx = ((last.x - first.x) / dt) * 1000;
       const vy = ((last.y - first.y) / dt) * 1000;
-      bot.vel.x = Math.max(-800, Math.min(800, vx));
-      bot.vel.y = Math.max(-800, Math.min(800, vy));
+      bot.vel.x = Math.max(-900, Math.min(900, vx));
+      bot.vel.y = Math.max(-900, Math.min(900, vy));
     }
     try { bot.play('tumble'); } catch (_) {}
     dragged = null;
-  });
+  };
+  canvas.addEventListener('pointerup', endDrag);
+  canvas.addEventListener('pointercancel', endDrag);
 
   // ── §9 Camera follow + distance zoom ──────────────────
   // Now that platforms & floor render in-canvas (tiled sprites +
@@ -445,17 +484,33 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
     if (bots.length < 2) return;
     const cx = (craft.pos.x + code.pos.x) / 2;
     const cy = (craft.pos.y + code.pos.y) / 2;
-    const cur = k.getCamPos();
-    const nx = k.lerp(cur.x, cx, 0.06);
-    // Bias vertical to the lower-mid of the stage so floor + platforms
-    // remain visible when bots climb up.
-    const targetY = cy * 0.6 + LOGICAL_H * 0.5 * 0.4;
-    const ny = k.lerp(cur.y, targetY, 0.06);
-    k.setCamPos(nx, ny);
+
+    // Target zoom first so we can clamp translate using the right scale.
     const dist = craft.pos.dist(code.pos);
     const targetScale = Math.max(0.85, Math.min(1.15, 220 / Math.max(120, dist)));
     const curScale = k.getCamScale().x;
-    k.setCamScale(k.lerp(curScale, targetScale, 0.04));
+    const nextScale = k.lerp(curScale, targetScale, 0.04);
+    k.setCamScale(nextScale);
+
+    // Visible half-extents at the upcoming scale (in world units).
+    const halfW = LOGICAL_W / 2 / nextScale;
+    const halfH = LOGICAL_H / 2 / nextScale;
+
+    // Clamp X so camera can't pan beyond the stage edges (no void left
+    // or right of the hatch floor).
+    const minCx = halfW;
+    const maxCx = LOGICAL_W - halfW;
+    // Clamp Y so the bottom of the stage (y=LOGICAL_H) stays in frame —
+    // i.e. camera centre ≤ LOGICAL_H − halfH. Also don't rise above
+    // halfH so the top doesn't show empty space.
+    const minCy = halfH;
+    const maxCy = LOGICAL_H - halfH;
+
+    const rawX = k.lerp(k.getCamPos().x, cx, 0.06);
+    const rawY = k.lerp(k.getCamPos().y, cy * 0.5 + LOGICAL_H * 0.5, 0.06);
+    const clampedX = Math.min(maxCx, Math.max(minCx, rawX));
+    const clampedY = Math.min(maxCy, Math.max(minCy, rawY));
+    k.setCamPos(clampedX, clampedY);
   });
 
   // ── §6 Bubble bridge (DOM overlay above canvas) ───────
@@ -497,7 +552,14 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
 
   const showBubble = (who: BotWho, text: string, holdMs = 2400) => {
     const el = ensureBubble(who);
-    el.textContent = `${who}: ${text}`;
+    // DOM-build the "WHO:" label + body so CSS can style them
+    // separately. textContent-based, no innerHTML → no XSS surface.
+    el.replaceChildren();
+    const kicker = document.createElement('span');
+    kicker.className = 'who';
+    kicker.textContent = `${who}:`;
+    el.appendChild(kicker);
+    el.appendChild(document.createTextNode(text));
     el.classList.add('visible');
     positionBubble(who);
     if (bubbleTimers[who]) clearTimeout(bubbleTimers[who]!);

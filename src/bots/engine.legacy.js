@@ -508,6 +508,20 @@ import { FRAME_ORDER, fIdx, CLIPS, STATE_TO_CLIP } from './frames.data.js';
 
       document.addEventListener('visibilitychange', () => {
         if (document.hidden) {
+          // If the tab goes hidden mid-drag, the matching pointerup may never
+          // arrive — engine would stay `dragging` forever, bot frozen in the
+          // held state. Treat hidden as an implicit pointercancel.
+          if (this.activeDrag) {
+            const who = this.activeDrag.who;
+            this.activeDrag = null;
+            this.pointerMoved = false;
+            if (this.pos[who]) {
+              this.pos[who].vx = 0;
+              this.pos[who].vy = 0;
+              this.pos[who].grounded = false;
+            }
+            this.setCharState(who, 'falling');
+          }
           clearTimeout(this.idleTimer);
           clearTimeout(this.wanderTimer);
           clearTimeout(this.thinkingTimer);

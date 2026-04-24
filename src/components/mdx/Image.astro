@@ -3,10 +3,15 @@ interface Props {
   src: string;
   alt?: string;
   caption?: string;
+  /** When true and no `caption` is set, render `alt` as the caption. Opt-in
+   *  so existing usages stay unchanged; MDX authors enable per-image. */
+  autoCaption?: boolean;
   width?: number;
   height?: number;
 }
-const { src, alt = '', caption, width, height } = Astro.props as Props;
+const { src, alt = '', caption, autoCaption = false, width, height } = Astro.props as Props;
+// Effective caption: explicit wins; else fall back to alt when autoCaption is on.
+const effectiveCaption = caption ?? (autoCaption && alt ? alt : undefined);
 ---
 
 <figure class="mdx-image">
@@ -14,7 +19,7 @@ const { src, alt = '', caption, width, height } = Astro.props as Props;
     type="button"
     class="mdx-image__trigger"
     data-lightbox-src={src}
-    data-lightbox-alt={alt || caption || ''}
+    data-lightbox-alt={alt || effectiveCaption || ''}
     aria-label="Открыть увеличенное изображение"
   >
     <img
@@ -33,7 +38,7 @@ const { src, alt = '', caption, width, height } = Astro.props as Props;
       </svg>
     </span>
   </button>
-  {caption && <figcaption class="mdx-image__caption">// {caption}</figcaption>}
+  {effectiveCaption && <figcaption class="mdx-image__caption">// {effectiveCaption}</figcaption>}
 </figure>
 
 <style>

@@ -72,6 +72,12 @@ const TARGET_ALPHA = 0.12;
 // visual snap on state reset / resize.
 const MAX_DSCALE_PER_TICK = 0.03;
 const MAX_DTRANSLATE_PER_TICK = 60;
+// Mode-flip guard (revision #3): when targetScale jumps sharply between ticks
+// — which happens when `inCloseMode` ↔ `inWideMode` flips after the bot lands
+// on crate_03 from a toss and its bbox snaps — we clamp the per-tick scale
+// step even harder so the visual zoom becomes a glide instead of a lurch.
+const MODE_FLIP_SCALE_DELTA = 0.15;
+const MODE_FLIP_MAX_DSCALE = 0.06;
 // Hysteresis — entry is harder than exit by ~30–35%.
 const ZOOM_IN_BBOX_W = 120;   // enter "close" mode below this
 const ZOOM_IN_BBOX_H = 180;
@@ -131,6 +137,9 @@ export function initCamera(): () => void {
   // thresholds apply asymmetrically.
   let inCloseMode = false;
   let inWideMode = false;
+  // Previous tick's computed targetScale — used to detect mode-flip jumps so
+  // we can clamp per-tick step size down to MODE_FLIP_MAX_DSCALE.
+  let prevTargetScale = 1;
   // Idle-window tracking: history of recent bbox-center
   // samples, used to decide whether anything moved enough to
   // warrant recomputing target at all.
@@ -311,7 +320,16 @@ export function initCamera(): () => void {
     // Per-tick clamp: step toward target under caps. Keeps
     // large jumps (resize, terminal close) smooth rather than
     // jarring.
-    state.scale = approach(state.scale, target.scale, MAX_DSCALE_PER_TICK);
+    // Mode-flip guard: if the raw computed target scale jumped more than
+    // MODE_FLIP_SCALE_DELTA vs last tick (typical when inCloseMode/inWideMode
+    // just toggled after a bbox snap on landing), cap the per-tick scale step
+    // to MODE_FLIP_MAX_DSCALE instead of MAX_DSCALE_PER_TICK.
+    const rawScaleJump = Math.abs(computed.cam.scale - prevTargetScale);
+    const scaleStep = rawScaleJump > MODE_FLIP_SCALE_DELTA
+      ? Math.min(MODE_FLIP_MAX_DSCALE, MAX_DSCALE_PER_TICK)
+      : MAX_DSCALE_PER_TICK;
+    prevTargetScale = computed.cam.scale;
+    state.scale = approach(state.scale, target.scale, scaleStep);
     state.tx = approach(state.tx, target.tx, MAX_DTRANSLATE_PER_TICK);
     state.ty = approach(state.ty, target.ty, MAX_DTRANSLATE_PER_TICK);
     applyTransform();
@@ -382,8 +400,17 @@ export function initCamera(): () => void {
   document.addEventListener('cc:terminal-close', onTermClose);
 
   // Pause on visibility hidden, resume on visible.
+  // Also force-release any stuck drag state: if the tab goes hidden
+  // mid-drag the OS may never deliver the matching pointerup, leaving
+  // `dragging=true` forever and freezing the camera. Treat hidden as
+  // an implicit pointercancel.
   const onVisibility = () => {
     if (document.hidden) {
+      if (dragging) {
+        dragging = false;
+        cam.style.transition = '';
+        history.length = 0;
+      }
       paused = true;
       stopLoop();
     } else {

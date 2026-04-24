@@ -1,0 +1,98 @@
+---
+title: Справка
+description: Тулбар, горячие клавиши, Project Settings и технические детали ManualSprite Editor Tools.
+order: 10
+---
+
+## Тулбар
+
+<Image src="/images/plugins/manualsprite/Screen_02.png" alt="Полный тулбар Manual Sprite Editor" caption="Тулбар редактора" />
+
+| Группа | Кнопки | Описание |
+|--------|--------|----------|
+| **История** | Undo, Redo | Отмена / повтор действий |
+| **Режимы** | Select, Add, Triangle, Delete | Переключение режимов редактирования |
+| **Зеркалирование** | X, Y, XY | Зеркальное редактирование по осям |
+| **Сетка** | Grid, Snap, Size | Видимость, привязка и размер сетки |
+| **Инструменты** | (выпадающее меню) | Копирование, выделение, утилиты |
+| **Генерация** | Generate | Диалог генерации меша |
+
+---
+
+## Горячие клавиши
+
+| Клавиша | Действие |
+|---------|----------|
+| `Q` | Режим Select |
+| `W` | Режим Add Vertex |
+| `E` | Режим Triangle |
+| `R` | Режим Delete |
+| `X` | Зеркалирование по X |
+| `Y` | Зеркалирование по Y |
+| `Shift+X` | Зеркалирование по XY |
+| `G` | Переключить сетку |
+| `Ctrl+G` | Переключить привязку к сетке |
+| `3` | Авто-триангуляция Делоне (выделенные вершины) |
+| `4` | Удалить все треугольники выделенных вершин |
+| `V` | Проверить триангуляцию на пересечения |
+| `Ctrl+Z` / `Ctrl+Y` | Undo / Redo |
+| `Ctrl+C` / `Ctrl+V` | Копировать / Вставить вершины |
+| `Ctrl+M` | Открыть диалог генерации меша |
+| `Delete` | Удалить выделенные вершины/треугольники |
+| Колесо мыши | Зум |
+| Средняя кнопка | Пан вида |
+
+---
+
+## Project Settings
+
+**Edit → Project Settings → Plugins → Manual Sprite Mesh Generator**
+
+Здесь настраиваются значения по умолчанию для диалога генерации меша: тип меша, размещение пивота, параметры материала, путь для новых ассетов.
+
+---
+
+## Code Modules
+
+- **ManualSpriteEditor** `[Runtime]` — runtime-тип `UManualSprite`
+- **ManualSpriteEditorTools** `[Editor]` — редактор + диалог генерации
+
+## Зависимости
+
+```cs
+PublicDependencyModuleNames.AddRange(new string[] {
+    "Core", "CoreUObject", "Engine", "Paper2D",
+});
+PrivateDependencyModuleNames.AddRange(new string[] {
+    "Slate", "SlateCore", "UnrealEd", "EditorStyle",
+    "EditorWidgets", "InputCore", "AssetTools",
+    "AssetRegistry", "ToolMenus", "ContentBrowser",
+});
+```
+
+---
+
+## Поддерживаемые версии
+
+| UE | Статус |
+|-----|--------|
+| 5.5 | ✅ |
+| 5.6 | ✅ |
+| 5.7 | ✅ (latest) |
+
+<Block type="warning" title="UE < 5.5">
+Плагин использует API, добавленные в UE 5.5. Запуск на 5.0–5.4 не гарантируется. Если нужна поддержка более ранних версий — [напиши автору](https://boosty.to/channel-jonathan-developer).
+</Block>
+
+---
+
+## Видео-демо
+
+<Video id="MbnoJhVYDTc" title="Manual Sprite Editor — редактирование геометрии и генерация меша" />
+
+---
+
+## Контакты
+
+- Boosty: [boosty.to/channel-jonathan-developer](https://boosty.to/channel-jonathan-developer)
+- GitHub: [CRAFTCODE-CJD/ManualSprite](https://github.com/CRAFTCODE-CJD/ManualSprite)

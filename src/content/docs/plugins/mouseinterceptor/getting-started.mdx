@@ -1,0 +1,104 @@
+---
+title: Как использовать
+description: Добавить MouseInterceptorComponent, подписаться на делегаты мыши в Blueprint, настроить порог двойного клика.
+order: 2
+---
+
+## Установка
+
+<Steps>
+  <Step title="Скопируй плагин">
+    Помести папку `MouseInterceptor` в директорию `Plugins` твоего проекта. Если папки `Plugins` нет — создай её.
+  </Step>
+  <Step title="Включи плагин">
+    Открой проект в Unreal Editor → **Edit → Plugins → Installed → Input → Mouse Interceptor** → галочка.
+  </Step>
+  <Step title="Перезапусти редактор">
+    После включения плагин нужно перекомпилировать — Editor перезапустится автоматически.
+  </Step>
+</Steps>
+
+---
+
+## Шаг 1 — Добавить компонент
+
+<Steps>
+  <Step title="Открой актор">
+    Выбери актора, в котором нужен перехват мыши (Character, PlayerController, ActorComponent-хост — любой).
+  </Step>
+  <Step title="Add Component">
+    В панели **Components** нажми **Add Component**, начни вводить `MouseInterceptor`.
+  </Step>
+  <Step title="Выбери MouseInterceptorComponent">
+    Добавь его — компонент появится в иерархии.
+  </Step>
+</Steps>
+
+<Image src="/images/plugins/mouseinterceptor/Image_01.png" alt="MouseInterceptorComponent в панели Components" caption="Компонент добавлен в актор" />
+
+---
+
+## Шаг 2 — Подписаться на делегаты
+
+В **Blueprint Event Graph** выбранного актора:
+
+<Steps>
+  <Step title="Выбери компонент">
+    В Components pane слева щёлкни `MouseInterceptorComponent`.
+  </Step>
+  <Step title="Найди события">
+    В Details panel → секция **Events** → `OnMousePressed` / `OnMouseReleased`. Нажми кнопку **+** справа от нужного — в Event Graph появится узел.
+  </Step>
+</Steps>
+
+<Image src="/images/plugins/mouseinterceptor/Image_02.png" alt="Привязка OnMousePressed в Event Graph" caption="Узел OnMousePressed создан" />
+
+Параметры делегата:
+
+- **`Button`** — `EKeys::LeftMouseButton`, `RightMouseButton`, `MiddleMouseButton` и т.д.
+- **`bIsDoubleClick`** — `true` если клик попал в окно `DoubleClickThreshold` с предыдущего клика той же кнопкой.
+
+<Image src="/images/plugins/mouseinterceptor/Image_03.png" alt="Использование bIsDoubleClick в Blueprint" caption="Ветвление по bIsDoubleClick" />
+
+---
+
+## Пример Blueprint-логики
+
+```text
+Event OnMousePressed (Button, bIsDoubleClick)
+  → Branch: bIsDoubleClick?
+      True  → Print "Двойной клик: {Button}"
+      False → Print "Одиночный клик: {Button}"
+```
+
+<Image src="/images/plugins/mouseinterceptor/Image_04.png" alt="Полный граф Blueprint с Branch по bIsDoubleClick" caption="Готовая Blueprint-логика" />
+
+---
+
+## Настройка порога двойного клика
+
+По умолчанию порог — `0.25` секунды. Меняется в runtime через `SetDoubleClickThreshold`.
+
+```cpp
+MouseInterceptorComponent->SetDoubleClickThreshold(0.5f); // полсекунды
+```
+
+Или через Blueprint (тот же метод):
+
+<Image src="/images/plugins/mouseinterceptor/Image_05.png" alt="SetDoubleClickThreshold в Blueprint" caption="Метод вызывается как обычная Blueprint-функция" />
+
+<Block type="warning" title="Отключение двойного клика">
+Плагин всегда определяет двойной клик. Чтобы фактически «отключить» определение — поставь порог очень большим: `SetDoubleClickThreshold(10.0f)`. Тогда флаг `bIsDoubleClick` будет `false` почти всегда.
+</Block>
+
+---
+
+## Заметки
+
+<Block type="info" title="Client-side only">
+Плагин обрабатывает ввод на клиенте — сетевая репликация не поддерживается. Если нужен сетевой кликстрим, отправляй события сам через RPC.
+</Block>
+
+<Block type="ok" title="Zero Tick">
+Компонент не использует `Tick` — Slate сам вызывает препроцессор только при реальных событиях мыши. Можно вешать на сотни акторов без потерь производительности.
+</Block>

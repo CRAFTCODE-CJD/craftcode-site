@@ -1,49 +1,70 @@
 ---
 title: Mouse Interceptor
-description: Глобальный перехват событий мыши для Unreal Engine — без тиков, с Blueprint-делегатами.
+description: Глобальный перехват событий мыши для Unreal Engine — без тиков, с Blueprint-делегатами и настраиваемым двойным кликом.
 plugin_page: true
 kicker: "// plugin · input · runtime"
-version: "Runtime"
-tagline: "Лёгкий UE-плагин: глобальный перехват кликов мыши независимо от активного интерфейса. Работает без тика, Blueprint-делегаты в несколько нодов."
-image: "https://raw.githubusercontent.com/CRAFTCODE-CJD/MouseInterceptor/main/Images/Image_01.png"
+version: "UE 4.27 — 5.7"
+tagline: "Лёгкий плагин Unreal Engine для глобального перехвата мыши. Делегаты OnMousePressed / OnMouseReleased, настраиваемый порог двойного клика, никаких тиков."
+image: "/images/plugins/mouseinterceptor/Image_01.png"
 accent: "#38BDF8"
 ctas:
   - label: "Как использовать →"
     href: "/plugins/mouseinterceptor/getting-started/"
     variant: "primary"
+  - label: "GitHub"
+    href: "https://github.com/CRAFTCODE-CJD/MouseInterceptor"
+    external: true
 order: 1
 ---
+
+## Обзор
+
+<Block type="info" title="Что это">
+Плагин захватывает все события мыши глобально — независимо от того, что сейчас активно на экране (UMG, уровень, редактор). События приходят через делегаты, подключаются в Blueprint в несколько нодов.
+</Block>
 
 ## Ключевые возможности
 
 <CardGrid>
-  <Card title="Глобальный перехват" icon="setting">
-    Захватывает все события мыши — независимо от того, что сейчас активно на экране.
+  <Card title="Глобальный перехват">
+    Захватывает события мыши независимо от активного интерфейса или состояния ввода.
   </Card>
-  <Card title="Blueprint-делегаты" icon="puzzle">
-    `OnMousePressed` и `OnMouseReleased` — подключи в Event Graph за секунду.
+  <Card title="Blueprint-делегаты">
+    `OnMousePressed` и `OnMouseReleased` — подключаются в Event Graph за секунду.
   </Card>
-  <Card title="Двойной клик" icon="approve-check">
-    Настраиваемый порог двойного клика через `SetDoubleClickThreshold`. Отключается высоким значением.
+  <Card title="Настраиваемый двойной клик">
+    `SetDoubleClickThreshold(seconds)` — задаёшь интервал времени, выше которого два клика считаются одиночными.
   </Card>
-  <Card title="Без тиков" icon="rocket">
-    Работает без Tick — минимальная нагрузка на CPU.
+  <Card title="Без тиков">
+    Работает без `Tick` — нулевая нагрузка на CPU, пока ты не нажмёшь.
   </Card>
 </CardGrid>
 
----
+## Как это выглядит
+
+<Image src="/images/plugins/mouseinterceptor/Image_01.png" alt="Компонент MouseInterceptorComponent в панели Components" caption="Компонент в панели Components" />
+
+<Image src="/images/plugins/mouseinterceptor/Image_02.png" alt="Подписка на OnMousePressed в Blueprint Event Graph" caption="Подписка на OnMousePressed в Blueprint" />
+
+<Image src="/images/plugins/mouseinterceptor/Image_03.png" alt="Обработка нажатия с проверкой bIsDoubleClick" caption="Обработка нажатия с проверкой bIsDoubleClick" />
 
 ## Поддерживаемые платформы
 
 | Платформа | Разработка | Сборка |
 |-----------|-----------|--------|
 | Windows 64-bit | ✅ | ✅ |
-| Mac OS | ✅ | ✅ |
+| macOS | ✅ | ✅ |
 | Linux | ✅ | ✅ |
 
----
+## Поддерживаемые версии движка
+
+Плагин поставляется как **CrossEngine** — один и тот же исходник компилируется на UE 4.27 и всех линиях UE 5 вплоть до 5.7.
+
+<Block type="ok" title="Zero Tick">
+`Tick` отключён в компоненте — плагин использует Slate-препроцессор ввода, который срабатывает только когда мышь реально генерирует события. CPU-нагрузка = 0 при простое.
+</Block>
 
 ## Что дальше
 
-- [Как использовать](/plugins/mouseinterceptor/getting-started/) — добавить компонент, подписаться на делегаты
-- [Справка](/plugins/mouseinterceptor/reference/) — API, FAQ
+- [Как использовать](/plugins/mouseinterceptor/getting-started/) — шаг за шагом: добавить компонент, подписаться на делегаты, настроить порог.
+- [Справка](/plugins/mouseinterceptor/reference/) — API, FAQ, примеры.

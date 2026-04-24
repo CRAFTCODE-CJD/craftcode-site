@@ -2,17 +2,17 @@
   "slug": "manualsprite",
   "repo": "ManualSprite",
   "name": {
-    "en": "ManualSprite",
-    "ru": "ManualSprite"
+    "en": "Manual Sprite Editor Tools",
+    "ru": "Manual Sprite Editor Tools"
   },
-  "version": "0.0.0",
+  "version": "3.0.0",
   "description": {
-    "en": "Hand-crafted sprite workflow for Unreal Engine.",
-    "ru": "Ручная работа со спрайтами в Unreal Engine."
+    "en": "Dedicated editor for PaperSprite geometry — manual vertices, triangles, mesh generation (StaticMesh / SkeletalMesh) from 2D art. UE 5.5 — 5.7.",
+    "ru": "Специализированный редактор геометрии PaperSprite — ручные вершины, треугольники, генерация StaticMesh / SkeletalMesh прямо из 2D-арта. UE 5.5 — 5.7."
   },
-  "image": "",
-  "video": "",
-  "docs": "https://github.com/CRAFTCODE-CJD/ManualSprite",
-  "updated": "2026-01-01T00:00:00Z",
-  "accent": "#10B981"
+  "image": "/images/plugins/manualsprite/Screen_00.png",
+  "video": "https://youtu.be/MbnoJhVYDTc",
+  "docs": "https://craftcode-site.pages.dev/plugins/manualsprite/",
+  "updated": "2026-04-23T23:39:49Z",
+  "accent": "#F472B6"
 }

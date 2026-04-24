@@ -2,17 +2,17 @@
   "slug": "mouseinterceptor",
   "repo": "MouseInterceptor",
   "name": {
-    "en": "MouseInterceptor",
-    "ru": "MouseInterceptor"
+    "en": "Mouse Interceptor",
+    "ru": "Mouse Interceptor"
   },
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": {
-    "en": "Network cursor replication for Unreal multiplayer projects.",
-    "ru": "Сетевая репликация курсора для мультиплеерных проектов Unreal."
+    "en": "Lightweight Unreal Engine plugin for global mouse event interception with Blueprint delegates and customizable double-click detection. Zero tick. UE 4.27 — 5.7.",
+    "ru": "Лёгкий плагин Unreal Engine для глобального перехвата мыши: Blueprint-делегаты, настраиваемый порог двойного клика, без тиков. UE 4.27 — 5.7."
   },
-  "image": "",
+  "image": "/images/plugins/mouseinterceptor/Image_01.png",
   "video": "",
-  "docs": "https://github.com/CRAFTCODE-CJD/MouseInterceptor",
-  "updated": "2026-01-01T00:00:00Z",
+  "docs": "https://craftcode-site.pages.dev/plugins/mouseinterceptor/",
+  "updated": "2026-04-23T23:39:50Z",
   "accent": "#38BDF8"
 }

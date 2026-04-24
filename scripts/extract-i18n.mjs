@@ -80,6 +80,55 @@ function flattenText(node) {
   return out.join('').replace(/\s+/g, ' ').trim();
 }
 
+/** Like flattenText, but preserves inline markdown (bold/italic/code/links)
+ *  and raw HTML elements (<kbd>, <br>) so the string can be fed into
+ *  apply(innerHTML=…) after mini-md-to-html conversion. */
+function flattenMarkdown(node) {
+  function render(n) {
+    if (!n) return '';
+    switch (n.type) {
+      case 'text':
+        return n.value;
+      case 'inlineCode':
+        return '`' + n.value + '`';
+      case 'strong':
+        return '**' + (n.children ?? []).map(render).join('') + '**';
+      case 'emphasis':
+        return '*' + (n.children ?? []).map(render).join('') + '*';
+      case 'delete':
+        return '~~' + (n.children ?? []).map(render).join('') + '~~';
+      case 'link': {
+        const inner = (n.children ?? []).map(render).join('');
+        return '[' + inner + '](' + (n.url ?? '') + ')';
+      }
+      case 'break':
+        return '\n';
+      case 'code':
+        return '';
+      case 'mdxJsxTextElement':
+      case 'mdxJsxFlowElement': {
+        const name = n.name ?? '';
+        // Lowercase JSX names are treated as raw HTML (<kbd>, <br>, …).
+        // Preserve them verbatim so apply() can dump into innerHTML.
+        if (/^[a-z]/.test(name)) {
+          const attrs = (n.attributes ?? [])
+            .filter((a) => a.type === 'mdxJsxAttribute' && typeof a.value === 'string')
+            .map((a) => ` ${a.name}="${a.value.replace(/"/g, '&quot;')}"`)
+            .join('');
+          const inner = (n.children ?? []).map(render).join('');
+          if (!inner && /^(br|hr|img)$/i.test(name)) return `<${name}${attrs}/>`;
+          return `<${name}${attrs}>${inner}</${name}>`;
+        }
+        // Component JSX (Trans, Hero, Block …) — unwrap children.
+        return (n.children ?? []).map(render).join('');
+      }
+      default:
+        return (n.children ?? []).map(render).join('');
+    }
+  }
+  return render(node).replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+}
+
 /** True if a node tree already contains a <Trans> JSX element — skip wrap. */
 function containsTrans(node) {
   let found = false;
@@ -124,11 +173,39 @@ function collectHits(body, tree, fileKey) {
   const hits = [];
   let section = 'body';
   const counter = {};
-  const wraps = []; // { kind: 'heading'|'paragraph', node, key }
+  const liCounter = {}; // separate namespace for list items (".li1", ".li2" …)
+  const wraps = []; // { kind: 'heading'|'paragraph'|'listitem', node, key }
 
   function paragraphKey() {
     counter[section] = (counter[section] ?? 0) + 1;
     return `${fileKey}.${section}.p${counter[section]}`;
+  }
+
+  function listItemKey(ns) {
+    liCounter[ns] = (liCounter[ns] ?? 0) + 1;
+    return `${fileKey}.${ns}.li${liCounter[ns]}`;
+  }
+
+  // Process a list node: wrap the first paragraph of each listItem.
+  // `ns` is the section namespace to attach keys under (uses ".liN" suffix
+  // so it never collides with paragraph ".pN" keys in the same section).
+  function processList(listNode, ns) {
+    for (const item of listNode.children ?? []) {
+      if (item.type !== 'listItem') continue;
+      const para = (item.children ?? []).find((c) => c.type === 'paragraph');
+      if (!para) continue;
+      if (containsTrans(para)) continue; // idempotent — already wrapped
+      if (looksLikeTable(body, para)) continue;
+      const txt = flattenMarkdown(para).trim();
+      if (!txt) continue;
+      const key = listItemKey(ns);
+      hits.push({ key, text: txt, source: 'listitem' });
+      wraps.push({ kind: 'listitem', node: para, key });
+      // Nested lists — recurse using same namespace.
+      for (const c of item.children) {
+        if (c.type === 'list') processList(c, ns);
+      }
+    }
   }
 
   for (const node of tree.children ?? []) {
@@ -144,13 +221,18 @@ function collectHits(body, tree, fileKey) {
     }
 
     if (node.type === 'paragraph') {
-      const txt = flattenText(node).trim();
+      const txt = flattenMarkdown(node).trim();
       if (!txt) continue;
       const key = paragraphKey();
       hits.push({ key, text: txt, source: 'paragraph' });
       if (!containsTrans(node) && !looksLikeTable(body, node)) {
         wraps.push({ kind: 'paragraph', node, key });
       }
+      continue;
+    }
+
+    if (node.type === 'list') {
+      processList(node, section);
       continue;
     }
 
@@ -168,20 +250,40 @@ function collectHits(body, tree, fileKey) {
           source: `<${name} ${attr.name}>`,
         });
       }
+
+      const isHtmlWrapper = /^[a-z]/.test(name); // <details>, <summary>, …
       if (PROSE_TAGS.has(name)) {
-        // Wrap paragraphs nested inside the component too.
+        // Existing behavior: wrap paragraphs nested inside the component.
         let pIdx = 0;
         visit(node, (n) => {
           if (n === node) return;
+          if (n.type === 'list') return SKIP; // list items handled separately
           if (n.type === 'paragraph') {
             pIdx += 1;
-            const txt = flattenText(n).trim();
+            const txt = flattenMarkdown(n).trim();
             if (!txt) return;
             const key = `${fileKey}.${slugify(name)}.p${pIdx}`;
             hits.push({ key, text: txt, source: `<${name}> p${pIdx}` });
             if (!containsTrans(n) && !looksLikeTable(body, n)) {
               wraps.push({ kind: 'paragraph', node: n, key });
             }
+          }
+        });
+        // Lists inside the prose container — wrap their items with ".liN" keys
+        // in the component's own namespace.
+        const compNs = slugify(name);
+        visit(node, (n) => {
+          if (n.type === 'list') {
+            processList(n, compNs);
+            return SKIP; // avoid double-processing nested lists
+          }
+        });
+      } else if (isHtmlWrapper) {
+        // HTML wrappers like <details>: wrap direct lists in current section.
+        visit(node, (n) => {
+          if (n.type === 'list') {
+            processList(n, section);
+            return SKIP;
           }
         });
       }

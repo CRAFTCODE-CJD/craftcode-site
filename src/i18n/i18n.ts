@@ -45,14 +45,60 @@ export function t(key: string, lang: Lang = getLang()): string | null {
   return typeof fallback === 'string' ? fallback : null;
 }
 
+/** Inline-markdown → HTML. Handles the subset our extractor produces:
+ *  `**bold**`, `*em*`, `` `code` ``, `[text](url)`. Raw HTML tags present in
+ *  the source (<kbd>, <br>) pass through untouched. */
+function mdInlineToHtml(s: string): string {
+  return s
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_m, t, u) => `<a href="${u}">${t}</a>`)
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, '$1<em>$2</em>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>');
+}
+
+/** Strip obviously-unsafe constructs. Translations are our own authored
+ *  MDX, so this is defense-in-depth rather than primary XSS protection.
+ *  Allowed by omission: <strong>, <em>, <code>, <a>, <kbd>, <br>, <span>. */
+function sanitize(html: string): string {
+  return html
+    .replace(/<\s*script[\s\S]*?<\s*\/\s*script\s*>/gi, '')
+    .replace(/<\s*script\b[^>]*>/gi, '')
+    .replace(/\son\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, '')
+    .replace(/javascript:/gi, '');
+}
+
+/** Translation value needs rich-HTML treatment if it contains raw HTML tags
+ *  or any of our supported inline-markdown markers. */
+function needsHtml(val: string): boolean {
+  return /<[a-z][\s\S]*?>|\*\*|`|\[[^\]]+\]\([^)]+\)/i.test(val);
+}
+
+/** Replace element children with parsed-and-sanitized HTML. Uses
+ *  Range.createContextualFragment so the HTML string is parsed by the
+ *  browser's HTML parser, then sanitized before insertion. */
+function setRichContent(el: HTMLElement, html: string): void {
+  const clean = sanitize(html);
+  const range = document.createRange();
+  range.selectNodeContents(el);
+  const frag = range.createContextualFragment(clean);
+  el.replaceChildren(frag);
+}
+
 /** Apply translations to every tagged node under `root`. */
 function apply(lang: Lang, root: ParentNode = document): void {
-  // Text-content swaps
+  // Text swaps — use rich-HTML path when the value carries inline markdown
+  // or raw HTML (so **bold** / `code` / [link](url) / <kbd> survive
+  // re-application on every language switch).
   root.querySelectorAll<HTMLElement>('[data-i18n]').forEach((el) => {
     const key = el.dataset.i18n;
     if (!key) return;
     const translated = t(key, lang);
-    if (translated !== null) el.textContent = translated;
+    if (translated === null) return;
+    if (needsHtml(translated)) {
+      setRichContent(el, mdInlineToHtml(translated));
+    } else {
+      el.textContent = translated;
+    }
   });
   // Attribute swaps: data-i18n-attr="alt:img.alt, title:hero.name"
   root.querySelectorAll<HTMLElement>('[data-i18n-attr]').forEach((el) => {

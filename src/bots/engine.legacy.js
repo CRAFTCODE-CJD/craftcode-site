@@ -1064,8 +1064,25 @@ import { FRAME_ORDER, fIdx, CLIPS, STATE_TO_CLIP } from './frames.data.js';
     },
 
     _toLocal(clientX, clientY) {
-      const r = this.els.container.getBoundingClientRect();
-      return { x: clientX - r.left, y: clientY - r.top };
+      // `.companions` is a child of `.cc-stage-camera`, which applies a
+      // translate+scale transform. getBoundingClientRect() returns the
+      // visually-transformed rect; `clientX - r.left` is therefore in
+      // visual pixels. Physics stores p.x/p.y in world pixels (untransformed
+      // container space), so we must divide by the camera scale to get
+      // world coordinates. The scale is published by bot.camera.ts on the
+      // `.cc-stage-camera` dataset. Falls back to `width / offsetWidth`
+      // (which equals the effective scale) and finally to 1.
+      const c = this.els.container;
+      const r = c.getBoundingClientRect();
+      const cam = document.querySelector('.cc-stage-camera');
+      let s = 1;
+      if (cam && cam.dataset.ccCamScale) {
+        const n = parseFloat(cam.dataset.ccCamScale);
+        if (n > 0) s = n;
+      } else if (c.offsetWidth > 0 && r.width > 0) {
+        s = r.width / c.offsetWidth;
+      }
+      return { x: (clientX - r.left) / s, y: (clientY - r.top) / s };
     },
 
     onPointerUp(e) {
@@ -1333,25 +1350,25 @@ import { FRAME_ORDER, fIdx, CLIPS, STATE_TO_CLIP } from './frames.data.js';
     refreshObstacles() {
       const c = this.els.container;
       if (!c) { this._obstacles = []; return; }
-      const cRect = c.getBoundingClientRect();
+      // IMPORTANT: physics runs in the untransformed "world" coordinate
+      // space of `.companions` (bots are positioned via `style.top/left`
+      // and compared against `clientHeight`, neither of which is affected
+      // by the CSS transform applied to `.cc-stage-camera`). Reading
+      // `getBoundingClientRect()` here would return SCALED coordinates
+      // (scale × world) the moment the camera zooms, so obstacle AABBs
+      // would drift away from the bots visually. Use `offsetLeft/Top/
+      // Width/Height` — these are layout-space values that ignore the
+      // ancestor transform. Dynamic-movement offsets added later in the
+      // tick loop are expressed in the same world space, so this stays
+      // consistent through zoom changes.
       this._obstacles = [...c.querySelectorAll('[data-ob]')].map((el) => {
         const isDynamic = el.hasAttribute('data-dynamic');
-        let oldT = '';
-        if (isDynamic) {
-           oldT = el.style.transform;
-           el.style.transform = '';
-        }
-        const r = el.getBoundingClientRect();
-        if (isDynamic) {
-           el.style.transform = oldT;
-        }
-        
         const base = {
           el,
-          origX: r.left - cRect.left,
-          origY: r.top  - cRect.top,
-          w: r.width,
-          h: r.height,
+          origX: el.offsetLeft,
+          origY: el.offsetTop,
+          w: el.offsetWidth,
+          h: el.offsetHeight,
           isDynamic,
           moveType: el.getAttribute('data-dynamic'),
           tOffset: el.__tOffset || (el.__tOffset = Math.random() * 100)
@@ -1364,13 +1381,12 @@ import { FRAME_ORDER, fIdx, CLIPS, STATE_TO_CLIP } from './frames.data.js';
       // Special interactive elements
       const btn = document.getElementById('cc-floor-btn');
       if (btn) {
-         const br = btn.getBoundingClientRect();
          this._btn = {
             el: btn,
-            x: br.left - cRect.left,
-            y: br.top - cRect.top,
-            w: br.width,
-            h: br.height,
+            x: btn.offsetLeft,
+            y: btn.offsetTop,
+            w: btn.offsetWidth,
+            h: btn.offsetHeight,
             pressed: false
          };
       }

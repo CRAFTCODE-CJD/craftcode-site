@@ -48,7 +48,12 @@ export interface KaplayHandle {
 // Base logical resolution. Canvas DOM size scales via CSS; KAPLAY keeps
 // drawing at this fixed internal resolution for crisp pixel output.
 const LOGICAL_W = 1200;
-const LOGICAL_H = 420;
+const LOGICAL_H = 480;
+// Y of the walkable ground line. Bots stand with their feet at this
+// Y; the floor physics body tops out here. Visual hatch extends from
+// FLOOR_TOP_Y all the way down to LOGICAL_H so there's no dead band
+// beneath the bots.
+const FLOOR_TOP_Y = 408;
 
 // Sprite sheet layout — matches public/sprites/craft.png / code.png.
 // 92 frames, single row (see frames.data.js FRAME_ORDER).
@@ -152,21 +157,24 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
   // never drops a bot into void. The visible tile, however, is drawn
   // only across [0..LOGICAL_W] by a dedicated visual GameObj; the
   // extended physics body uses opacity(0).
+  // Physics body sits at FLOOR_TOP_Y with a thin 12-px collision box.
+  // That's still where feet touch.
   k.add([
     k.rect(LOGICAL_W * 3, 12),
-    k.pos(-LOGICAL_W, LOGICAL_H - 12),
+    k.pos(-LOGICAL_W, FLOOR_TOP_Y),
     k.area(),
     k.body({ isStatic: true }),
     k.opacity(0),
     'platform',
     'floor',
   ]);
-  // Visual-only floor tile — rendered via a tiled hatch sprite spanning
-  // the same 3× width as the physics body, so when the camera zooms out
-  // (scale<1) the hatch keeps covering everything that's visible.
+  // Visual-only floor tile — extends from FLOOR_TOP_Y all the way down
+  // to the canvas bottom so the whole region beneath the bots reads as
+  // continuous ground. 3× width keeps the hatch covering the wrap zone.
+  const FLOOR_VIS_H = LOGICAL_H - FLOOR_TOP_Y; // fills to canvas bottom
   k.add([
-    k.sprite('hatch-floor', { tiled: true, width: LOGICAL_W * 3, height: 12 }),
-    k.pos(-LOGICAL_W, LOGICAL_H - 12),
+    k.sprite('hatch-floor', { tiled: true, width: LOGICAL_W * 3, height: FLOOR_VIS_H }),
+    k.pos(-LOGICAL_W, FLOOR_TOP_Y),
     'floor-visual',
     { _kind: 'floor' as const },
   ]);
@@ -216,18 +224,18 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
   const LABEL   = k.rgb(148, 130, 144);
 
   k.onDraw(() => {
-    // Floor neon top edge — drawn directly at floor-top (y = LOGICAL_H - 12)
-    // minus 2px so the lit line mirrors the legacy DOM ::after. Spans the
-    // same extended (3×) range as the physics body / visual tile so zoomed-
+    // Floor neon top edge — drawn directly at FLOOR_TOP_Y minus 2 px so
+    // the lit line mirrors the legacy DOM ::after. Spans the same
+    // extended (3×) range as the physics body / visual tile so zoomed-
     // out frames never reveal a hard cutoff.
     k.drawRect({
-      pos: k.vec2(-LOGICAL_W, LOGICAL_H - 12 - 2),
+      pos: k.vec2(-LOGICAL_W, FLOOR_TOP_Y - 2),
       width: LOGICAL_W * 3,
       height: 2,
       color: ACCENT,
     });
     k.drawRect({
-      pos: k.vec2(-LOGICAL_W, LOGICAL_H - 12 - 6),
+      pos: k.vec2(-LOGICAL_W, FLOOR_TOP_Y - 6),
       width: LOGICAL_W * 3,
       height: 4,
       color: ACCENT,

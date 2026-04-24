@@ -50,7 +50,7 @@ import TypingText from '~/components/TypingText.astro';
          the static background, HUD, wordmark, caption, and bubble host. -->
 
     <div class="kc-canvas-wrap">
-      <canvas id="cc-canvas" width="1200" height="420" aria-label="Workshop playground"></canvas>
+      <canvas id="cc-canvas" width="1200" height="480" aria-label="Workshop playground"></canvas>
       <div class="kc-bubble-layer" id="kc-bubble-layer" aria-live="polite"></div>
     </div>
   </div>
@@ -133,7 +133,7 @@ import TypingText from '~/components/TypingText.astro';
     position: relative;
     margin: 0 auto 40px;
     width: 100%;
-    height: 420px;
+    height: 480px;
     border: 2px solid color-mix(in oklab, var(--accent) 55%, var(--border));
     border-radius: 12px;
     overflow: hidden;
@@ -150,42 +150,6 @@ import TypingText from '~/components/TypingText.astro';
     box-shadow:
       inset 0 0 80px rgba(0, 0, 0, 0.6),
       0 0 40px color-mix(in oklab, var(--accent) 15%, transparent);
-  }
-
-  /* Static "ground" band — a 56-px strip at the bottom of the stage,
-     hatched the same way as the KAPLAY floor tile. The canvas floor
-     (12 px) renders the physics surface + neon edge and sits inside
-     the camera transform. This DOM band fills the visual gap BELOW
-     that line: without it the area where the HUD lives reads as
-     empty grid. Treated as deep background — it stays still while
-     the canvas pans/zooms, like the horizon behind a side-scroller. */
-  .kc-stage::before {
-    content: '';
-    position: absolute;
-    left: 0; right: 0; bottom: 0;
-    height: 56px;
-    pointer-events: none;
-    z-index: 1;
-    /* Diagonal hatch + radial vertical fade so the band blends into
-       the stage background at its top. Accent-pink on a near-black
-       base matches the in-canvas floor tile. */
-    background:
-      linear-gradient(
-        to top,
-        color-mix(in oklab, var(--code-bg) 100%, transparent) 0%,
-        color-mix(in oklab, var(--code-bg) 92%, transparent) 70%,
-        transparent 100%
-      ),
-      repeating-linear-gradient(
-        45deg,
-        color-mix(in oklab, var(--accent) 22%, transparent) 0 2px,
-        transparent 2px 10px
-      ),
-      linear-gradient(
-        to bottom,
-        color-mix(in oklab, var(--accent) 10%, var(--code-bg)) 0%,
-        color-mix(in oklab, var(--accent) 18%, var(--code-bg)) 100%
-      );
   }
 
   .kc-stage-log,
@@ -437,14 +401,14 @@ import TypingText from '~/components/TypingText.astro';
   }
 
   @media (max-width: 760px) {
-    .kc-stage { height: 320px; margin-top: 16px; }
+    .kc-stage { height: 380px; margin-top: 16px; }
     #boot-log { font-size: 11px; }
     .kc-stage-sign { top: 20px; }
     .kc-stage-sign-word { font-size: clamp(22px, 8vw, 32px); }
     .kc-stage-sign-tag { font-size: 10px; }
   }
   @media (max-width: 480px) {
-    .kc-stage { height: 280px; }
+    .kc-stage { height: 340px; }
     .companions-hud { font-size: 9px; gap: 8px; bottom: 6px; right: 8px; }
     .companions-caption { font-size: 10px; top: 6px; left: 8px; right: 8px; }
   }

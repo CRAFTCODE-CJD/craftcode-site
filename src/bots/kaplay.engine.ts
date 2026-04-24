@@ -593,13 +593,13 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
     const cx = (craft.pos.x + code.pos.x) / 2;
     const cy = (craft.pos.y + code.pos.y) / 2;
 
-    // Camera zoom is DISABLED — locked at 1.0 scale. Non-integer scales
-    // like 1.15 multiply the 24-px floor hatch tile by 27.6 px, so tile
-    // edges land on fractional pixels and the browser shows a visible
-    // shimmering seam between them. With scale pinned at 1.0 the tile
-    // math stays integer → clean render. Camera still PANS (translate)
-    // which is the part that made the follow feel alive anyway.
-    const nextScale = 1.0;
+    // Fixed scale 1.5 — hatch tile 24 × 1.5 = 36 and sprite 48 × 1.5 =
+    // 72, both integer pixels, so no sub-pixel seams. Bots read at
+    // ~1.5× their logical size; visible window 800 × 320 out of the
+    // 1200 × 480 world, so the camera actually has room to pan with
+    // the bots. 2.0 would make step_01 / crate_03 unreachable in-frame;
+    // non-integer scales like 1.3/1.7 bring the hatch shimmer back.
+    const nextScale = 1.5;
     k.setCamScale(nextScale);
 
     // Visible extents at the upcoming scale (in world units). When the

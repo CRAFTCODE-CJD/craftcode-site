@@ -168,6 +168,21 @@ function obstacleRects(): Rect[] {
     });
 }
 
+// Already-spawned dynamic elements (items + platforms). Must be avoided
+// when placing a fresh spawn so `__ccEvents.trigger()` called twice in
+// quick succession (or a natural event landing on top of a live one)
+// can't produce visually overlapping emoji / platforms.
+function dynamicSpawnRects(): Rect[] {
+  const comp = getCompanionsContainer();
+  if (!comp) return [];
+  const host = comp.getBoundingClientRect();
+  return Array.from(comp.querySelectorAll<HTMLElement>('[data-cc-event]'))
+    .map((el) => {
+      const r = el.getBoundingClientRect();
+      return { x: r.left - host.left, y: r.top - host.top, w: r.width, h: r.height };
+    });
+}
+
 function rectsOverlap(a: Rect, b: Rect, pad = 0): boolean {
   return !(a.x + a.w + pad < b.x || b.x + b.w + pad < a.x ||
            a.y + a.h + pad < b.y || b.y + b.h + pad < a.y);
@@ -182,6 +197,7 @@ function findValidSpawnPos(itemW: number, itemH: number): { x: number; y: number
   const obs = obstacleRects();
   const bots = companionsRect();
   const botRects = [bots.craft, bots.code].filter((r): r is Rect => r !== null);
+  const dynamics = dynamicSpawnRects();
 
   for (let i = 0; i < MAX_PLACEMENT_TRIES; i++) {
     const x = rand(EDGE_PAD, w - EDGE_PAD - itemW);
@@ -195,6 +211,13 @@ function findValidSpawnPos(itemW: number, itemH: number): { x: number; y: number
     if (!ok) continue;
     for (const b of botRects) {
       if (rectsOverlap(candidate, b, MIN_CLEARANCE)) { ok = false; break; }
+    }
+    if (!ok) continue;
+    // Avoid stacking onto a still-live dynamic item/platform — covers
+    // both rapid __ccEvents.trigger() calls and back-to-back scheduled
+    // events whose lifetimes overlap.
+    for (const d of dynamics) {
+      if (rectsOverlap(candidate, d, MIN_CLEARANCE)) { ok = false; break; }
     }
     if (ok) return { x, y };
   }

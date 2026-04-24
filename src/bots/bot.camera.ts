@@ -95,7 +95,10 @@ const EVENT_IGNORE_MS = 2000;
 // Biasing bbox center toward the feet keeps the camera framing
 // the "stance" of the bots rather than the geometric middle of
 // the sprite frame, which looks more stable during idle bobbing.
-const FOOT_ANCHOR_RATIO = 0.75;
+// Tuned 0.75 → 0.72 (revision #1): 0.75 pushed the frame slightly
+// too low, clipping the platform/crate tops above the bots; 0.72
+// sits just above the feet centroid and keeps more headroom.
+const FOOT_ANCHOR_RATIO = 0.72;
 
 function clamp(v: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, v));

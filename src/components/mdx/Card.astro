@@ -9,7 +9,18 @@ const { title } = Astro.props as Props;
 </div>
 
 <style>
-  .mdx-card { padding: 14px 16px; background: var(--surface); }
+  /* Flex column + min-height keeps every card in a <CardGrid> at a
+     consistent vertical footprint — so grid rows align even when one
+     card has one line of body text and its neighbour has three.
+     The body flex-grows into the remaining space. */
+  .mdx-card {
+    padding: 14px 16px;
+    background: var(--surface);
+    display: flex;
+    flex-direction: column;
+    min-height: 120px;
+    height: 100%;
+  }
   .mdx-card__title {
     font-family: 'VT323', 'Russo One', monospace;
     font-size: 20px;
@@ -18,7 +29,12 @@ const { title } = Astro.props as Props;
     letter-spacing: 0.02em;
     margin: 0 0 6px;
   }
-  .mdx-card__body { color: var(--muted); line-height: 1.55; font-size: 14px; }
+  .mdx-card__body {
+    color: var(--muted);
+    line-height: 1.55;
+    font-size: 14px;
+    flex: 1 1 auto;
+  }
   .mdx-card__body :global(p) { margin: 0; }
   .mdx-card__body :global(strong) { color: var(--ink); }
 </style>

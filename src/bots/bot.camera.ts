@@ -78,6 +78,14 @@ const MAX_DTRANSLATE_PER_TICK = 60;
 // step even harder so the visual zoom becomes a glide instead of a lurch.
 const MODE_FLIP_SCALE_DELTA = 0.15;
 const MODE_FLIP_MAX_DSCALE = 0.06;
+// Per-tick translate jump guard (revision #4): analogous to scale mode-flip.
+// If the raw computed tx/ty leaps more than MODE_FLIP_TRANSLATE_DELTA vs the
+// previous tick — typical when a bot teleports (spawn respawn, off-screen
+// reset) and the bbox center jumps by several hundred px — we clamp the
+// per-tick step to MODE_FLIP_MAX_DTRANSLATE so the camera glides instead of
+// snapping. 120px raw delta is the trigger, 100px is the capped step.
+const MODE_FLIP_TRANSLATE_DELTA = 120;
+const MODE_FLIP_MAX_DTRANSLATE = 100;
 // Hysteresis — entry is harder than exit by ~30–35%.
 const ZOOM_IN_BBOX_W = 120;   // enter "close" mode below this
 const ZOOM_IN_BBOX_H = 180;
@@ -140,6 +148,9 @@ export function initCamera(): () => void {
   // Previous tick's computed targetScale — used to detect mode-flip jumps so
   // we can clamp per-tick step size down to MODE_FLIP_MAX_DSCALE.
   let prevTargetScale = 1;
+  // Previous tick's raw tx/ty — used for translate-jump clamp.
+  let prevTargetTx = 0;
+  let prevTargetTy = 0;
   // Idle-window tracking: history of recent bbox-center
   // samples, used to decide whether anything moved enough to
   // warrant recomputing target at all.
@@ -329,9 +340,20 @@ export function initCamera(): () => void {
       ? Math.min(MODE_FLIP_MAX_DSCALE, MAX_DSCALE_PER_TICK)
       : MAX_DSCALE_PER_TICK;
     prevTargetScale = computed.cam.scale;
+    // Translate-jump guard — see MODE_FLIP_TRANSLATE_DELTA comment.
+    const rawTxJump = Math.abs(computed.cam.tx - prevTargetTx);
+    const rawTyJump = Math.abs(computed.cam.ty - prevTargetTy);
+    const txStep = rawTxJump > MODE_FLIP_TRANSLATE_DELTA
+      ? Math.min(MODE_FLIP_MAX_DTRANSLATE, MAX_DTRANSLATE_PER_TICK)
+      : MAX_DTRANSLATE_PER_TICK;
+    const tyStep = rawTyJump > MODE_FLIP_TRANSLATE_DELTA
+      ? Math.min(MODE_FLIP_MAX_DTRANSLATE, MAX_DTRANSLATE_PER_TICK)
+      : MAX_DTRANSLATE_PER_TICK;
+    prevTargetTx = computed.cam.tx;
+    prevTargetTy = computed.cam.ty;
     state.scale = approach(state.scale, target.scale, scaleStep);
-    state.tx = approach(state.tx, target.tx, MAX_DTRANSLATE_PER_TICK);
-    state.ty = approach(state.ty, target.ty, MAX_DTRANSLATE_PER_TICK);
+    state.tx = approach(state.tx, target.tx, txStep);
+    state.ty = approach(state.ty, target.ty, tyStep);
     applyTransform();
   };
 

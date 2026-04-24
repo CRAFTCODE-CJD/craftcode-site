@@ -64,9 +64,17 @@ const { Content } = await render(entry);
 
   .about-bots {
     display: flex;
+    flex-wrap: wrap;
     gap: 12px;
     margin: 0 0 16px;
     align-items: center;
+  }
+  /* On very narrow screens, companion sprites render at their intrinsic
+     size regardless of the `size` prop (they use background-image of a
+     48–64px sprite); padding here keeps them from crowding the card
+     below if the viewport is cramped. */
+  @media (max-width: 360px) {
+    .about-bots { gap: 8px; padding: 4px 0; }
   }
 
   .sys-card {

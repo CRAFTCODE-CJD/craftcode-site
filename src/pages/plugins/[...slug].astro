@@ -101,15 +101,53 @@ const isPluginIndex = entry.id === `plugins/${pluginSlug}`;
     </nav>
 
     {data.plugin_page ? (
-      <PluginHero
-        kicker={data.kicker}
-        title={data.title}
-        version={data.version}
-        tagline={data.tagline ?? ''}
-        image={data.image}
-        accent={data.accent}
-        ctas={data.ctas}
-      />
+      <>
+        <PluginHero
+          kicker={data.kicker}
+          title={data.title}
+          version={data.version}
+          tagline={data.tagline ?? ''}
+          image={data.image}
+          accent={data.accent}
+          ctas={data.ctas}
+        />
+
+        {data.stats && data.stats.stats.length > 0 && (
+          <section class="plugin-stats" aria-label={data.stats.title}>
+            <header class="plugin-section__head">
+              <p class="plugin-section__kicker">// stats</p>
+              <h2 class="plugin-section__title">{data.stats.title}</h2>
+            </header>
+            <div class="plugin-stats__grid">
+              {data.stats.stats.map((s) => (
+                <div class="stat-card">
+                  <p class="stat-card__label">{s.label}</p>
+                  <p class="stat-card__value">{s.value}</p>
+                  {s.delta && <p class="stat-card__delta">{s.delta}</p>}
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {data.pipeline && data.pipeline.steps.length > 0 && (
+          <section class="plugin-pipeline" aria-label={data.pipeline.title}>
+            <header class="plugin-section__head">
+              <p class="plugin-section__kicker">// pipeline</p>
+              <h2 class="plugin-section__title">{data.pipeline.title}</h2>
+            </header>
+            <ol class="plugin-pipeline__list">
+              {data.pipeline.steps.map((s) => (
+                <li class="pipeline-step">
+                  <span class="pipeline-step__n">{s.n}</span>
+                  <h3 class="pipeline-step__title">{s.title}</h3>
+                  <p class="pipeline-step__text">{s.text}</p>
+                </li>
+              ))}
+            </ol>
+          </section>
+        )}
+      </>
     ) : (
       <header class="plugin-page__head">
         {data.kicker && <p class="plugin-page__kicker">{data.kicker}</p>}
@@ -138,6 +176,26 @@ const isPluginIndex = entry.id === `plugins/${pluginSlug}`;
 
       <div class="plugin-page__body">
         <Content components={mdxComponents} />
+
+        {data.plugin_page && data.gallery && data.gallery.shots.length > 0 && (
+          <section class="plugin-gallery" aria-label={data.gallery.title}>
+            <header class="plugin-section__head">
+              <p class="plugin-section__kicker">// gallery</p>
+              <h2 class="plugin-section__title">{data.gallery.title}</h2>
+            </header>
+            <div class="plugin-gallery__grid">
+              {data.gallery.shots.map((shot) => (
+                <figure class="gallery-shot">
+                  <img src={shot.src} alt={shot.caption} loading="lazy" />
+                  <figcaption>
+                    {shot.n && <span class="gallery-shot__n">{shot.n}</span>}
+                    <span class="gallery-shot__caption">{shot.caption}</span>
+                  </figcaption>
+                </figure>
+              ))}
+            </div>
+          </section>
+        )}
       </div>
     </div>
   </article>
@@ -374,5 +432,163 @@ const isPluginIndex = entry.id === `plugins/${pluginSlug}`;
       padding: 8px 10px;
       font-size: 12px;
     }
+  }
+
+  /* ─── Shared section headers for stats / pipeline / gallery ─── */
+  .plugin-section__head {
+    margin: 0 0 18px;
+  }
+  .plugin-section__kicker {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: lowercase;
+    color: var(--muted);
+    margin: 0 0 4px;
+  }
+  .plugin-section__title {
+    font-family: 'VT323', 'Russo One', monospace;
+    font-size: clamp(24px, 3.4vw, 30px);
+    color: var(--accent-2);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin: 0;
+    text-shadow: 0 0 12px color-mix(in oklab, var(--accent-2) 40%, transparent);
+  }
+
+  /* ─── Stats strip ─── */
+  .plugin-stats { margin: 8px 0 56px; }
+  .plugin-stats__grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+  }
+  @media (max-width: 900px) { .plugin-stats__grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 480px) { .plugin-stats__grid { grid-template-columns: 1fr; } }
+  .stat-card {
+    padding: 16px 18px;
+    background: color-mix(in oklab, var(--surface) 94%, black);
+    border: 1px solid color-mix(in oklab, var(--accent) 25%, var(--grid));
+    border-radius: 6px;
+    box-shadow: inset 0 0 20px color-mix(in oklab, var(--accent) 5%, transparent);
+  }
+  .stat-card__label {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin: 0 0 8px;
+    letter-spacing: 0.05em;
+  }
+  .stat-card__value {
+    font-family: 'VT323', 'Russo One', monospace;
+    font-size: 30px;
+    color: var(--ink);
+    margin: 0;
+    line-height: 1;
+    text-shadow: var(--glow-sm);
+  }
+  .stat-card__delta {
+    margin: 6px 0 0;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 12px;
+    color: var(--accent-3);
+    letter-spacing: 0.04em;
+  }
+
+  /* ─── Pipeline steps ─── */
+  .plugin-pipeline { margin: 0 0 56px; }
+  .plugin-pipeline__list {
+    list-style: none;
+    counter-reset: pipeline;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+  }
+  @media (max-width: 900px) { .plugin-pipeline__list { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 480px) { .plugin-pipeline__list { grid-template-columns: 1fr; } }
+  .pipeline-step {
+    padding: 16px 18px;
+    background: color-mix(in oklab, var(--surface) 94%, black);
+    border: 1px solid var(--border);
+    border-left: 2px solid color-mix(in oklab, var(--accent) 60%, transparent);
+    border-radius: 6px;
+  }
+  .pipeline-step__n {
+    display: inline-block;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.14em;
+    margin-bottom: 6px;
+  }
+  .pipeline-step__title {
+    font-family: 'VT323', 'Russo One', monospace;
+    font-size: 22px;
+    color: var(--accent-2);
+    text-transform: uppercase;
+    margin: 0 0 6px;
+    letter-spacing: 0.02em;
+  }
+  .pipeline-step__text {
+    margin: 0;
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  /* ─── Gallery ─── */
+  .plugin-gallery { margin: 48px 0 0; }
+  .plugin-gallery__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 14px;
+  }
+  .gallery-shot {
+    margin: 0;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--surface);
+    transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+  }
+  .gallery-shot:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in oklab, var(--accent) 55%, var(--border));
+    box-shadow: var(--glow-md);
+  }
+  .gallery-shot img {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 10;
+    object-fit: cover;
+    cursor: zoom-in;
+    border: 0;
+    border-radius: 0;
+    margin: 0;
+  }
+  /* Override the generic .plugin-page__body img styles for gallery. */
+  .plugin-page__body :global(.gallery-shot img) {
+    max-width: 100%;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+  }
+  .gallery-shot figcaption {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 8px 12px;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 12px;
+    color: var(--muted);
+    border-top: 1px dashed var(--border);
+  }
+  .gallery-shot__n {
+    color: var(--accent);
+    font-weight: 600;
+    letter-spacing: 0.08em;
   }
 </style>

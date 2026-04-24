@@ -16,38 +16,63 @@ order: 2
 
 ### <Trans id="plugin.spriteOptimizer.features.atlas.h.структура-редактора">Структура редактора</Trans>
 
-| Панель | Описание |
-|--------|----------|
-| **Items** (слева) | Список элементов: размещённые (Placed) и не размещённые (Unplaced). Поиск, фильтр, чекбоксы. |
-| **Viewport** (центр) | Интерактивный холст — перемещение, поворот, выделение. |
-| **Settings** (справа) | Алгоритм, размер страницы, параметры вывода. |
+<table>
+  <thead>
+    <tr>
+      <th><Trans id="plugin.spriteOptimizer.features.atlas.table.layout.h1">Панель</Trans></th>
+      <th><Trans id="plugin.spriteOptimizer.features.atlas.table.layout.h2">Описание</Trans></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td><Trans id="plugin.spriteOptimizer.features.atlas.table.layout.r1c1">**Items** (слева)</Trans></td><td><Trans id="plugin.spriteOptimizer.features.atlas.table.layout.r1c2">Список элементов: размещённые (Placed) и не размещённые (Unplaced). Поиск, фильтр, чекбоксы.</Trans></td></tr>
+    <tr><td><Trans id="plugin.spriteOptimizer.features.atlas.table.layout.r2c1">**Viewport** (центр)</Trans></td><td><Trans id="plugin.spriteOptimizer.features.atlas.table.layout.r2c2">Интерактивный холст — перемещение, поворот, выделение.</Trans></td></tr>
+    <tr><td><Trans id="plugin.spriteOptimizer.features.atlas.table.layout.r3c1">**Settings** (справа)</Trans></td><td><Trans id="plugin.spriteOptimizer.features.atlas.table.layout.r3c2">Алгоритм, размер страницы, параметры вывода.</Trans></td></tr>
+  </tbody>
+</table>
 
 ---
 
 ## <Trans id="plugin.spriteOptimizer.features.atlas.h.тулбар">Тулбар</Trans>
 
-| Кнопка | Шорткат | Описание |
-|--------|---------|----------|
-| Analyze | `F5` | Запустить алгоритм пакинга и показать превью |
-| Create Atlas | `Ctrl+Shift+Enter` | Экспортировать атлас, спрайты, Material Instances |
-| Repack | `Ctrl+R` | Перепаковать текущую страницу |
-| Place All | — | Разместить все Unplaced элементы |
-| Import Atlas | — | Импортировать готовый атлас |
-| Fit | `Home` | Подогнать вид под весь атлас |
-| Grid | `G` | Переключить сетку |
-| Snap | `S` | Переключить привязку к сетке |
-| Free Move | `F` | Свободное перемещение (без коллизий) |
+<table>
+  <thead>
+    <tr>
+      <th><Trans id="plugin.spriteOptimizer.features.atlas.table.toolbar.h1">Кнопка</Trans></th>
+      <th><Trans id="plugin.spriteOptimizer.features.atlas.table.toolbar.h2">Шорткат</Trans></th>
+      <th><Trans id="plugin.spriteOptimizer.features.atlas.table.toolbar.h3">Описание</Trans></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>Analyze</td><td><code>F5</code></td><td><Trans id="plugin.spriteOptimizer.features.atlas.table.toolbar.r1c3">Запустить алгоритм пакинга и показать превью</Trans></td></tr>
+    <tr><td>Create Atlas</td><td><code>Ctrl+Shift+Enter</code></td><td><Trans id="plugin.spriteOptimizer.features.atlas.table.toolbar.r2c3">Экспортировать атлас, спрайты, Material Instances</Trans></td></tr>
+    <tr><td>Repack</td><td><code>Ctrl+R</code></td><td><Trans id="plugin.spriteOptimizer.features.atlas.table.toolbar.r3c3">Перепаковать текущую страницу</Trans></td></tr>
+    <tr><td>Place All</td><td>—</td><td><Trans id="plugin.spriteOptimizer.features.atlas.table.toolbar.r4c3">Разместить все Unplaced элементы</Trans></td></tr>
+    <tr><td>Import Atlas</td><td>—</td><td><Trans id="plugin.spriteOptimizer.features.atlas.table.toolbar.r5c3">Импортировать готовый атлас</Trans></td></tr>
+    <tr><td>Fit</td><td><code>Home</code></td><td><Trans id="plugin.spriteOptimizer.features.atlas.table.toolbar.r6c3">Подогнать вид под весь атлас</Trans></td></tr>
+    <tr><td>Grid</td><td><code>G</code></td><td><Trans id="plugin.spriteOptimizer.features.atlas.table.toolbar.r7c3">Переключить сетку</Trans></td></tr>
+    <tr><td>Snap</td><td><code>S</code></td><td><Trans id="plugin.spriteOptimizer.features.atlas.table.toolbar.r8c3">Переключить привязку к сетке</Trans></td></tr>
+    <tr><td>Free Move</td><td><code>F</code></td><td><Trans id="plugin.spriteOptimizer.features.atlas.table.toolbar.r9c3">Свободное перемещение (без коллизий)</Trans></td></tr>
+  </tbody>
+</table>
 
 ---
 
 ## <Trans id="plugin.spriteOptimizer.features.atlas.h.алгоритмы-пакинга">Алгоритмы пакинга</Trans>
 
-| Алгоритм | Лучше всего для |
-|----------|----------------|
-| **Max Rects** | Универсальный. 5 эвристик × 4 порядка сортировки. Отраслевой стандарт. |
-| **Bin Pack** | Алгоритм опорных точек. Хорошо для разнородных размеров. |
-| **Fixed Grid** | Равномерная N×M сетка. Лучший выбор для tile-based игр. |
-| **Tile (Simple)** | Горизонтальная/вертикальная полоса. Для линейных раскладок. |
+<table>
+  <thead>
+    <tr>
+      <th><Trans id="plugin.spriteOptimizer.features.atlas.table.algorithms.h1">Алгоритм</Trans></th>
+      <th><Trans id="plugin.spriteOptimizer.features.atlas.table.algorithms.h2">Лучше всего для</Trans></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>Max Rects</strong></td><td><Trans id="plugin.spriteOptimizer.features.atlas.table.algorithms.r1c2">Универсальный. 5 эвристик × 4 порядка сортировки. Отраслевой стандарт.</Trans></td></tr>
+    <tr><td><strong>Bin Pack</strong></td><td><Trans id="plugin.spriteOptimizer.features.atlas.table.algorithms.r2c2">Алгоритм опорных точек. Хорошо для разнородных размеров.</Trans></td></tr>
+    <tr><td><strong>Fixed Grid</strong></td><td><Trans id="plugin.spriteOptimizer.features.atlas.table.algorithms.r3c2">Равномерная N×M сетка. Лучший выбор для tile-based игр.</Trans></td></tr>
+    <tr><td><strong>Tile (Simple)</strong></td><td><Trans id="plugin.spriteOptimizer.features.atlas.table.algorithms.r4c2">Горизонтальная/вертикальная полоса. Для линейных раскладок.</Trans></td></tr>
+  </tbody>
+</table>
 
 ---
 
@@ -55,15 +80,23 @@ order: 2
 
 ### <Trans id="plugin.spriteOptimizer.features.atlas.h.управление">Управление</Trans>
 
-| Действие | Как |
-|----------|-----|
-| Выбрать элемент | ЛКМ по элементу |
-| Добавить в выделение | Ctrl+ЛКМ |
-| Rubber band | ЛКМ перетащить по пустому месту |
-| Переместить | ЛКМ перетащить по элементу |
-| **Axis lock** | Shift+перетаскивание — фиксирует ось (H или V, автодетект) |
-| Поворот 90° | `R` на выделенных |
-| Убрать из атласа | `Del` — переходит в Unplaced |
+<table>
+  <thead>
+    <tr>
+      <th><Trans id="plugin.spriteOptimizer.features.atlas.table.canvas.h1">Действие</Trans></th>
+      <th><Trans id="plugin.spriteOptimizer.features.atlas.table.canvas.h2">Как</Trans></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td><Trans id="plugin.spriteOptimizer.features.atlas.table.canvas.r1c1">Выбрать элемент</Trans></td><td><Trans id="plugin.spriteOptimizer.features.atlas.table.canvas.r1c2">ЛКМ по элементу</Trans></td></tr>
+    <tr><td><Trans id="plugin.spriteOptimizer.features.atlas.table.canvas.r2c1">Добавить в выделение</Trans></td><td><Trans id="plugin.spriteOptimizer.features.atlas.table.canvas.r2c2">Ctrl+ЛКМ</Trans></td></tr>
+    <tr><td>Rubber band</td><td><Trans id="plugin.spriteOptimizer.features.atlas.table.canvas.r3c2">ЛКМ перетащить по пустому месту</Trans></td></tr>
+    <tr><td><Trans id="plugin.spriteOptimizer.features.atlas.table.canvas.r4c1">Переместить</Trans></td><td><Trans id="plugin.spriteOptimizer.features.atlas.table.canvas.r4c2">ЛКМ перетащить по элементу</Trans></td></tr>
+    <tr><td><strong>Axis lock</strong></td><td><Trans id="plugin.spriteOptimizer.features.atlas.table.canvas.r5c2">Shift+перетаскивание — фиксирует ось (H или V, автодетект)</Trans></td></tr>
+    <tr><td><Trans id="plugin.spriteOptimizer.features.atlas.table.canvas.r6c1">Поворот 90°</Trans></td><td><Trans id="plugin.spriteOptimizer.features.atlas.table.canvas.r6c2">`R` на выделенных</Trans></td></tr>
+    <tr><td><Trans id="plugin.spriteOptimizer.features.atlas.table.canvas.r7c1">Убрать из атласа</Trans></td><td><Trans id="plugin.spriteOptimizer.features.atlas.table.canvas.r7c2">`Del` — переходит в Unplaced</Trans></td></tr>
+  </tbody>
+</table>
 
 ### <Trans id="plugin.spriteOptimizer.features.atlas.h.мультистраничные-атласы">Мультистраничные атласы</Trans>
 
@@ -93,12 +126,20 @@ Content/YourFolder/
 
 ### <Trans id="plugin.spriteOptimizer.features.atlas.h.material-instance-параметры">Material Instance параметры</Trans>
 
-| Параметр | Описание |
-|----------|----------|
-| PixelX, PixelY | Позиция спрайта в атласе (пиксели) |
-| SizeW, SizeH | Размер спрайта (пиксели) |
-| AtlasW, AtlasH | Размер атласа (пиксели) |
-| UVRotation | Флаг поворота (для упакованных с ротацией) |
+<table>
+  <thead>
+    <tr>
+      <th><Trans id="plugin.spriteOptimizer.features.atlas.table.miParams.h1">Параметр</Trans></th>
+      <th><Trans id="plugin.spriteOptimizer.features.atlas.table.miParams.h2">Описание</Trans></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>PixelX, PixelY</td><td><Trans id="plugin.spriteOptimizer.features.atlas.table.miParams.r1c2">Позиция спрайта в атласе (пиксели)</Trans></td></tr>
+    <tr><td>SizeW, SizeH</td><td><Trans id="plugin.spriteOptimizer.features.atlas.table.miParams.r2c2">Размер спрайта (пиксели)</Trans></td></tr>
+    <tr><td>AtlasW, AtlasH</td><td><Trans id="plugin.spriteOptimizer.features.atlas.table.miParams.r3c2">Размер атласа (пиксели)</Trans></td></tr>
+    <tr><td>UVRotation</td><td><Trans id="plugin.spriteOptimizer.features.atlas.table.miParams.r4c2">Флаг поворота (для упакованных с ротацией)</Trans></td></tr>
+  </tbody>
+</table>
 
 <Trans id="plugin.spriteOptimizer.features.atlas.material-instance-параметры.p2">Работает в 3D-мешах, Paper2D-спрайтах и UMG-виджетах.</Trans>
 
@@ -106,10 +147,18 @@ Content/YourFolder/
 
 ## <Trans id="plugin.spriteOptimizer.features.atlas.h.настройки-вывода">Настройки вывода</Trans>
 
-| Опция | Описание |
-|-------|----------|
-| **Texture** | Всегда создаётся — BC7 сжатие с альфа |
-| **Sprite** | PaperSprite ассеты |
-| **Material Instance** | MI с пиксельными UV параметрами |
-| **Preserve Position** | Скорректировать пивот после обрезки |
-| **Pad to x4** | Размеры кратны 4 для BC-компрессии |
+<table>
+  <thead>
+    <tr>
+      <th><Trans id="plugin.spriteOptimizer.features.atlas.table.output.h1">Опция</Trans></th>
+      <th><Trans id="plugin.spriteOptimizer.features.atlas.table.output.h2">Описание</Trans></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>Texture</strong></td><td><Trans id="plugin.spriteOptimizer.features.atlas.table.output.r1c2">Всегда создаётся — BC7 сжатие с альфа</Trans></td></tr>
+    <tr><td><strong>Sprite</strong></td><td><Trans id="plugin.spriteOptimizer.features.atlas.table.output.r2c2">PaperSprite ассеты</Trans></td></tr>
+    <tr><td><strong>Material Instance</strong></td><td><Trans id="plugin.spriteOptimizer.features.atlas.table.output.r3c2">MI с пиксельными UV параметрами</Trans></td></tr>
+    <tr><td><strong>Preserve Position</strong></td><td><Trans id="plugin.spriteOptimizer.features.atlas.table.output.r4c2">Скорректировать пивот после обрезки</Trans></td></tr>
+    <tr><td><strong>Pad to x4</strong></td><td><Trans id="plugin.spriteOptimizer.features.atlas.table.output.r5c2">Размеры кратны 4 для BC-компрессии</Trans></td></tr>
+  </tbody>
+</table>

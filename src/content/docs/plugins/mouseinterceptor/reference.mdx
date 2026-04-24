@@ -20,19 +20,37 @@ order: 10
 
 <Trans id="plugin.mouseinterceptor.reference.onmousepressed.p1">Срабатывает при **нажатии** кнопки мыши.</Trans>
 
-| Параметр | Тип | Описание |
-|----------|-----|----------|
-| `Button` | `FKey` | Нажатая кнопка (`EKeys::LeftMouseButton`, `RightMouseButton`, `MiddleMouseButton`, `ThumbMouseButton`, `ThumbMouseButton2`) |
-| `bIsDoubleClick` | `bool` | `true`, если клик попал в окно `DoubleClickThreshold` с предыдущего клика той же кнопкой |
+<table>
+  <thead>
+    <tr>
+      <th><Trans id="plugin.mouseinterceptor.reference.table.pressed.h1">Параметр</Trans></th>
+      <th><Trans id="plugin.mouseinterceptor.reference.table.pressed.h2">Тип</Trans></th>
+      <th><Trans id="plugin.mouseinterceptor.reference.table.pressed.h3">Описание</Trans></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td><code>Button</code></td><td><code>FKey</code></td><td><Trans id="plugin.mouseinterceptor.reference.table.pressed.r1c3">Нажатая кнопка (`EKeys::LeftMouseButton`, `RightMouseButton`, `MiddleMouseButton`, `ThumbMouseButton`, `ThumbMouseButton2`)</Trans></td></tr>
+    <tr><td><code>bIsDoubleClick</code></td><td><code>bool</code></td><td><Trans id="plugin.mouseinterceptor.reference.table.pressed.r2c3">`true`, если клик попал в окно `DoubleClickThreshold` с предыдущего клика той же кнопкой</Trans></td></tr>
+  </tbody>
+</table>
 
 ### <Trans id="plugin.mouseinterceptor.reference.h.onmousereleased">`OnMouseReleased`</Trans>
 
 <Trans id="plugin.mouseinterceptor.reference.onmousereleased.p1">Срабатывает при **отпускании** кнопки мыши.</Trans>
 
-| Параметр | Тип | Описание |
-|----------|-----|----------|
-| `Button` | `FKey` | Отпущенная кнопка |
-| `bIsDoubleClick` | `bool` | Флаг двойного клика для последовательности press+release |
+<table>
+  <thead>
+    <tr>
+      <th><Trans id="plugin.mouseinterceptor.reference.table.released.h1">Параметр</Trans></th>
+      <th><Trans id="plugin.mouseinterceptor.reference.table.released.h2">Тип</Trans></th>
+      <th><Trans id="plugin.mouseinterceptor.reference.table.released.h3">Описание</Trans></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td><code>Button</code></td><td><code>FKey</code></td><td><Trans id="plugin.mouseinterceptor.reference.table.released.r1c3">Отпущенная кнопка</Trans></td></tr>
+    <tr><td><code>bIsDoubleClick</code></td><td><code>bool</code></td><td><Trans id="plugin.mouseinterceptor.reference.table.released.r2c3">Флаг двойного клика для последовательности press+release</Trans></td></tr>
+  </tbody>
+</table>
 
 ---
 
@@ -78,10 +96,18 @@ PublicDependencyModuleNames.AddRange(new string[] {
 
 ## <Trans id="plugin.mouseinterceptor.reference.h.поддерживаемые-версии">Поддерживаемые версии</Trans>
 
-| UE | Статус |
-|-----|--------|
-| 4.27 | ✅ CrossEngine |
-| 5.0 – 5.7 | ✅ CrossEngine |
+<table>
+  <thead>
+    <tr>
+      <th>UE</th>
+      <th><Trans id="plugin.mouseinterceptor.reference.table.versions.h2">Статус</Trans></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>4.27</td><td>✅ CrossEngine</td></tr>
+    <tr><td>5.0 – 5.7</td><td>✅ CrossEngine</td></tr>
+  </tbody>
+</table>
 
 <Block type="ok">
 <Trans id="plugin.mouseinterceptor.reference.block.p1">Единый исходник скомпилируется на любой поддерживаемой версии без правок — в `.uplugin` стоит `EngineVersion: "4.27"` для широкой совместимости.</Trans>

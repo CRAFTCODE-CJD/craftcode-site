@@ -162,7 +162,13 @@ function parseFrontmatter(src) {
 
 /** Heuristic: a "table paragraph" is a paragraph whose source contains '\n|'
  *  — i.e. multiple piped lines. Markdown tables in remark without GFM get
- *  collapsed into a single paragraph node. Don't wrap these. */
+ *  collapsed into a single paragraph node. Don't wrap these.
+ *
+ *  AUTHORING NOTE: markdown-pipe tables are NOT i18n-able through this
+ *  extractor — wrapping them in <Trans> corrupts the MDX parser. Write
+ *  tables as explicit JSX (<table><thead>...<tbody>...) with per-cell
+ *  <Trans id="..."> tags instead. See any *.mdx in src/content/docs/ for
+ *  examples. */
 function looksLikeTable(src, node) {
   if (!node.position) return false;
   const s = src.slice(node.position.start.offset, node.position.end.offset);

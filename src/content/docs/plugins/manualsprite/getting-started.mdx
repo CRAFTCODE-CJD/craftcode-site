@@ -43,12 +43,21 @@ order: 2
 
 <Trans id="plugin.manualsprite.getting-started.шаг-3-редактируй-геометрию.p1">Используй кнопки тулбара или горячие клавиши:</Trans>
 
-| Режим | Клавиша | Действие |
-|-------|---------|----------|
-| **Select** | `Q` | Перемещение вершин (клик или рамка выделения) |
-| **Add Vertex** | `W` | Клик в вьюпорте — добавить новую вершину |
-| **Triangle** | `E` | Выбрать 3 вершины — создать треугольник |
-| **Delete** | `R` | Клик на вершине или треугольнике — удалить |
+<table>
+  <thead>
+    <tr>
+      <th><Trans id="plugin.manualsprite.getting-started.table.modes.h1">Режим</Trans></th>
+      <th><Trans id="plugin.manualsprite.getting-started.table.modes.h2">Клавиша</Trans></th>
+      <th><Trans id="plugin.manualsprite.getting-started.table.modes.h3">Действие</Trans></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>Select</strong></td><td><code>Q</code></td><td><Trans id="plugin.manualsprite.getting-started.table.modes.r1c3">Перемещение вершин (клик или рамка выделения)</Trans></td></tr>
+    <tr><td><strong>Add Vertex</strong></td><td><code>W</code></td><td><Trans id="plugin.manualsprite.getting-started.table.modes.r2c3">Клик в вьюпорте — добавить новую вершину</Trans></td></tr>
+    <tr><td><strong>Triangle</strong></td><td><code>E</code></td><td><Trans id="plugin.manualsprite.getting-started.table.modes.r3c3">Выбрать 3 вершины — создать треугольник</Trans></td></tr>
+    <tr><td><strong>Delete</strong></td><td><code>R</code></td><td><Trans id="plugin.manualsprite.getting-started.table.modes.r4c3">Клик на вершине или треугольнике — удалить</Trans></td></tr>
+  </tbody>
+</table>
 
 <Image src="/images/plugins/manualsprite/Screen_02.png" alt="Тулбар редактора Manual Sprite" caption="Тулбар: История — Режимы — Зеркало — Сетка — Инструменты — Generate" />
 
@@ -74,12 +83,20 @@ order: 2
 
 <Image src="/images/plugins/manualsprite/Screen_03.png" alt="Диалог генерации StaticMesh / SkeletalMesh" caption="Окно настройки генерации меша" />
 
-| Настройка | Описание |
-|-----------|----------|
-| **Mesh Type** | `StaticMesh` или `SkeletalMesh` |
-| **Pivot Placement** | `Center` / `Bottom` / `Origin` / `Custom` — точка опоры объекта |
-| **Asset Name & Path** | Имя и путь для новых ассетов |
-| **Material Settings** | Авто-создание Lit/Unlit материала, двусторонность |
+<table>
+  <thead>
+    <tr>
+      <th><Trans id="plugin.manualsprite.getting-started.table.genSettings.h1">Настройка</Trans></th>
+      <th><Trans id="plugin.manualsprite.getting-started.table.genSettings.h2">Описание</Trans></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>Mesh Type</strong></td><td><Trans id="plugin.manualsprite.getting-started.table.genSettings.r1c2">`StaticMesh` или `SkeletalMesh`</Trans></td></tr>
+    <tr><td><strong>Pivot Placement</strong></td><td><Trans id="plugin.manualsprite.getting-started.table.genSettings.r2c2">`Center` / `Bottom` / `Origin` / `Custom` — точка опоры объекта</Trans></td></tr>
+    <tr><td><strong>Asset Name & Path</strong></td><td><Trans id="plugin.manualsprite.getting-started.table.genSettings.r3c2">Имя и путь для новых ассетов</Trans></td></tr>
+    <tr><td><strong>Material Settings</strong></td><td><Trans id="plugin.manualsprite.getting-started.table.genSettings.r4c2">Авто-создание Lit/Unlit материала, двусторонность</Trans></td></tr>
+  </tbody>
+</table>
 
 <Trans id="plugin.manualsprite.getting-started.шаг-4-генерация-меша.p3">Нажми **Generate** — новые ассеты появятся в Content Browser и подсветятся.</Trans>
 

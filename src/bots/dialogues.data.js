@@ -1043,4 +1043,70 @@ export const SCENES = [
       { who: 'code',  text: '*касание: зарегистрировано*', clip: 'wave' },
       { who: 'craft', text: 'ачивка!' },
     ]},
+
+  // ═════════════════════════════════════════════════════════════════
+  //  EVENT — реакции на случайные события стейджа (item_spawn,
+  //  platform_appear, obstacle_move). Scene id-шка содержит тип
+  //  предмета/события после точки; bot.events.ts выбирает по тегу
+  //  `event` + опциональному остатку в id. Короткие реплики (1-2).
+  // ═════════════════════════════════════════════════════════════════
+  { id: 'event.item_spawn.coffee', tags: ['event','event:item_spawn'], weight: 1.2, cooldown: 60,
+    lines: [
+      { who: 'craft', text: 'кофе! оно само!' , act: 'excited' },
+      { who: 'code',  text: 'варенье в кружке. принято.' },
+    ]},
+
+  { id: 'event.item_spawn.gear', tags: ['event','event:item_spawn'], weight: 1, cooldown: 60,
+    lines: [
+      { who: 'code',  text: 'шестерёнка. пригодится.' },
+      { who: 'craft', text: 'запчасть! дай пощупаю' , act: 'excited' },
+    ]},
+
+  { id: 'event.item_spawn.spring', tags: ['event','event:item_spawn'], weight: 1, cooldown: 60,
+    lines: [
+      { who: 'craft', text: 'пружина! будем прыгать' , act: 'excited' },
+      { who: 'code',  text: 'закон Гука говорит «осторожно»' },
+    ]},
+
+  { id: 'event.item_spawn.wrench', tags: ['event','event:item_spawn'], weight: 1, cooldown: 60,
+    lines: [
+      { who: 'code',  text: 'ключ. на 14. похоже.' },
+      { who: 'craft', text: 'чиним всё подряд!' },
+    ]},
+
+  { id: 'event.item_spawn.bolt', tags: ['event','event:item_spawn'], weight: 1, cooldown: 60,
+    lines: [
+      { who: 'craft', text: 'болтик укатился. лови!' },
+      { who: 'code',  text: 'M6, длина 20. стандарт.' },
+    ]},
+
+  { id: 'event.item_spawn.cube', tags: ['event','event:item_spawn'], weight: 1, cooldown: 60,
+    lines: [
+      { who: 'craft', text: 'коробка! что внутри?' },
+      { who: 'code',  text: 'schrödinger. не открывай.' },
+    ]},
+
+  { id: 'event.item_spawn.coin', tags: ['event','event:item_spawn'], weight: 1, cooldown: 60,
+    lines: [
+      { who: 'craft', text: 'монетка! +1 очко!' , act: 'excited' },
+      { who: 'code',  text: 'в экономике Tick() инфляция' },
+    ]},
+
+  { id: 'event.item_seen.generic', tags: ['event','event:item_seen'], weight: 1, cooldown: 45,
+    lines: [
+      { who: 'code',  text: 'что-то упало' },
+      { who: 'craft', text: 'ага, видел!' },
+    ]},
+
+  { id: 'event.platform_appear.generic', tags: ['event','event:platform_appear'], weight: 1, cooldown: 80,
+    lines: [
+      { who: 'craft', text: 'новая платформа! лезу!' , act: 'excited' },
+      { who: 'code',  text: 'physics материализовал ещё один коллайдер' },
+    ]},
+
+  { id: 'event.obstacle_move.generic', tags: ['event','event:obstacle_move'], weight: 1, cooldown: 70,
+    lines: [
+      { who: 'code',  text: 'оно... поехало?' },
+      { who: 'craft', text: 'мир шевелится! держись!' },
+    ]},
 ];

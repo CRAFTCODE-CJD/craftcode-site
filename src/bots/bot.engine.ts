@@ -23,6 +23,10 @@ import type {
 import './engine.legacy.js';
 // Virtual camera — auto-initialises on DOM ready. Keeps both robots framed.
 import './bot.camera';
+// Random playground events (item/platform spawn, obstacle moves).
+// Self-inits on DOM ready + waits for __companions._started. Opts out
+// under prefers-reduced-motion.
+import './bot.events';
 
 type Listener = (s: BotState) => void;
 

@@ -2155,16 +2155,160 @@ import { FRAME_ORDER, fIdx, CLIPS, STATE_TO_CLIP } from './frames.data.js';
     startIdle() {
       if (this.muted || this.dialogueState !== 'idle') return;
       if (!this.pos.craft.grounded || !this.pos.code.grounded) return;
-      const scene = dialogue.pick('idle');
-      if (!scene) return;                 // nothing fits context right now
+      // ~20% chance: pick from 'behavior' tier (scripted mini-routine).
+      // Falls back to a normal idle scene if no behavior candidates fit.
+      let scene = null;
+      if (Math.random() < 0.20) {
+        scene = dialogue.pick('behavior');
+      }
+      if (!scene) scene = dialogue.pick('idle');
+      if (!scene) return;
       dialogue.recordEvent('idle_play');
-      this.playSequence(dialogue.play(scene));
+      this.playSequence(dialogue.play(scene), scene);
     },
 
-    playSequence(seq) {
+    playSequence(seq, scene) {
       this.dialogueState = 'talking';
       this.queue = [...seq];
+      // If the caller passed a behavior scene, kick off its action executor
+      // in parallel with the dialogue lines. Actions run async and are
+      // best-effort — they don't block or interrupt the typewriter.
+      if (scene && typeof scene.id === 'string' && scene.id.startsWith('behavior.')) {
+        try { this._runBehaviorAction(scene.id); } catch (_) {}
+      }
       this.playNext();
+    },
+
+    // Minimal behavior-action executor. Maps scene id → short physics
+    // routine that plays alongside the dialogue lines. Uses existing
+    // engine primitives (walkTarget, setCharState, playClip, floorYFor,
+    // containerWidth). Unknown ids are no-ops.
+    _runBehaviorAction(id) {
+      const cw = this.containerWidth();
+      const sideM = this.SIDE_M;
+      const S = this.S;
+      const maxX = cw - sideM - S;
+      const clampX = (x) => Math.max(sideM, Math.min(maxX, x));
+      const craft = this.pos.craft;
+      const code  = this.pos.code;
+      const walkTo = (who, tx) => {
+        const p = this.pos[who];
+        if (!p.grounded) return;
+        p.walkTarget = clampX(tx);
+        p.facing = p.walkTarget > p.x ? 'right' : 'left';
+        this.setCharState(who, 'walking');
+      };
+
+      switch (id) {
+        case 'behavior.chase': {
+          // CRAFT walks to CODE, then CODE retreats ~120px away.
+          walkTo('craft', code.x - 30);
+          setTimeout(() => {
+            if (this.dialogueState !== 'talking') return;
+            const dir = code.x > craft.x ? 1 : -1;
+            walkTo('code', code.x + dir * 120);
+          }, 900);
+          break;
+        }
+        case 'behavior.ball_toss': {
+          // CODE windup+release, pause, CRAFT hifive approach+slap.
+          // Also spawn a visual ball that arcs between them.
+          try { this.playClip('code', 'throwAct', { force: true }); } catch (_) {}
+          this._spawnBallArc(code, craft);
+          setTimeout(() => {
+            try { this.playClip('craft', 'hifive', { force: true }); } catch (_) {}
+          }, 600);
+          break;
+        }
+        case 'behavior.highfive': {
+          // Both walk to middle, then both play hifive clip.
+          const mid = (craft.x + code.x) / 2;
+          walkTo('craft', mid - 24);
+          walkTo('code',  mid + 24);
+          setTimeout(() => {
+            try { this.playClip('craft', 'hifive', { force: true }); } catch (_) {}
+            try { this.playClip('code',  'hifive', { force: true }); } catch (_) {}
+          }, 800);
+          break;
+        }
+        case 'behavior.sync_nap': {
+          // Both sit+sleep for ~3s.
+          try { this.playClip('craft', 'rest', { force: true }); } catch (_) {}
+          try { this.playClip('code',  'rest', { force: true }); } catch (_) {}
+          setTimeout(() => {
+            try { this.playClip('craft', 'sleep', { force: true }); } catch (_) {}
+            try { this.playClip('code',  'sleep', { force: true }); } catch (_) {}
+          }, 700);
+          setTimeout(() => {
+            // Return to idle after ~3s total
+            try { this.playClip('craft', 'idle'); } catch (_) {}
+            try { this.playClip('code',  'idle'); } catch (_) {}
+          }, 3500);
+          break;
+        }
+        case 'behavior.stuck_corner': {
+          // Teleport CRAFT to right edge + play tumble (cycling).
+          craft.x = maxX;
+          craft.walkTarget = null;
+          this.applyPosition('craft');
+          try { this.playClip('craft', 'tumble', { force: true }); } catch (_) {}
+          setTimeout(() => {
+            try { this.playClip('craft', 'idle'); } catch (_) {}
+          }, 2200);
+          break;
+        }
+        case 'behavior.race': {
+          // Both dash to opposite edges.
+          walkTo('craft', sideM + 10);
+          walkTo('code',  maxX - 10);
+          break;
+        }
+        case 'behavior.dance_battle': {
+          try { this.playClip('craft', 'wave', { force: true }); } catch (_) {}
+          setTimeout(() => {
+            try { this.playClip('code', 'wave', { force: true }); } catch (_) {}
+          }, 400);
+          break;
+        }
+        default:
+          // no-op for other behavior.* scenes (dialog-only)
+          break;
+      }
+    },
+
+    // Spawn a short-lived DOM element that arcs from one bot to the other.
+    // Purely decorative; added to `.companions` so the camera tracking
+    // covers it. Removed after the animation ends.
+    _spawnBallArc(from, to) {
+      try {
+        const host = this.els.container;
+        if (!host) return;
+        const ball = document.createElement('div');
+        ball.className = 'cc-event-ball';
+        ball.setAttribute('data-cc-event', 'ball_toss');
+        ball.setAttribute('data-dynamic', 'appear');
+        ball.style.position = 'absolute';
+        ball.style.left = `${from.x + this.S / 2 - 8}px`;
+        ball.style.top  = `${from.y + 4}px`;
+        ball.style.width = '16px';
+        ball.style.height = '16px';
+        ball.style.borderRadius = '50%';
+        ball.style.background = 'radial-gradient(circle at 35% 30%, #fff, var(--accent-2, #ffcf3f) 60%, #b8870b 100%)';
+        ball.style.boxShadow = '0 0 10px color-mix(in oklab, var(--accent-2, #ffcf3f) 70%, transparent)';
+        ball.style.pointerEvents = 'none';
+        ball.style.zIndex = '6';
+        ball.style.transition = 'left 700ms cubic-bezier(.2,.8,.5,1), top 700ms cubic-bezier(.4,0,.6,1)';
+        host.appendChild(ball);
+        // Kick transition on next frame.
+        requestAnimationFrame(() => {
+          ball.style.left = `${to.x + this.S / 2 - 8}px`;
+          ball.style.top  = `${to.y - 40}px`;
+          requestAnimationFrame(() => {
+            ball.style.top = `${to.y + 4}px`;
+          });
+        });
+        setTimeout(() => { try { ball.remove(); } catch (_) {} }, 1200);
+      } catch (_) {}
     },
 
     playNext() {

@@ -472,11 +472,44 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
     }
   });
 
+  // ── Pixel-accurate HEAD_TOP per bot ─────────────────
+  // Parity with the legacy engine: scan frame 0 of each sprite sheet
+  // for the first non-transparent row — that's the visual top of the
+  // bot's head (hair/antenna tip). Stored as a Y offset INSIDE the 48-
+  // pixel sprite box. Used by the bot-on-bot snap below so the upper
+  // bot's feet rest on the exact pixel tip of the lower bot's head,
+  // not somewhere inside the 40-px hit-area.
+  const SPRITE_H = 48;
+  const headTopPx: Record<BotWho, number> = { craft: 8, code: 10 }; // sensible defaults until scan returns
+  const scanHeadTop = (src: string, who: BotWho) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.src = src;
+    img.onload = () => {
+      try {
+        const c = document.createElement('canvas');
+        c.width = SPRITE_H; c.height = SPRITE_H;
+        const ctx = c.getContext('2d')!;
+        // Frame 0 is the first 48×48 tile at (0, 0) of the sheet.
+        ctx.drawImage(img, 0, 0, SPRITE_H, SPRITE_H, 0, 0, SPRITE_H, SPRITE_H);
+        const d = ctx.getImageData(0, 0, SPRITE_H, SPRITE_H).data;
+        for (let y = 0; y < SPRITE_H; y++) {
+          for (let x = 0; x < SPRITE_H; x++) {
+            if (d[(y * SPRITE_H + x) * 4 + 3] > 128) {
+              headTopPx[who] = y;
+              return;
+            }
+          }
+        }
+      } catch (_) { /* CORS or no-DOM — keep default */ }
+    };
+  };
+  try { scanHeadTop('/sprites/craft.png', 'craft'); scanHeadTop('/sprites/code.png', 'code'); } catch (_) {}
+
   // ── Bot-on-bot stacking snap ─────────────────────────
-  // KAPLAY's dynamic-on-dynamic resolution leaves a visible gap when one
-  // bot is dropped onto another's head; manually snap the upper bot's
-  // feet to the lower bot's hit-area top when they horizontally overlap
-  // and the upper is descending or near-rest above the lower.
+  // Feet of the upper bot land exactly on the VISIBLE head pixel of
+  // the lower bot — not the bounding-box top — so the stack reads as
+  // a physical contact instead of hovering in the hit-area's padding.
   k.onUpdate(() => {
     const pairs = [[craft, code], [code, craft]] as const;
     for (const [upper, lower] of pairs) {
@@ -484,20 +517,26 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
       const uA = upper.worldArea();
       const lA = lower.worldArea();
       if (!uA || !lA || !uA.pts || !lA.pts) continue;
-      // Rect.pts → [TL, TR, BR, BL] in KAPLAY.
-      const uLeft   = Math.min(uA.pts[0].x, uA.pts[3].x);
-      const uRight  = Math.max(uA.pts[1].x, uA.pts[2].x);
-      const uBottom = Math.max(uA.pts[2].y, uA.pts[3].y);
-      const lLeft   = Math.min(lA.pts[0].x, lA.pts[3].x);
-      const lRight  = Math.max(lA.pts[1].x, lA.pts[2].x);
-      const lTop    = Math.min(lA.pts[0].y, lA.pts[1].y);
-      const hOverlap = !(uRight < lLeft || uLeft > lRight);
-      if (!hOverlap) continue;
-      const gap = lTop - uBottom; // positive = upper above lower
-      if (gap > -8 && gap < 4 && upper.vel.y >= -20) {
-        // anchor='bot' → pos.y == feet/bottom of hit-area, so snapping
-        // pos.y onto the lower bot's hit-area top closes the gap exactly.
-        upper.pos.y = lTop;
+      // Hit-area x-extents are still from worldArea; they're only used
+      // for the horizontal-overlap test.
+      const uLeft  = Math.min(uA.pts[0].x, uA.pts[3].x);
+      const uRight = Math.max(uA.pts[1].x, uA.pts[2].x);
+      const lLeft  = Math.min(lA.pts[0].x, lA.pts[3].x);
+      const lRight = Math.max(lA.pts[1].x, lA.pts[2].x);
+      if (uRight < lLeft || uLeft > lRight) continue;
+
+      // Pixel-accurate head Y of the lower bot in world space. anchor
+      // 'bot' → pos.y is the feet line; the sprite box extends SPRITE_H
+      // upward from there, and the head pixel sits headTopPx[who] rows
+      // down from the box top.
+      const lowerWho = lower === craft ? 'craft' : 'code';
+      const lowerHeadY = lower.pos.y - SPRITE_H + headTopPx[lowerWho];
+
+      // Upper feet Y == upper.pos.y (anchor='bot'). Snap when within
+      // a small window above/below the head pixel and descending.
+      const gap = lowerHeadY - upper.pos.y; // >0 = upper is above head
+      if (gap > -10 && gap < 6 && upper.vel.y >= -20) {
+        upper.pos.y = lowerHeadY;
         upper.vel.y = 0;
         upper._groundedOnBot = performance.now();
       }

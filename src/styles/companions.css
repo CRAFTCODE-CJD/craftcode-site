@@ -443,3 +443,16 @@
     line-height: 1.35;
   }
 }
+/* Extra-narrow phones (≤360px): the bubble sits at `bottom: 56px` and can
+   still visually overhang the stage-top when a bot stands on the crate.
+   Trim max-width further and cap with calc-against-viewport so the bubble
+   can't exceed the stage width on the smallest iPhone SE / Galaxy Fold
+   profiles. */
+@media (max-width: 360px) {
+  .companion-bubble {
+    max-width: min(160px, calc(100vw - 32px));
+    padding: 5px 9px;
+    font-size: clamp(12px, 3vw, 14px);
+    line-height: 1.3;
+  }
+}

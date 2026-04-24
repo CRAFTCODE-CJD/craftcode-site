@@ -1284,5 +1284,42 @@
   "site.templates.body.p1": "Section under construction. UE project and gameplay-mechanic templates land here: ready-made groundwork you can grab, pull apart, and evolve into your own project.",
   "site.templates.body.p2": "Nothing public yet — follow announcements on YouTube and Boosty.",
   "site.templates.description": "Project and game templates for Unreal Engine — coming soon.",
-  "site.templates.title": "Templates"
+  "site.templates.title": "Templates",
+
+  "donate.label": "// support",
+  "donate.heading": "Support the project",
+  "donate.pitch": "Your support lets me spend more time building plugins and shipping learning content.",
+  "donate.cta": "Donate on Boosty ↗",
+  "donate.qr.alt": "QR code for donation",
+  "donate.qr.label": "SCAN TO DONATE",
+
+  "templates.teaser.aria": "Templates — coming soon",
+  "templates.teaser.kicker": "// terminal::templates_soon",
+  "templates.teaser.heading": "Project & gameplay templates",
+  "templates.teaser.pitch": "UE templates with battle-ready architecture: sprite roguelike, top-down shooter, inventory, dialogue system. Unzip — it works.",
+  "templates.teaser.cta": "INITIALIZE_TEMPLATES()",
+  "templates.teaser.status.label": "sys_status",
+  "templates.teaser.status.value": "prototypes_v0.7",
+  "templates.teaser.status.hint": "~5% completed",
+
+  "home.social.aria": "CRAFTCODE channels",
+  "home.social.fab.sub": "Plugins and assets for Unreal Engine",
+  "home.social.fab.cta": "Marketplace",
+  "home.social.yt.sub": "Devlogs, breakdowns, and work-in-progress footage",
+  "home.social.yt.cta": "Latest video",
+  "home.social.boosty.sub": "Exclusive content for subscribers",
+  "home.social.boosty.cta": "Subscribe",
+  "home.stage.caption": "// workshop · drag a robot and toss it · they bump into things",
+  "home.stage.hud.hint": "press <kbd>/</kbd> for terminal",
+  "home.stage.tag": "Tools and templates for UE",
+
+  "lightbox.dialog.aria": "Image viewer",
+  "lightbox.close.aria": "Close",
+  "lightbox.hint.close": "close",
+  "lightbox.hint.outside": "outside the image",
+
+  "site.404.title": "// signal lost",
+  "site.404.copy": "The bot couldn't find this page in the registry. Try <a href=\"/\">returning home</a> or browse the <a href=\"/plugins/\">plugin catalog</a>.",
+  "site.404.hint": "// press <kbd>/</kbd> to open the terminal",
+  "site.image.zoomAria": "Open enlarged image"
 }

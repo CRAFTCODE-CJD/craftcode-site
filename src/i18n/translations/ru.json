@@ -1284,5 +1284,42 @@
   "site.templates.body.p1": "Раздел в разработке. Здесь появятся UE-шаблоны проектов и геймплейных механик: готовая основа, которую можно взять, разобрать и развивать под свой проект.",
   "site.templates.body.p2": "Пока ничего публичного — следи за анонсами на YouTube и Boosty.",
   "site.templates.description": "Шаблоны проектов и игр для Unreal Engine — скоро.",
-  "site.templates.title": "Шаблоны"
+  "site.templates.title": "Шаблоны",
+
+  "donate.label": "// support",
+  "donate.heading": "Поддержать проект",
+  "donate.pitch": "Ваша поддержка помогает мне уделять больше времени разработке плагинов и созданию обучающего контента.",
+  "donate.cta": "Задонатить на Boosty ↗",
+  "donate.qr.alt": "QR-код для доната",
+  "donate.qr.label": "SCAN TO DONATE",
+
+  "templates.teaser.aria": "Шаблоны — скоро",
+  "templates.teaser.kicker": "// terminal::templates_soon",
+  "templates.teaser.heading": "Шаблоны проектов и геймплея",
+  "templates.teaser.pitch": "UE-шаблоны с готовой архитектурой: спрайтовый рогалик, top-down стрелялка, инвентарь, диалоговая система. Распаковал — работает.",
+  "templates.teaser.cta": "INITIALIZE_TEMPLATES()",
+  "templates.teaser.status.label": "sys_status",
+  "templates.teaser.status.value": "прототипы_v0.7",
+  "templates.teaser.status.hint": "~5% completed",
+
+  "home.social.aria": "CRAFTCODE каналы",
+  "home.social.fab.sub": "Плагины и ассеты для Unreal Engine",
+  "home.social.fab.cta": "Marketplace",
+  "home.social.yt.sub": "Devlog, разборы и футажи проделанной работы",
+  "home.social.yt.cta": "Свежее видео",
+  "home.social.boosty.sub": "Эксклюзивный контент для подписчиков",
+  "home.social.boosty.cta": "Подписаться",
+  "home.stage.caption": "// мастерская · хватай робота и кидай · они натыкаются на всё",
+  "home.stage.hud.hint": "нажми <kbd>/</kbd> для терминала",
+  "home.stage.tag": "Инструменты и шаблоны для UE",
+
+  "lightbox.dialog.aria": "Просмотр изображения",
+  "lightbox.close.aria": "Закрыть",
+  "lightbox.hint.close": "закрыть",
+  "lightbox.hint.outside": "за картинкой",
+
+  "site.404.title": "// signal lost",
+  "site.404.copy": "Бот не нашёл эту страницу в реестре. Попробуй <a href=\"/\">вернуться на главную</a> или открой <a href=\"/plugins/\">каталог плагинов</a>.",
+  "site.404.hint": "// нажми <kbd>/</kbd> чтобы открыть терминал",
+  "site.image.zoomAria": "Открыть увеличенное изображение"
 }

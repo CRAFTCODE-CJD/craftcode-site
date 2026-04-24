@@ -11,22 +11,22 @@ import CompanionBot from './CompanionBot.astro';
        <div class="donate-bot" aria-hidden="true">
          <CompanionBot bot="craft" anim="think" size={48} />
        </div>
-       <span class="ds-label">// support</span>
-       <h2 class="donate-heading">Поддержать проект</h2>
-       <p class="donate-pitch">
+       <span class="ds-label" data-i18n="donate.label">// support</span>
+       <h2 class="donate-heading" data-i18n="donate.heading">Поддержать проект</h2>
+       <p class="donate-pitch" data-i18n="donate.pitch">
          Ваша поддержка помогает мне уделять больше времени разработке плагинов и созданию обучающего контента.
        </p>
-       <a href="https://boosty.to/channel-jonathan-developer/donate" target="_blank" rel="noopener" class="btn primary">
+       <a href="https://boosty.to/channel-jonathan-developer/donate" target="_blank" rel="noopener" class="btn primary" data-i18n="donate.cta">
          Задонатить на Boosty ↗
        </a>
     </div>
-    
+
     <div class="donate-qr-container">
        <div class="qr-wrapper">
-          <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://boosty.to/channel-jonathan-developer/donate" alt="QR Code for donation" class="qr-img" />
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://boosty.to/channel-jonathan-developer/donate" alt="QR Code for donation" class="qr-img" data-i18n-attr="alt:donate.qr.alt" />
           <div class="qr-scan-line"></div>
        </div>
-       <span class="qr-label">SCAN TO DONATE</span>
+       <span class="qr-label" data-i18n="donate.qr.label">SCAN TO DONATE</span>
     </div>
   </div>
 </section>

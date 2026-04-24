@@ -5,17 +5,17 @@ import CompanionBot from './CompanionBot.astro';
  */
 ---
 
-<section class="tmpl-teaser" aria-label="Шаблоны — скоро">
+<section class="tmpl-teaser" aria-label="templates teaser" data-i18n-attr="aria-label:templates.teaser.aria">
   <div class="tmpl-grid">
     <div class="tmpl-col">
-      <span class="tmpl-kicker">// terminal::templates_soon</span>
-      <h3 class="tmpl-heading">Шаблоны проектов и геймплея</h3>
-      <p class="tmpl-pitch">
+      <span class="tmpl-kicker" data-i18n="templates.teaser.kicker">// terminal::templates_soon</span>
+      <h3 class="tmpl-heading" data-i18n="templates.teaser.heading">Шаблоны проектов и геймплея</h3>
+      <p class="tmpl-pitch" data-i18n="templates.teaser.pitch">
         UE-шаблоны с готовой архитектурой: спрайтовый рогалик, top-down
         стрелялка, инвентарь, диалоговая система. Распаковал — работает.
       </p>
       <a class="tmpl-cta" href="/templates/">
-        <span>INITIALIZE_TEMPLATES()</span><span class="tmpl-cta__arrow">→</span>
+        <span data-i18n="templates.teaser.cta">INITIALIZE_TEMPLATES()</span><span class="tmpl-cta__arrow">→</span>
       </a>
     </div>
 
@@ -24,8 +24,8 @@ import CompanionBot from './CompanionBot.astro';
         <CompanionBot bot="craft" anim="typing" size={64} />
       </div>
       <div class="tmpl-status-body">
-        <span class="tmpl-status-label">sys_status</span>
-        <span class="tmpl-status-value">прототипы_v0.7</span>
+        <span class="tmpl-status-label" data-i18n="templates.teaser.status.label">sys_status</span>
+        <span class="tmpl-status-value" data-i18n="templates.teaser.status.value">прототипы_v0.7</span>
         <div class="tmpl-progress">
           <span class="p p-on"></span>
           <span class="p p-on p-dim"></span>
@@ -34,7 +34,7 @@ import CompanionBot from './CompanionBot.astro';
           <span class="p p-off"></span>
         </div>
         <div class="tmpl-status-foot">
-          <span class="tmpl-status-hint">~5% completed</span>
+          <span class="tmpl-status-hint" data-i18n="templates.teaser.status.hint">~5% completed</span>
           <span class="tmpl-status-dot"></span>
         </div>
       </div>

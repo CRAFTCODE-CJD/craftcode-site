@@ -10,8 +10,11 @@ interface Props {
   subtitle?: string;
   cta?: string;
   external?: boolean;
+  subtitleI18n?: string;
+  ctaI18n?: string;
+  titleI18n?: string;
 }
-const { brand, href, title, subtitle, cta, external = true } = Astro.props as Props;
+const { brand, href, title, subtitle, cta, external = true, subtitleI18n, ctaI18n, titleI18n } = Astro.props as Props;
 
 const BRANDS: Record<Props['brand'], { color: string; label: string }> = {
   fab:     { color: '#0ea5e9', label: 'fab' },
@@ -68,13 +71,13 @@ const b = BRANDS[brand];
   </div>
 
   <div class="social-link__body">
-    <h3 class="social-link__title">{title}</h3>
-    {subtitle && <p class="social-link__sub">{subtitle}</p>}
+    <h3 class="social-link__title" data-i18n={titleI18n ?? undefined}>{title}</h3>
+    {subtitle && <p class="social-link__sub" data-i18n={subtitleI18n ?? undefined}>{subtitle}</p>}
   </div>
 
   {cta && (
     <div class="social-link__foot">
-      <span>{cta}</span>
+      <span data-i18n={ctaI18n ?? undefined}>{cta}</span>
       <span class="social-link__arrow" aria-hidden="true">→</span>
     </div>
   )}

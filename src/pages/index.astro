@@ -9,14 +9,14 @@ import LatestReleases from '~/components/LatestReleases.astro';
 import SystemLog from '~/components/SystemLog.astro';
 ---
 
-<Base title="CRAFTCODE" description="Рабочая мастерская двух роботов — плагины и игры для Unreal Engine." bodyClass="is-home">
+<Base title="CRAFTCODE" description="A workshop of two robots — plugins and games for Unreal Engine." bodyClass="is-home">
   <BootToPlayground />
 
   <section class="home-wrap">
     <SystemLog />
     <LatestReleases />
 
-    <section class="home-social" aria-label="CRAFTCODE caналы">
+    <section class="home-social" aria-label="CRAFTCODE channels" data-i18n-attr="aria-label:home.social.aria">
       <header class="home-social__head">
         <p class="home-social__kicker" data-i18n="home.social.kicker">// channels</p>
         <h2 class="home-social__title" data-i18n="home.social.title">Где меня найти</h2>
@@ -27,21 +27,27 @@ import SystemLog from '~/components/SystemLog.astro';
           href="https://www.fab.com/sellers/CRAFTCODE"
           title="FAB Marketplace"
           subtitle="Плагины и ассеты для Unreal Engine"
+          subtitleI18n="home.social.fab.sub"
           cta="Marketplace"
+          ctaI18n="home.social.fab.cta"
         />
         <SocialLink
           brand="youtube"
           href="https://www.youtube.com/@jonathandeveloper6723"
           title="YouTube"
           subtitle="Devlog, разборы и футажи проделанной работы"
+          subtitleI18n="home.social.yt.sub"
           cta="Latest video"
+          ctaI18n="home.social.yt.cta"
         />
         <SocialLink
           brand="boosty"
           href="https://boosty.to/channel-jonathan-developer"
           title="Boosty"
           subtitle="Эксклюзивный контент для подписчиков"
+          subtitleI18n="home.social.boosty.sub"
           cta="Subscribe"
+          ctaI18n="home.social.boosty.cta"
         />
       </div>
     </section>

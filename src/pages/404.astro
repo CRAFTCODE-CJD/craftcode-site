@@ -3,7 +3,7 @@ import Base from '~/layouts/Base.astro';
 import CompanionBot from '~/components/CompanionBot.astro';
 ---
 
-<Base title="404 // signal lost" description="Страница не найдена." bodyClass="is-404">
+<Base title="404 // signal lost" description="Page not found." bodyClass="is-404">
   <section class="err404">
     <div class="err404__bots" aria-hidden="true">
       <CompanionBot bot="code" anim="think" size={72} />
@@ -16,9 +16,9 @@ import CompanionBot from '~/components/CompanionBot.astro';
 |__   _| |_| ||__   _|
    |_|  \___/    |_|
 </pre>
-    <h1 class="err404__title glitch" data-text="// signal lost">// signal lost</h1>
-    <p class="err404__copy">Бот не нашёл эту страницу в реестре. Попробуй <a href="/">вернуться на главную</a> или открой <a href="/plugins/">каталог плагинов</a>.</p>
-    <p class="err404__hint">// нажми <kbd>/</kbd> чтобы открыть терминал</p>
+    <h1 class="err404__title glitch" data-text="// signal lost" data-i18n="site.404.title">// signal lost</h1>
+    <p class="err404__copy" data-i18n="site.404.copy">Бот не нашёл эту страницу в реестре. Попробуй <a href="/">вернуться на главную</a> или открой <a href="/plugins/">каталог плагинов</a>.</p>
+    <p class="err404__hint" data-i18n="site.404.hint">// нажми <kbd>/</kbd> чтобы открыть терминал</p>
   </section>
 </Base>
 

@@ -959,6 +959,30 @@ import { FRAME_ORDER, fIdx, CLIPS, STATE_TO_CLIP } from './frames.data.js';
         if (p.grounded && Math.abs(p.y - floorY) < 2) {
           sim.stackFired[who] = false;
         }
+
+        // 11. Anti-stuck watchdog — if a bot sat in one spot for 15 s
+        //     (grounded, idle, not being dragged), force a fresh nav pick.
+        //     Without this a bot that wanders onto a platform + rolls 'stay'
+        //     repeatedly can sit there forever, giving the "AI is dead" feel.
+        if (!sim._idleSpot) sim._idleSpot = { craft: null, code: null };
+        const spot = sim._idleSpot[who];
+        const dragging = this.activeDrag && this.activeDrag.who === who;
+        const idleOnGround = p.grounded && p.state === 'idle' && !dragging;
+        if (idleOnGround) {
+          if (!spot || Math.abs(spot.x - p.x) > 4 || Math.abs(spot.y - p.y) > 4) {
+            sim._idleSpot[who] = { x: p.x, y: p.y, t: 0 };
+          } else {
+            spot.t += dt;
+            if (spot.t > 15 && !this.muted &&
+                this.dialogueState === 'idle') {
+              spot.t = 0;
+              // Force a wander pick (bypasses the scheduled cadence).
+              this.wanderOne(who);
+            }
+          }
+        } else {
+          sim._idleSpot[who] = null;
+        }
       });
 
       // 11. Inner monologue — tiny 1-3 word bubble every 15-40 s idle,
@@ -1169,66 +1193,246 @@ import { FRAME_ORDER, fIdx, CLIPS, STATE_TO_CLIP } from './frames.data.js';
       }
     },
 
+    // ── Pathfinding awareness (lightweight) ────────────────────
+    // Describes what the bot's feet are touching right now. Returns:
+    //   { type: 'floor'|'platform', id?, edgeLeft, edgeRight, top }
+    // `edgeLeft`/`edgeRight` are the walkable x-extents of the surface,
+    // measured at the bot's sprite.x (i.e. already accounting for the
+    // half-sprite offsets on each end). `top` is the y-value p.y would
+    // have while grounded on this surface.
+    getCurrentSurface(who) {
+      const p = this.pos[who];
+      const ch = this.els.container ? this.els.container.clientHeight : 480;
+      const floorTop = ch - this.FLOOR_M - this.FOOT_Y[who];
+      const pad = this.HITBOX[who];
+
+      // Platform check first (more specific). Uses same tolerance/overlap
+      // test as _isUnsupported so the two helpers stay in lockstep.
+      if (this._obstacles && this._obstacles.length) {
+        const feetY = p.y + this.FOOT_Y[who];
+        const tol = Math.max(this.PLATFORM_M, 2) + 1;
+        const hb = this._hb(who);
+        for (const o of this._obstacles) {
+          const target = o.y - this.PLATFORM_M;
+          if (feetY < target - tol || feetY > target + tol) continue;
+          if (hb.right <= o.x || o.x + o.w <= hb.left) continue;
+          return {
+            type: 'platform',
+            id: o.el && (o.el.id || o.el.getAttribute('data-ob') || null),
+            ob: o,
+            // Walkable sprite.x so the HITBOX stays fully above the platform.
+            edgeLeft:  o.x - (this.S - pad.padR),
+            edgeRight: (o.x + o.w) - pad.padL,
+            top: o.y - this.PLATFORM_M - this.FOOT_Y[who],
+          };
+        }
+      }
+
+      // Main floor — edges are the viewport clamp used by walk code.
+      const cw = this.containerWidth();
+      return {
+        type: 'floor',
+        id: null,
+        ob: null,
+        edgeLeft:  this.SIDE_M - pad.padL,
+        edgeRight: cw - this.SIDE_M - (this.S - pad.padR),
+        top: floorTop,
+      };
+    },
+
+    // Plan a jump from (x0, y0) to land on a target surface at (tx, ty).
+    // `flightTime` ≈ 0.8 s gives a readable arc under current GRAVITY/drag.
+    // Returns { vx, vy, feasible } — feasible=false when the horizontal
+    // speed would exceed MAX_V (e.g. platform on the far side of the stage).
+    planJumpTo(x0, y0, tx, ty, flightTime = 0.8) {
+      const g = this.GRAVITY;
+      const dx = tx - x0;
+      const dy = ty - y0;                                  // usually negative (up)
+      const vx = dx / flightTime;
+      const vy = (dy - 0.5 * g * flightTime * flightTime) / flightTime;
+      const feasible = Math.abs(vx) < 520 && vy > -1400;
+      return { vx, vy, feasible };
+    },
+
+    // List all non-current surfaces and whether we can hop onto them from
+    // the current spot. Cheap ballistic check only (air-drag ignored — it's
+    // ~1.5 % per tick and the formula already produces slightly over-vx).
+    reachablePlatforms(who) {
+      const p = this.pos[who];
+      const current = this.getCurrentSurface(who);
+      const out = [];
+      if (!this._obstacles) return out;
+      for (const o of this._obstacles) {
+        if (current.ob === o) continue;
+        // Target sprite.x: centre of the platform (half-sprite offset).
+        const targetX = o.x + o.w / 2 - this.S / 2;
+        const targetY = o.y - this.PLATFORM_M - this.FOOT_Y[who];
+        const plan = this.planJumpTo(p.x, p.y, targetX, targetY);
+        if (plan.feasible) out.push({ ob: o, targetX, targetY, plan });
+      }
+      return out;
+    },
+
+    // High-level move set the wander picker draws from. Returns array of
+    //   { kind, weight, ...payload }
+    // where `kind` ∈ walk-left, walk-right, step-off-left, step-off-right,
+    //               jump-to-platform, jump-up, stay
+    getNavOptions(who) {
+      const p = this.pos[who];
+      const surface = this.getCurrentSurface(who);
+      const opts = [];
+
+      // Walk targets: stay on current surface.
+      const room = 80;
+      if (p.x - surface.edgeLeft > room) {
+        opts.push({ kind: 'walk-left',
+          walkTo: Math.max(surface.edgeLeft,
+                           p.x - (80 + Math.random() * 160)),
+          weight: 1 });
+      }
+      if (surface.edgeRight - p.x > room) {
+        opts.push({ kind: 'walk-right',
+          walkTo: Math.min(surface.edgeRight,
+                           p.x + (80 + Math.random() * 160)),
+          weight: 1 });
+      }
+
+      // Step-off from platform edges — walk off so gravity takes us down.
+      if (surface.type === 'platform') {
+        opts.push({ kind: 'step-off-left',
+          walkTo: surface.edgeLeft - 24, weight: 1 });
+        opts.push({ kind: 'step-off-right',
+          walkTo: surface.edgeRight + 24, weight: 1 });
+      }
+
+      // Jump to any reachable platform (excluding the one we're already on).
+      const reach = this.reachablePlatforms(who);
+      for (const r of reach) {
+        opts.push({ kind: 'jump-to-platform',
+          target: r, weight: 1 });
+      }
+
+      // Stand-still idle.
+      opts.push({ kind: 'stay', weight: 1 });
+
+      // Up-hop when we have nothing else meaningful to do.
+      opts.push({ kind: 'jump-up', weight: 1 });
+
+      return { surface, opts };
+    },
+
+    // Weighted-random pick per the spec:
+    //   on platform → 30% walk, 40% step-off, 20% jump-to-other, 10% stay
+    //   on floor    → 50% walk, 30% jump-to-platform, 20% stay
+    _pickNavOption(who) {
+      const { surface, opts } = this.getNavOptions(who);
+      const bucket = (o) => {
+        if (o.kind === 'walk-left' || o.kind === 'walk-right')       return 'walk';
+        if (o.kind === 'step-off-left' || o.kind === 'step-off-right') return 'step';
+        if (o.kind === 'jump-to-platform') return 'jump';
+        if (o.kind === 'jump-up')          return 'hop';
+        return 'stay';
+      };
+      const weights = surface.type === 'platform'
+        ? { walk: 0.30, step: 0.40, jump: 0.20, stay: 0.10, hop: 0.02 }
+        : { walk: 0.50, step: 0.00, jump: 0.30, stay: 0.20, hop: 0.05 };
+      // Expand opts with category weight; drop categories with no options.
+      const weighted = opts.map(o => ({ o, w: weights[bucket(o)] || 0 }))
+                           .filter(x => x.w > 0);
+      if (!weighted.length) return opts[opts.length - 1];   // "stay"
+      const total = weighted.reduce((a, b) => a + b.w, 0);
+      let r = Math.random() * total;
+      for (const x of weighted) { r -= x.w; if (r <= 0) return x.o; }
+      return weighted[weighted.length - 1].o;
+    },
+
     // ── Walk & Jump (bottom-only) ────────────────────────
     wanderOne(who) {
       if (this.muted) return;
       const p = this.pos[who];
       if (p.state !== 'idle' || !p.grounded) return;
-      
+
       const partner = this.partnerOf(who);
-      const pp = this.pos[partner];
-      const dist = Math.abs(p.x - pp.x);
-      
-      const r = Math.random();
-      const floorY = this.floorYFor(who);
-      const onPlatform = p.y < floorY - 10;
-      
-      // 1. Social drive: if far apart, maybe close distance
-      if (dist > 450 && r < 0.3) {
-         const maxX = this.containerWidth() - this.SIDE_M - this.S;
-         const nudge = (Math.random() * 60 - 30);
-         p.walkTarget = Math.max(this.SIDE_M, Math.min(maxX, pp.x + nudge));
-         p.facing = p.walkTarget > p.x ? 'right' : 'left';
-         p._sprint = Math.random() < 0.4;
-         this.setCharState(who, 'walking');
-         return;
-      }
+      const pp = partner ? this.pos[partner] : null;
+      const dist = pp ? Math.abs(p.x - pp.x) : 0;
 
-      // 2. High altitude scanning
-      if (onPlatform && r < 0.15) {
-         this.playClip(who, 'think');
-         this.setCharState(who, 'scanning');
-         setTimeout(() => {
-            if (this.pos[who].state === 'scanning') this.setCharState(who, 'idle');
-         }, 2500);
-         return;
-      }
-
-      // 3. Jump off platform
-      if (onPlatform && r < 0.4) {
-        p.grounded = false;
-        p.vy = -350 - Math.random() * 200;
-        p.vx = (Math.random() > 0.5 ? 1 : -1) * (150 + Math.random() * 100);
-        this.setCharState(who, 'falling');
-        if (Math.random() < 0.3) dialogue.fire('jump_down:' + who);
-      } 
-      // 4. Random jump/hop
-      else if (r < 0.25) {
-        p.grounded = false;
-        p.vy = -650 - Math.random() * 300;
-        p.vx = (Math.random() > 0.5 ? 1 : -1) * (80 + Math.random() * 120);
-        this.setCharState(who, 'falling');
-        this.emitDustAtFeet(who);
-        if (Math.random() < 0.3) dialogue.fire('jump:' + who);
-      } 
-      // 5. Normal walk
-      else {
+      // 1. Social drive (kept from legacy) — override AI if partner is far.
+      if (pp && dist > 450 && Math.random() < 0.3) {
         const maxX = this.containerWidth() - this.SIDE_M - this.S;
-        const nudge = (80 + Math.random() * 220) * (Math.random() < 0.5 ? 1 : -1);
-        p.walkTarget = Math.max(this.SIDE_M, Math.min(maxX, p.x + nudge));
+        const nudge = (Math.random() * 60 - 30);
+        p.walkTarget = Math.max(this.SIDE_M, Math.min(maxX, pp.x + nudge));
         p.facing = p.walkTarget > p.x ? 'right' : 'left';
-        p._sprint = Math.random() < 0.3;
+        p._sprint = Math.random() < 0.4;
         this.setCharState(who, 'walking');
+        return;
+      }
+
+      // 2. Occasional high-altitude "scanning" animation (kept from legacy).
+      const surface = this.getCurrentSurface(who);
+      if (surface.type === 'platform' && Math.random() < 0.12) {
+        this.playClip(who, 'think');
+        this.setCharState(who, 'scanning');
+        setTimeout(() => {
+          if (this.pos[who].state === 'scanning') this.setCharState(who, 'idle');
+        }, 2500);
+        return;
+      }
+
+      // 3. Weighted nav pick — drives the actual movement variety.
+      const opt = this._pickNavOption(who);
+      this._executeNavOption(who, opt);
+    },
+
+    // Execute a plan from _pickNavOption. Kept separate so anti-stuck
+    // rescue logic can force-call it too.
+    _executeNavOption(who, opt) {
+      const p = this.pos[who];
+      if (!opt) return;
+      switch (opt.kind) {
+        case 'walk-left':
+        case 'walk-right': {
+          p.walkTarget = opt.walkTo;
+          p.facing = p.walkTarget > p.x ? 'right' : 'left';
+          p._sprint = Math.random() < 0.25;
+          this.setCharState(who, 'walking');
+          break;
+        }
+        case 'step-off-left':
+        case 'step-off-right': {
+          // Walk past the edge; the tick loop's _isUnsupported check will
+          // un-ground us as soon as hitbox-x clears the platform.
+          p.walkTarget = opt.walkTo;
+          p.facing = p.walkTarget > p.x ? 'right' : 'left';
+          p._sprint = false;
+          this.setCharState(who, 'walking');
+          // Flag so we know a deliberate hop is intended if we get stuck.
+          p._pendingHop = true;
+          break;
+        }
+        case 'jump-to-platform': {
+          const { vx, vy } = opt.target.plan;
+          p.grounded = false;
+          p.vx = vx;
+          p.vy = vy;
+          p.facing = vx > 0 ? 'right' : 'left';
+          this.setCharState(who, 'falling');
+          this.emitDustAtFeet(who);
+          if (Math.random() < 0.3) dialogue.fire('jump:' + who);
+          break;
+        }
+        case 'jump-up': {
+          p.grounded = false;
+          p.vy = -650 - Math.random() * 300;
+          p.vx = (Math.random() > 0.5 ? 1 : -1) * (80 + Math.random() * 120);
+          this.setCharState(who, 'falling');
+          this.emitDustAtFeet(who);
+          if (Math.random() < 0.3) dialogue.fire('jump:' + who);
+          break;
+        }
+        case 'stay':
+        default:
+          // Do nothing — next wander tick will re-roll.
+          break;
       }
     },
 
@@ -1985,13 +2189,24 @@ import { FRAME_ORDER, fIdx, CLIPS, STATE_TO_CLIP } from './frames.data.js';
     // character's floor-line. Element is 10 px tall → top = bottom - 10.
     // Y anchor is the ACTUAL feet pixel (FOOT_Y), not sprite-box bottom —
     // the sprite's legs don't reach p.y + S because of transparent padding.
+    //
+    // X centering: the element is positioned by its TOP-LEFT corner, so to
+    // visually center it under the sprite we subtract HALF the element's
+    // natural CSS width. Normal dust = 30px (half = 15), big dust = 46px
+    // (half = 23). Previously both used -15 which skewed `big` to the right.
     emitDustAtFeet(who, big) {
       const p = this.pos[who];
       const feetY = p.y + this.FOOT_Y[who];
-      this.emitEffect('dust', p.x + this.S / 2 - 15, feetY - 10, { big });
+      const spriteCenterX = p.x + this.S / 2;       // center of 48px sprite box
+      const dustW = big ? 46 : 30;                   // matches .fx-dust / .fx-dust.big
+      const dustH = big ? 14 : 10;
+      // x = sprite_center - dust_width/2  |  y = feet_line - dust_height
+      this.emitEffect('dust', spriteCenterX - dustW / 2, feetY - dustH, { big });
     },
 
     // Shock ring centred exactly on the floor line under the feet.
+    // .fx-shock has `transform: translate(-50%, -50%)` in CSS so the element's
+    // visual center aligns to (left, top). We pass the sprite's feet-center.
     emitShockAtFeet(who) {
       const p = this.pos[who];
       const feetY = p.y + this.FOOT_Y[who];

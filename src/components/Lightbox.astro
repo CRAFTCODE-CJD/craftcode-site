@@ -9,8 +9,8 @@
  */
 ---
 
-<dialog class="lb" data-lightbox role="dialog" aria-modal="true" aria-label="Просмотр изображения">
-  <button class="lb__close" type="button" data-lightbox-close aria-label="Закрыть">
+<dialog class="lb" data-lightbox role="dialog" aria-modal="true" aria-label="Image viewer" data-i18n-attr="aria-label:lightbox.dialog.aria">
+  <button class="lb__close" type="button" data-lightbox-close aria-label="Close" data-i18n-attr="aria-label:lightbox.close.aria">
     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
       <path d="M6 6l12 12M18 6L6 18" />
     </svg>
@@ -20,7 +20,7 @@
     <figcaption class="lb__caption"></figcaption>
   </figure>
   <div class="lb__hint" aria-hidden="true">
-    <span>esc</span> закрыть · <span>click</span> за картинкой
+    <span>esc</span> <span data-i18n="lightbox.hint.close">закрыть</span> · <span>click</span> <span data-i18n="lightbox.hint.outside">за картинкой</span>
   </div>
 </dialog>
 

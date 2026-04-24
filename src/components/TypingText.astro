@@ -4,48 +4,91 @@ interface Props {
   speed?: number;
   delay?: number;
   class?: string;
+  /** Optional i18n key. When set, the typed text is resolved at runtime via
+   *  the client-side i18n dictionary and follows live language swaps. */
+  i18nKey?: string;
 }
 
-const { text, speed = 100, delay = 500, class: className } = Astro.props;
+const { text, speed = 100, delay = 500, class: className, i18nKey } = Astro.props;
 ---
 
-<span class:list={["typing-text", className]} data-text={text} data-speed={speed} data-delay={delay}></span>
+<span
+  class:list={["typing-text", className]}
+  data-text={text}
+  data-speed={speed}
+  data-delay={delay}
+  data-i18n-typing={i18nKey ?? undefined}
+></span>
 
 <script>
+  import { onLangChange, getLang } from '~/i18n/i18n';
+
+  type I18nApi = {
+    t: (key: string, lang?: 'en' | 'ru') => string | null;
+  };
+
+  function resolveText(el: Element): string {
+    const key = el.getAttribute('data-i18n-typing');
+    if (key) {
+      const api = (window as unknown as { __i18n?: I18nApi }).__i18n;
+      const v = api?.t?.(key, getLang());
+      if (typeof v === 'string' && v) return v;
+    }
+    return el.getAttribute('data-text') || '';
+  }
+
+  function typeInto(el: Element): void {
+    const text = resolveText(el);
+    const speed = parseInt(el.getAttribute('data-speed') || '100');
+    const delay = parseInt(el.getAttribute('data-delay') || '500');
+
+    // Reset content + state for re-typing on language swap.
+    el.textContent = '';
+    el.classList.remove('typing-cursor');
+    const prevTimer = (el as HTMLElement & { _typingTimer?: number })._typingTimer;
+    if (prevTimer) window.clearInterval(prevTimer);
+
+    let currentText = '';
+    let index = 0;
+
+    window.setTimeout(() => {
+      el.classList.add('typing-cursor');
+
+      const timer = window.setInterval(() => {
+        if (index < text.length) {
+          currentText += text[index];
+          el.textContent = currentText;
+          index++;
+        } else {
+          window.clearInterval(timer);
+          el.classList.remove('typing-cursor');
+        }
+      }, speed);
+      (el as HTMLElement & { _typingTimer?: number })._typingTimer = timer;
+    }, delay);
+  }
+
   function initTyping() {
-    const elements = document.querySelectorAll('.typing-text');
-    
-    elements.forEach(el => {
+    document.querySelectorAll('.typing-text').forEach((el) => {
       if (el.hasAttribute('data-ready')) return;
       el.setAttribute('data-ready', 'true');
-      
-      const text = el.getAttribute('data-text') || '';
-      const speed = parseInt(el.getAttribute('data-speed') || '100');
-      const delay = parseInt(el.getAttribute('data-delay') || '500');
-      
-      let currentText = '';
-      let index = 0;
-      
-      setTimeout(() => {
-        el.classList.add('typing-cursor');
-        
-        const timer = setInterval(() => {
-          if (index < text.length) {
-            currentText += text[index];
-            el.textContent = currentText;
-            index++;
-          } else {
-            clearInterval(timer);
-            el.classList.remove('typing-cursor');
-          }
-        }, speed);
-      }, delay);
+      typeInto(el);
     });
   }
 
   // Init on load and after Starlight navigation
   initTyping();
   document.addEventListener('astro:page-load', initTyping);
+
+  // Re-type i18n-bound instances when the language swaps.
+  onLangChange(() => {
+    document.querySelectorAll('.typing-text[data-i18n-typing]').forEach((el) => {
+      // Skip the fast fallback delay on language swap so the new translation
+      // appears promptly instead of after the original boot delay.
+      el.setAttribute('data-delay', '80');
+      typeInto(el);
+    });
+  });
 </script>
 
 <style>

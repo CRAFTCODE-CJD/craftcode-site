@@ -20,7 +20,8 @@ const effectiveCaption = caption ?? (autoCaption && alt ? alt : undefined);
     class="mdx-image__trigger"
     data-lightbox-src={src}
     data-lightbox-alt={alt || effectiveCaption || ''}
-    aria-label="Открыть увеличенное изображение"
+    aria-label="Open enlarged image"
+    data-i18n-attr="aria-label:site.image.zoomAria"
   >
     <img
       src={src}

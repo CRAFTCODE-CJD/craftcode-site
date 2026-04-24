@@ -54,8 +54,11 @@ type CameraState = {
 // Bumped 18 → 22px: final micro-jitter guard.
 const DEADZONE_PX = 22;
 const DEADZONE_SCALE = 0.07;
-const MIN_SCALE = 0.7;
-const MAX_SCALE = 1.5;
+const MIN_SCALE = 0.85;
+// Keep zoom mild: anything above ~1.15 lifts the scene enough that
+// the floor drops out of view and feet-on-floor contact reads as
+// floating. Prior 1.5 was too aggressive for this stage size.
+const MAX_SCALE = 1.15;
 // Tick ceiling: we recompute at ~5.5 Hz instead of 8.3 Hz.
 // The 750ms CSS transition is what the eye actually sees;
 // ticking faster just spends CPU.
@@ -260,7 +263,7 @@ export function initCamera(): () => void {
     }
 
     if (inCloseMode) {
-      targetScale = Math.min(MAX_SCALE, Math.max(targetScale, 1.35));
+      targetScale = Math.min(MAX_SCALE, Math.max(targetScale, 1.08));
     } else if (inWideMode) {
       targetScale = Math.min(targetScale, 0.9);
     }

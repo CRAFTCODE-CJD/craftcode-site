@@ -173,54 +173,16 @@ import TypingText from '~/components/TypingText.astro';
   }
 
   /* ── Workshop FLOOR ────────────────────────────────────────────────
-     Two stacked pseudo-elements build an explicit, readable "floor":
-       ::before — tall (32px) pad with a diagonal hatch pattern + a warm
-                  ramp gradient fading into the stage background. Reads
-                  as a solid walkable surface with shop-floor texture.
-       ::after  — 2px bright neon edge at the VERY top of the floor with
-                  a glowing drop, acting as the crisp floor-line the
-                  robots "stand on". Replaces the old dashed line while
-                  keeping the existing dashed accent via a secondary
-                  repeating-linear-gradient at the edge.
-     Both are pointer-events: none and sit below companions (z=10).      */
+     Visual floor must line up with the physics floor. Engine floorY is
+     stageH - FLOOR_M (1px margin), so the bots' feet sit exactly at the
+     stage bottom edge. The floor is a single 2px neon band flush with
+     that edge, plus a soft glow lift above it — no tall hatch pad and
+     no vertical offset to desync with the bots.
+     pointer-events: none; below companions (z=10).                      */
   .cc-stage::before {
     content: '';
     position: absolute;
     left: 0; right: 0; bottom: 0;
-    height: 32px;
-    background:
-      /* Top-of-floor dashed highlight (keeps legacy dashed-line feel) */
-      repeating-linear-gradient(
-        to right,
-        color-mix(in oklab, var(--accent) 75%, transparent) 0 10px,
-        transparent 10px 20px
-      ) top / 100% 2px no-repeat,
-      /* Diagonal hatch "shop floor" texture */
-      repeating-linear-gradient(
-        45deg,
-        color-mix(in oklab, var(--accent) 14%, transparent) 0 2px,
-        transparent 2px 10px
-      ),
-      repeating-linear-gradient(
-        -45deg,
-        color-mix(in oklab, var(--accent-2) 10%, transparent) 0 2px,
-        transparent 2px 10px
-      ),
-      /* Warm ramp fading up into the background */
-      linear-gradient(to top,
-        color-mix(in oklab, var(--accent) 28%, transparent) 0%,
-        color-mix(in oklab, var(--accent-2) 12%, transparent) 60%,
-        transparent 100%);
-    pointer-events: none;
-    z-index: 1;
-    opacity: 0.95;
-  }
-  /* Bright neon floor-edge — the line robots visually stand on. */
-  .cc-stage::after {
-    content: '';
-    position: absolute;
-    left: 0; right: 0;
-    bottom: 32px;            /* sits on TOP of the floor pad */
     height: 2px;
     background: var(--accent);
     pointer-events: none;
@@ -228,8 +190,25 @@ import TypingText from '~/components/TypingText.astro';
     box-shadow:
       0 0 6px  color-mix(in oklab, var(--accent) 80%, transparent),
       0 -2px 14px color-mix(in oklab, var(--accent) 55%, transparent),
-      0 -8px 32px color-mix(in oklab, var(--accent) 25%, transparent),
-      0 2px 4px color-mix(in oklab, var(--accent-2) 40%, transparent);
+      0 -8px 36px color-mix(in oklab, var(--accent) 18%, transparent),
+      0 2px 4px  color-mix(in oklab, var(--accent-2) 40%, transparent);
+  }
+  /* Dashed accent line 1px above the neon band — keeps the legacy
+     workshop-stripe read without building a heavy floor pad. */
+  .cc-stage::after {
+    content: '';
+    position: absolute;
+    left: 0; right: 0;
+    bottom: 3px;
+    height: 1px;
+    background: repeating-linear-gradient(
+      to right,
+      color-mix(in oklab, var(--accent-2) 70%, transparent) 0 10px,
+      transparent 10px 20px
+    );
+    opacity: 0.55;
+    pointer-events: none;
+    z-index: 1;
   }
 
   /* Both phase-layers fill the stage box. Opacity + scale cross-fade. */

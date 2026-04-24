@@ -66,6 +66,13 @@ export function mountTerminal(opts: TerminalOptions): () => void {
   const { scroll, input } = buildShell(host);
   const history: string[] = [];
   let historyIdx = -1;
+  // Serialize typewriter runs so a fast user typing `help` before the boot
+  // banner finishes doesn't interleave lines.
+  let runQueue: Promise<void> = Promise.resolve();
+  const enqueue = (fn: () => Promise<void>): Promise<void> => {
+    runQueue = runQueue.then(fn, fn);
+    return runQueue;
+  };
 
   const addLine = (cls: string, text: string): HTMLElement => {
     const el = document.createElement('div');
@@ -94,10 +101,9 @@ export function mountTerminal(opts: TerminalOptions): () => void {
     }
   };
 
-  const handleSubmit = async (raw: string) => {
+  const handleSubmit = (raw: string) => {
     const trimmed = raw.trim();
     if (!trimmed) return;
-    addLine('term-echo', `>>> ${trimmed}`);
     history.unshift(trimmed);
     if (history.length > 32) history.length = 32;
     historyIdx = -1;
@@ -108,12 +114,17 @@ export function mountTerminal(opts: TerminalOptions): () => void {
       plugins: opts.plugins ?? [],
     };
 
-    bots.setState('thinking');
-    const reply = respond(trimmed, ctx);
-    await new Promise((r) => setTimeout(r, reply.delay ?? 200));
-    bots.setState(reply.state);
-    await runLines(reply.lines);
-    if (reply.fireTag) bots.fire(reply.fireTag);
+    // Queue the whole response: echo + thinking + reply lines render in order,
+    // never interleaved with a still-running boot banner or previous command.
+    enqueue(async () => {
+      addLine('term-echo', `>>> ${trimmed}`);
+      bots.setState('thinking');
+      const reply = respond(trimmed, ctx);
+      await new Promise((r) => setTimeout(r, reply.delay ?? 200));
+      bots.setState(reply.state);
+      await runLines(reply.lines);
+      if (reply.fireTag) bots.fire(reply.fireTag);
+    });
   };
 
   const onKey = (e: KeyboardEvent) => {
@@ -142,12 +153,12 @@ export function mountTerminal(opts: TerminalOptions): () => void {
   input.addEventListener('keydown', onKey);
   input.focus();
 
-  // Boot banner — localized
+  // Boot banner — localized, queued so a fast user `help` submit waits its turn.
   const lang = opts.lang ?? detectLang();
-  void runLines([
+  enqueue(() => runLines([
     { who: 'code', text: t('bot.terminal.online', lang) ?? 'terminal online.' },
     { who: 'code', text: t('bot.terminal.hint', lang) ?? 'type `help` for commands.' },
-  ]);
+  ]));
 
   return () => {
     input.removeEventListener('keydown', onKey);

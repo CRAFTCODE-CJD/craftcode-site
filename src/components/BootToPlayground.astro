@@ -19,6 +19,7 @@ import TypingText from '~/components/TypingText.astro';
       <span><span class="k">bots</span> <span class="v">2</span></span>
       <span><span class="k">rapport</span> <span class="v" id="hud-rapport">50</span></span>
       <span><span class="k">bumps</span> <span class="v" id="hud-bumps">0</span></span>
+      <span class="hud-hint">press <kbd>/</kbd> for terminal</span>
     </div>
 
     <!-- Decorative CRAFTCODE wordmark: lives in the playground phase as a
@@ -246,7 +247,7 @@ import TypingText from '~/components/TypingText.astro';
     opacity: 0.92;
   }
   .cc-stage-sign-word {
-    font-family: 'Press Start 2P', monospace;
+    font-family: 'Press Start 2P', 'IBM Plex Mono', monospace;
     font-size: clamp(28px, 4.4vw, 48px);
     line-height: 1.05;
     letter-spacing: 0.02em;

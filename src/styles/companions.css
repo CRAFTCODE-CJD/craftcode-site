@@ -101,11 +101,11 @@
   opacity: 0.65;
 }
 
-/* HUD strip — small corner labels like the designer mockup. Purely
-   decorative; no JS wires into these. */
+/* HUD strip — moved to the bottom-right so the caption on the top-left
+   has the full width. Decorative labels, no JS wires into these. */
 .companions-hud {
   position: absolute;
-  top: 10px; right: 14px;
+  bottom: 10px; right: 14px;
   display: flex;
   gap: 14px;
   font-family: 'JetBrains Mono', monospace;
@@ -116,16 +116,41 @@
 }
 .companions-hud .k { color: var(--muted); }
 .companions-hud .v { color: var(--accent-2); }
+.companions-hud .hud-hint {
+  color: var(--muted);
+  opacity: 0.7;
+  padding-left: 12px;
+  border-left: 1px dashed var(--border);
+  margin-left: 4px;
+}
+.companions-hud .hud-hint kbd {
+  font-family: inherit;
+  font-size: 10px;
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 0 4px;
+  color: var(--accent-3);
+  margin: 0 2px;
+}
+@media (max-width: 700px) {
+  .companions-hud .hud-hint { display: none; }
+}
 
 .companions-caption {
   position: absolute;
   top: 10px; left: 14px;
+  right: 14px;
+  max-width: calc(100% - 28px);
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
   color: var(--faint);
   letter-spacing: 0.04em;
   pointer-events: none;
   z-index: 3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .fx-layer { z-index: 4; }        /* FX render below topbar and above page content */
@@ -287,7 +312,7 @@
   border: 1px solid var(--accent);
   border-radius: 0;
   padding: 8px 14px;
-  font-family: 'VT323', monospace;
+  font-family: 'VT323', 'Roboto Mono', monospace;
   font-size: 16px;
   letter-spacing: 0.02em;
   color: var(--ink);

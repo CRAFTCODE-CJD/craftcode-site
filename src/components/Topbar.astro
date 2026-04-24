@@ -48,10 +48,54 @@ const activeKey =
         <span class="cc-lang-sep" aria-hidden="true">/</span>
         <button type="button" class="cc-lang-btn" data-lang="ru">RU</button>
       </div>
+      <button
+        type="button"
+        class="cc-burger"
+        aria-label="Menu"
+        aria-expanded="false"
+        aria-controls="cc-mobile-nav"
+        data-burger
+      >
+        <span></span><span></span><span></span>
+      </button>
       <slot name="search" />
     </div>
   </div>
+
+  <!-- Mobile drawer — hidden on desktop via CSS, toggled by [data-burger]. -->
+  <nav id="cc-mobile-nav" class="cc-mobile-nav" aria-label="Mobile" data-mobile-nav hidden>
+    {navLinks.map(l => (
+      <a
+        href={l.href}
+        data-i18n={l.labelKey}
+        class:list={[{ active: activeKey === l.key }]}
+      >{l.fallback}</a>
+    ))}
+  </nav>
 </header>
+
+<script>
+  const btn = document.querySelector<HTMLButtonElement>('[data-burger]');
+  const nav = document.querySelector<HTMLElement>('[data-mobile-nav]');
+  if (btn && nav) {
+    const set = (open: boolean) => {
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      btn.classList.toggle('is-open', open);
+      if (open) nav.removeAttribute('hidden');
+      else nav.setAttribute('hidden', '');
+      document.body.classList.toggle('cc-nav-open', open);
+    };
+    btn.addEventListener('click', () => {
+      set(btn.getAttribute('aria-expanded') !== 'true');
+    });
+    // Close when nav link is clicked
+    nav.querySelectorAll('a').forEach((a) => a.addEventListener('click', () => set(false)));
+    // Close on Escape
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && btn.getAttribute('aria-expanded') === 'true') set(false);
+    });
+  }
+</script>
 
 <style>
   .cc-top {
@@ -100,7 +144,7 @@ const activeKey =
       drop-shadow(0 0 16px color-mix(in oklab, var(--accent-2) 60%, transparent));
   }
   .cc-brand-word {
-    font-family: 'Press Start 2P', monospace;
+    font-family: 'Press Start 2P', 'IBM Plex Mono', monospace;
     font-size: 13px;
     text-transform: uppercase;
     letter-spacing: 0;
@@ -127,7 +171,7 @@ const activeKey =
     position: relative;
     /* Set everything directly — Starlight has higher-specificity base rules
        on generic <nav a> selectors that would otherwise override us. */
-    font-family: 'VT323', monospace !important;
+    font-family: 'VT323', 'Roboto Mono', monospace !important;
     font-size: 18px !important;
     font-weight: 400 !important;
     text-transform: uppercase;
@@ -191,8 +235,76 @@ const activeKey =
     color: var(--accent);
   }
 
+  /* ─── Burger button (mobile only) ─── */
+  .cc-burger {
+    display: none;
+    width: 36px; height: 36px;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--radius, 4px);
+    cursor: pointer;
+    padding: 0;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .cc-burger:hover,
+  .cc-burger:focus-visible,
+  .cc-burger.is-open {
+    border-color: var(--accent);
+    box-shadow: var(--glow-sm);
+  }
+  .cc-burger span {
+    display: block;
+    width: 18px; height: 2px;
+    background: var(--ink);
+    transition: transform 0.18s ease, opacity 0.18s ease;
+    transform-origin: center;
+  }
+  .cc-burger.is-open span:nth-child(1) { transform: translateY(7px) rotate(45deg); background: var(--accent); }
+  .cc-burger.is-open span:nth-child(2) { opacity: 0; }
+  .cc-burger.is-open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); background: var(--accent); }
+
+  /* ─── Mobile drawer (slides down under header) ─── */
+  .cc-mobile-nav {
+    display: none;
+    position: fixed;
+    top: 56px; left: 0; right: 0;
+    background: var(--surface);
+    border-bottom: 1px solid var(--accent);
+    box-shadow: var(--glow-md);
+    padding: 12px 0;
+    z-index: 99;
+    flex-direction: column;
+  }
+  .cc-mobile-nav[hidden] { display: none !important; }
+  .cc-mobile-nav a {
+    font-family: 'VT323', 'Roboto Mono', monospace;
+    font-size: 22px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    text-decoration: none;
+    padding: 12px 24px;
+    border-bottom: 1px solid color-mix(in oklab, var(--border) 40%, transparent);
+    transition: color 0.12s, background 0.12s;
+  }
+  .cc-mobile-nav a:last-child { border-bottom: 0; }
+  .cc-mobile-nav a:hover,
+  .cc-mobile-nav a.active {
+    color: var(--accent);
+    background: color-mix(in oklab, var(--accent) 8%, transparent);
+  }
+
   @media (max-width: 760px) {
     .cc-top-nav { display: none; }
     .cc-top-row { grid-template-columns: 1fr auto; }
+    .cc-burger { display: inline-flex; }
+    .cc-mobile-nav:not([hidden]) { display: flex; }
   }
+
+  /* Prevent body scroll when drawer open on mobile */
+  :global(body.cc-nav-open) { overflow: hidden; }
 </style>

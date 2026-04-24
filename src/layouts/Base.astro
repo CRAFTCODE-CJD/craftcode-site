@@ -54,9 +54,15 @@ const ogImage = image ?? '/logo/craftcode_wide.png';
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+    <!-- Font stack:
+         · Press Start 2P + VT323  — pixel/CRT display fonts, Latin-only.
+         · IBM Plex Mono + Roboto Mono — cyberpunk mono with full Cyrillic.
+         · Inter + JetBrains Mono  — body + inline code (both scripts).
+         CSS rule order uses Cyrillic-capable fonts first for runs that
+         contain Cyrillic, with pixel fonts as fallback for Latin flavor. -->
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&family=Press+Start+2P&family=VT323&display=swap"
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@600;700&family=Roboto+Mono:wght@500;700&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&family=Press+Start+2P&family=VT323&display=swap"
     />
 
     <meta property="og:title" content={siteTitle} />

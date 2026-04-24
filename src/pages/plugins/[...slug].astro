@@ -1,8 +1,13 @@
 ---
 /**
  * Dynamic plugin pages — picks up every MDX/MD under
- * src/content/docs/plugins/** and renders it through the shared Docs layout.
- * URL: /plugins/<slug>/ (e.g. /plugins/sprite-optimizer/, /plugins/sprite-optimizer/reference/)
+ * src/content/docs/plugins/** and renders it with:
+ *   · hero or simple header
+ *   · breadcrumbs (Plugins → <Plugin> → <Page>)
+ *   · sidebar with siblings of the current plugin
+ *   · MDX content with our custom components
+ *
+ * URL: /plugins/<slug>/ (e.g. /plugins/sprite-optimizer/reference/)
  */
 import { getCollection, render, type CollectionEntry } from 'astro:content';
 import Base from '~/layouts/Base.astro';
@@ -11,22 +16,89 @@ import * as mdxComponents from '~/components/mdx';
 
 type DocEntry = CollectionEntry<'docs'>;
 
+interface SidebarLink {
+  href: string;
+  title: string;
+  order: number;
+  active: boolean;
+  isIndex: boolean;
+  subgroup?: string;
+}
+
 export async function getStaticPaths() {
   const entries = await getCollection('docs', ({ id }: DocEntry) => id.startsWith('plugins/'));
   return entries.map((entry: DocEntry) => {
     const rawSlug = entry.id.replace(/^plugins\//, '');
-    return { params: { slug: rawSlug || undefined }, props: { entry } };
+    // Top-level plugin slug ("sprite-optimizer"), used to collect siblings.
+    const pluginSlug = rawSlug.split('/')[0];
+    const siblings = entries
+      .filter((e: DocEntry) => {
+        const id = e.id.replace(/^plugins\//, '');
+        return id === pluginSlug || id.startsWith(`${pluginSlug}/`);
+      })
+      .map((e: DocEntry) => {
+        const id = e.id.replace(/^plugins\//, '');
+        const parts = id.split('/');
+        const isIndex = parts.length === 1;
+        const href = `/plugins/${id}/`;
+        const subgroup = parts.length > 2 ? parts[1] : undefined;
+        return {
+          href,
+          title: e.data.title,
+          order: e.data.order ?? 999,
+          active: e.id === entry.id,
+          isIndex,
+          subgroup,
+        } satisfies SidebarLink;
+      })
+      .sort((a: SidebarLink, b: SidebarLink) => a.order - b.order);
+
+    return {
+      params: { slug: rawSlug || undefined },
+      props: { entry, pluginSlug, siblings },
+    };
   });
 }
 
-interface Props { entry: DocEntry }
-const { entry } = Astro.props as Props;
-const { Content } = await render(entry);
+interface Props {
+  entry: DocEntry;
+  pluginSlug: string;
+  siblings: SidebarLink[];
+}
+const { entry, pluginSlug, siblings } = Astro.props as Props;
+const { Content, headings } = await render(entry);
 const data = entry.data;
+
+// Current page's plugin-index (for breadcrumb middle segment).
+const pluginIndex = siblings.find((s) => s.isIndex);
+const isPluginIndex = entry.id === `plugins/${pluginSlug}`;
 ---
 
 <Base title={data.title} description={data.description} image={data.image}>
   <article class="plugin-page" style={data.accent ? `--accent: ${data.accent}` : undefined}>
+    <!-- Breadcrumbs — always visible, helps orientation. -->
+    <nav class="plugin-crumbs" aria-label="Breadcrumbs">
+      <a href="/plugins/">Plugins</a>
+      {pluginIndex && !isPluginIndex && (
+        <>
+          <span class="sep" aria-hidden="true">/</span>
+          <a href={pluginIndex.href}>{pluginIndex.title}</a>
+        </>
+      )}
+      {!isPluginIndex && (
+        <>
+          <span class="sep" aria-hidden="true">/</span>
+          <span class="current">{data.title}</span>
+        </>
+      )}
+      {isPluginIndex && (
+        <>
+          <span class="sep" aria-hidden="true">/</span>
+          <span class="current">{data.title}</span>
+        </>
+      )}
+    </nav>
+
     {data.plugin_page ? (
       <PluginHero
         kicker={data.kicker}
@@ -45,14 +117,117 @@ const data = entry.data;
       </header>
     )}
 
-    <div class="plugin-page__body">
-      <Content components={mdxComponents} />
+    <div class="plugin-page__layout">
+      {siblings.length > 1 && (
+        <aside class="plugin-sidebar" aria-label="Plugin pages">
+          <p class="plugin-sidebar__kicker">// {pluginSlug}</p>
+          <ul>
+            {siblings.map((s) => (
+              <li class:list={[{ active: s.active, nested: !!s.subgroup }]}>
+                {s.subgroup && <span class="plugin-sidebar__group">/{s.subgroup}</span>}
+                <a href={s.href} aria-current={s.active ? 'page' : undefined}>{s.title}</a>
+              </li>
+            ))}
+          </ul>
+        </aside>
+      )}
+
+      <div class="plugin-page__body">
+        <Content components={mdxComponents} />
+      </div>
     </div>
   </article>
 </Base>
 
 <style>
-  .plugin-page { max-width: 1080px; margin-inline: auto; padding: 24px 16px 64px; }
+  .plugin-page { max-width: 1200px; margin-inline: auto; padding: 24px 16px 64px; }
+
+  /* ─── Breadcrumbs ─── */
+  .plugin-crumbs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 18px;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed var(--border);
+  }
+  .plugin-crumbs a {
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 120ms;
+  }
+  .plugin-crumbs a:hover { color: var(--accent-3); }
+  .plugin-crumbs .sep { color: var(--faint); }
+  .plugin-crumbs .current { color: var(--accent); text-shadow: var(--glow-sm); }
+
+  /* ─── Layout: sidebar + content ─── */
+  .plugin-page__layout {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 32px;
+    align-items: start;
+  }
+  @media (max-width: 900px) {
+    .plugin-page__layout { grid-template-columns: 1fr; }
+  }
+
+  /* ─── Sidebar ─── */
+  .plugin-sidebar {
+    position: sticky;
+    top: 72px;
+    padding: 14px 14px 14px 0;
+    border-right: 1px dashed var(--border);
+  }
+  @media (max-width: 900px) {
+    .plugin-sidebar {
+      position: static;
+      border-right: 0;
+      border-bottom: 1px dashed var(--border);
+      padding: 0 0 14px;
+      margin-bottom: 14px;
+    }
+  }
+  .plugin-sidebar__kicker {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin: 0 0 10px;
+    text-transform: lowercase;
+    letter-spacing: 0.05em;
+  }
+  .plugin-sidebar ul { list-style: none; margin: 0; padding: 0; }
+  .plugin-sidebar li { margin: 2px 0; }
+  .plugin-sidebar li.nested { padding-left: 12px; border-left: 1px solid var(--border); margin-left: 4px; }
+  .plugin-sidebar__group {
+    display: block;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 10px;
+    color: var(--faint);
+    padding: 4px 0 2px;
+    text-transform: lowercase;
+  }
+  .plugin-sidebar a {
+    display: block;
+    padding: 6px 10px;
+    font-family: 'VT323', 'Roboto Mono', monospace;
+    font-size: 16px;
+    color: var(--muted);
+    text-decoration: none;
+    border-radius: 3px;
+    transition: color 120ms, background 120ms;
+  }
+  .plugin-sidebar a:hover { color: var(--ink); background: color-mix(in oklab, var(--accent) 6%, transparent); }
+  .plugin-sidebar li.active a {
+    color: var(--accent);
+    background: color-mix(in oklab, var(--accent) 10%, transparent);
+    text-shadow: var(--glow-sm);
+  }
+
+  /* ─── Content body ─── */
   .plugin-page__head { margin: 8px 0 28px; }
   .plugin-page__kicker {
     font-family: 'JetBrains Mono', ui-monospace, monospace;
@@ -63,14 +238,14 @@ const data = entry.data;
     letter-spacing: 0.1em;
   }
   .plugin-page__title {
-    font-family: 'Press Start 2P', monospace;
+    font-family: 'Press Start 2P', 'IBM Plex Mono', monospace;
     font-size: clamp(20px, 4vw, 32px);
     text-shadow: 3px 3px 0 var(--accent-2), 6px 6px 0 var(--accent);
     margin: 0 0 10px;
   }
   .plugin-page__tagline { color: var(--muted); max-width: 60ch; }
   .plugin-page__body :global(h2) {
-    font-family: 'VT323', monospace;
+    font-family: 'VT323', 'Roboto Mono', monospace;
     color: var(--accent-2);
     text-transform: uppercase;
     font-size: 28px;
@@ -78,7 +253,7 @@ const data = entry.data;
     margin: 32px 0 10px;
   }
   .plugin-page__body :global(h3) {
-    font-family: 'VT323', monospace;
+    font-family: 'VT323', 'Roboto Mono', monospace;
     color: var(--ink);
     font-size: 22px;
     text-transform: uppercase;

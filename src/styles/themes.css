@@ -60,8 +60,14 @@
 }
 
 /* ─── Arcade typography ───────────────────────────────── */
+/* Font-stack strategy for RU+EN:
+ * Press Start 2P / VT323 are Latin-only. When a heading is Latin-only the
+ * browser picks the pixel/CRT font; Cyrillic runs fall through to
+ * IBM Plex Mono / Roboto Mono (full Cyrillic) so Russian headings don't
+ * collapse into a system serif. Both styles read as cyberpunk. */
 h1 {
-  font-family: 'Press Start 2P', monospace;
+  font-family: 'Press Start 2P', 'IBM Plex Mono', ui-monospace, monospace;
+  font-weight: 700;
   font-size: 34px;
   line-height: 1.45;
   letter-spacing: 0;
@@ -74,14 +80,16 @@ h1 {
   padding-top: 6px;
 }
 h2 {
-  font-family: 'VT323', monospace;
+  font-family: 'VT323', 'Roboto Mono', ui-monospace, monospace;
+  font-weight: 500;
   font-size: 32px;
   letter-spacing: 0.02em;
   text-transform: uppercase;
   color: var(--accent-2);
 }
 h3 {
-  font-family: 'VT323', monospace;
+  font-family: 'VT323', 'Roboto Mono', ui-monospace, monospace;
+  font-weight: 500;
   font-size: 24px;
   color: var(--ink);
   letter-spacing: 0.02em;

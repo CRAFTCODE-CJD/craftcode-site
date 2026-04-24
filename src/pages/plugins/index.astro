@@ -1,6 +1,5 @@
 ---
 import Base from '~/layouts/Base.astro';
-import LatestReleases from '~/components/LatestReleases.astro';
 import { loadAllManifests, sortByUpdated, pick } from '~/lib/github/manifest';
 
 const manifests = sortByUpdated(await loadAllManifests());
@@ -25,19 +24,29 @@ const manifests = sortByUpdated(await loadAllManifests());
           data-desc-ru={pick(m.description, 'ru')}
         >
           <a href={`/plugins/${m.slug}/`} class="plugin-card__link">
-            <header>
-              <span class="plugin-card__kicker">/{m.slug}</span>
-              <span class="plugin-card__ver">v{m.version}</span>
-            </header>
-            <h2 class="plugin-card__name" data-loc="name">{pick(m.name, 'ru')}</h2>
-            <p class="plugin-card__desc" data-loc="desc">{pick(m.description, 'ru')}</p>
+            {m.image && (
+              <div class="plugin-card__thumb">
+                <img
+                  src={m.image}
+                  alt={pick(m.name, 'ru')}
+                  loading="lazy"
+                  decoding="async"
+                />
+              </div>
+            )}
+            <div class="plugin-card__body">
+              <header>
+                <span class="plugin-card__kicker">/{m.slug}</span>
+                <span class="plugin-card__ver">v{m.version}</span>
+              </header>
+              <h2 class="plugin-card__name" data-loc="name">{pick(m.name, 'ru')}</h2>
+              <p class="plugin-card__desc" data-loc="desc">{pick(m.description, 'ru')}</p>
+            </div>
           </a>
         </li>
       ))}
     </ul>
   </section>
-
-  <LatestReleases />
 </Base>
 
 <script>
@@ -71,7 +80,7 @@ const manifests = sortByUpdated(await loadAllManifests());
     letter-spacing: 0.1em;
   }
   .plugins-title {
-    font-family: 'Press Start 2P', monospace;
+    font-family: 'Press Start 2P', 'IBM Plex Mono', monospace;
     font-size: clamp(22px, 4vw, 34px);
     text-shadow: 3px 3px 0 var(--accent-2), 6px 6px 0 var(--accent);
     margin: 0 0 10px;
@@ -87,15 +96,32 @@ const manifests = sortByUpdated(await loadAllManifests());
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 16px;
   }
-  .plugin-card { padding: 0; transition: box-shadow 140ms ease, transform 140ms ease; }
+  .plugin-card { padding: 0; overflow: hidden; transition: box-shadow 140ms ease, transform 140ms ease; }
   .plugin-card:hover { transform: translateY(-2px); box-shadow: var(--glow-lg); }
   .plugin-card__link {
     display: block;
-    padding: 18px;
     color: var(--ink);
     text-decoration: none;
   }
-  .plugin-card__link header {
+  .plugin-card__thumb {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    background: var(--code-bg);
+    border-bottom: 1px solid color-mix(in oklab, var(--accent) 35%, var(--border));
+  }
+  .plugin-card__thumb img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 240ms ease;
+  }
+  .plugin-card:hover .plugin-card__thumb img { transform: scale(1.04); }
+  .plugin-card__body { padding: 16px 18px 18px; }
+  .plugin-card__body header {
     display: flex;
     justify-content: space-between;
     align-items: baseline;
@@ -105,7 +131,7 @@ const manifests = sortByUpdated(await loadAllManifests());
   .plugin-card__kicker { color: var(--muted); }
   .plugin-card__ver { color: var(--accent); text-shadow: var(--glow-sm); }
   .plugin-card__name {
-    font-family: 'VT323', monospace;
+    font-family: 'VT323', 'Roboto Mono', monospace;
     font-size: 26px;
     text-transform: uppercase;
     margin: 8px 0 6px;

@@ -1,6 +1,4 @@
 ---
-import CompanionBot from './CompanionBot.astro';
-
 interface CTA {
   label: string;
   href: string;
@@ -30,30 +28,21 @@ const {
       {version && <span class="plugin-hero-version">{version}</span>}
     </h1>
     <p class="plugin-hero-tag">{tagline}</p>
-    
-    <div class="mt-8 flex flex-col gap-6">
-      {ctas.length > 0 && (
-        <div class="plugin-hero-cta">
-          {ctas.map((c) => (
-            <a
-              href={c.href}
-              class:list={['plugin-hero-btn glitch-hover', c.variant === 'primary' && 'primary']}
-              target={c.external ? '_blank' : undefined}
-              rel={c.external ? 'noopener' : undefined}
-            >
-              {c.variant === 'primary' ? '▸ ' : ''}{c.label}{c.external ? ' ↗' : ''}
-            </a>
-          ))}
-          <div class="flex items-center gap-3 bg-black/40 border border-white/5 py-2 px-4 rounded-lg">
-            <CompanionBot bot="code" anim="typing" />
-            <div class="flex flex-col">
-              <span class="text-[9px] font-mono text-neon-mint opacity-50 uppercase tracking-widest">Bot Status</span>
-              <span class="text-[10px] font-mono text-neon-mint animate-pulse uppercase">Typing Docs...</span>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+
+    {ctas.length > 0 && (
+      <div class="plugin-hero-cta">
+        {ctas.map((c) => (
+          <a
+            href={c.href}
+            class:list={['plugin-hero-btn', c.variant === 'primary' && 'primary']}
+            target={c.external ? '_blank' : undefined}
+            rel={c.external ? 'noopener' : undefined}
+          >
+            {c.variant === 'primary' ? '▸ ' : ''}{c.label}{c.external ? ' ↗' : ''}
+          </a>
+        ))}
+      </div>
+    )}
   </div>
 
   {image && (
@@ -133,6 +122,7 @@ const {
   }
 
   .plugin-hero-cta {
+    margin-top: 24px;
     display: flex;
     flex-wrap: wrap;
     gap: 16px;

@@ -107,9 +107,14 @@ export function initKaplayEvents(
   const platformRects = (): Rect[] => {
     const objs = k.get('platform');
     return objs.map((o: GameObj) => {
-      const size = (o as unknown as { size?: { w: number; h: number } }).size;
-      const w = size?.w ?? 0;
-      const h = size?.h ?? 0;
+      const raw = o as unknown as {
+        size?: { w: number; h: number };
+        _size?: { w: number; h: number };
+        width?: number; height?: number;
+      };
+      const src = raw._size ?? raw.size;
+      const w = src?.w ?? raw.width ?? 0;
+      const h = src?.h ?? raw.height ?? 0;
       return { x: o.pos.x, y: o.pos.y, w, h };
     });
   };
@@ -195,51 +200,17 @@ export function initKaplayEvents(
     const left = p.x - platW / 2;
     const top  = p.y - platH / 2;
 
-    const body = k.add([
-      k.rect(platW, platH),
+    k.add([
+      k.sprite('hatch-event', { tiled: true, width: platW, height: platH }),
       k.pos(left, top),
-      k.area(),
+      k.area({ shape: new k.Rect(k.vec2(0), platW, platH) }),
       k.body({ isStatic: true }),
-      k.opacity(0), // DOM twin renders the visual
       k.lifespan(PLATFORM_LIFETIME_S, { fade: 1 }),
       'platform',
       'event-platform',
       'event-entity',
-      { size: { w: platW, h: platH } },
+      { size: { w: platW, h: platH }, _size: { w: platW, h: platH } },
     ]);
-
-    // DOM twin — lives in the overlay layer so it inherits the stage's
-    // scanlines, grid, and sits BELOW the canvas (bots draw on top).
-    const overlay = typeof document !== 'undefined'
-      ? document.getElementById('cc-stage-overlay')
-      : null;
-    if (overlay) {
-      const div = document.createElement('div');
-      div.className = 'cc-plat-decor event-platform';
-      // Positions are expressed as percent-of-logical-width + absolute px-y,
-      // matching the static platform overlay so every size reads identically.
-      div.style.left = `${(left / LOGICAL_W) * 100}%`;
-      div.style.top = `${top}px`;
-      div.style.width = `${(platW / LOGICAL_W) * 100}%`;
-      div.style.height = `${platH}px`;
-      // Fade in/out around the KAPLAY lifespan fade (1 s).
-      div.style.opacity = '0';
-      div.style.transition = 'opacity 260ms ease';
-      overlay.appendChild(div);
-      requestAnimationFrame(() => { div.style.opacity = '1'; });
-
-      // Remove slightly before KAPLAY destroys the body so the fade reads.
-      const fadeAt = (PLATFORM_LIFETIME_S - 1) * 1000;
-      const fadeTimer = setTimeout(() => { div.style.opacity = '0'; }, Math.max(0, fadeAt));
-      const killTimer = setTimeout(() => { div.remove(); }, PLATFORM_LIFETIME_S * 1000);
-      try {
-        (body as unknown as { onDestroy?: (cb: () => void) => void }).onDestroy?.(() => {
-          clearTimeout(fadeTimer);
-          clearTimeout(killTimer);
-          div.remove();
-        });
-      } catch (_) { /* lifecycle hook missing — timers cover cleanup */ }
-    }
 
     const dlg = dialogueRef();
     if (dlg) { try { dlg.fire('event:platform_appear'); } catch (_) {} }
@@ -253,8 +224,12 @@ export function initKaplayEvents(
     );
     if (!candidates.length) return false;
     const target = pick(candidates);
-    const size = (target as unknown as { size?: { w: number; h: number } }).size;
-    const w = size?.w ?? 0;
+    const raw = target as unknown as {
+      size?: { w: number; h: number };
+      _size?: { w: number; h: number };
+      width?: number;
+    };
+    const w = raw._size?.w ?? raw.size?.w ?? raw.width ?? 0;
 
     let newX = target.pos.x;
     for (let i = 0; i < MAX_PLACEMENT_TRIES; i++) {

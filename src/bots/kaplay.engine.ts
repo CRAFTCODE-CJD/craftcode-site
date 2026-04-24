@@ -107,12 +107,51 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
     anims: ANIMS,
   });
 
+  // ── Pre-rendered hatch tiles ──────────────────────────
+  // Build once per init using an offscreen Canvas2D, then load into
+  // KAPLAY as sprites that can be tiled across platform rects.
+  // Three variants:
+  //   hatch-plat  — dark purple base + pink hatch (static platforms)
+  //   hatch-event — same base, stronger pink tint (event-spawned)
+  //   hatch-floor — even darker base + subtle pink hatch (floor)
+  const makeHatchTile = (
+    size: number,
+    baseColor: string,
+    strokeColor: string,
+    stride: number,
+    lineWidth: number,
+  ): string => {
+    const c = document.createElement('canvas');
+    c.width = size; c.height = size;
+    const ctx = c.getContext('2d')!;
+    ctx.fillStyle = baseColor;
+    ctx.fillRect(0, 0, size, size);
+    ctx.strokeStyle = strokeColor;
+    ctx.lineWidth = lineWidth;
+    ctx.lineCap = 'square';
+    ctx.beginPath();
+    // Diagonal stripes — draw well beyond the tile so the pattern is
+    // seamless when it wraps. Angle is 45° because dx==dy==size.
+    for (let i = -size; i < size * 2; i += stride) {
+      ctx.moveTo(i, 0);
+      ctx.lineTo(i + size, size);
+    }
+    ctx.stroke();
+    return c.toDataURL();
+  };
+
+  // Non-blocking loadSprite — KAPLAY queues the asset internally.
+  try {
+    k.loadSprite('hatch-plat',  makeHatchTile(32, 'rgb(38,22,38)', 'rgba(236,72,153,0.35)', 8, 2));
+    k.loadSprite('hatch-event', makeHatchTile(32, 'rgb(38,22,38)', 'rgba(236,72,153,0.55)', 8, 2));
+    k.loadSprite('hatch-floor', makeHatchTile(24, 'rgb(28,18,28)', 'rgba(236,72,153,0.22)', 12, 2));
+  } catch (_) { /* SSR / no-DOM safeguard */ }
+
   // ── Floor ─────────────────────────────────────────────
-  // Physics-only body; DOM overlay (.cc-floor-decor) renders the visual.
-  // The body is 3× the logical width and offset to the left so the
-  // horizontal screen-wrap (below) can teleport a bot past the edge
-  // without a one-frame gap where the bot is outside the floor box
-  // and would plummet into the void.
+  // Physics body spans 3× logical width so the horizontal screen-wrap
+  // never drops a bot into void. The visible tile, however, is drawn
+  // only across [0..LOGICAL_W] by a dedicated visual GameObj; the
+  // extended physics body uses opacity(0).
   k.add([
     k.rect(LOGICAL_W * 3, 12),
     k.pos(-LOGICAL_W, LOGICAL_H - 12),
@@ -121,6 +160,14 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
     k.opacity(0),
     'platform',
     'floor',
+  ]);
+  // Visual-only floor tile — rendered via a tiled hatch sprite, clipped
+  // to the visible stage so screen-wrap never reveals the extended body.
+  k.add([
+    k.sprite('hatch-floor', { tiled: true, width: LOGICAL_W, height: 12 }),
+    k.pos(0, LOGICAL_H - 12),
+    'floor-visual',
+    { _kind: 'floor' as const },
   ]);
 
   // ── Static platforms — positions from BootToPlayground.astro ──
@@ -148,16 +195,82 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
     label: 'crate_03',
   };
   [step_01, floating_02, crate_03].forEach((p) => {
-    // Physics body only — visuals live in the DOM overlay (.cc-plat-decor).
+    // Tiled hatch sprite renders the fill; a shared onDraw below paints
+    // the neon top edge, corner ticks, and label above each box.
     k.add([
-      k.rect(p.w, p.h),
+      k.sprite('hatch-plat', { tiled: true, width: p.w, height: p.h }),
       k.pos(p.x, p.y),
-      k.area(),
+      k.area({ shape: new k.Rect(k.vec2(0), p.w, p.h) }),
       k.body({ isStatic: true }),
-      k.opacity(0),
       'platform',
-      { label: p.label },
+      { label: p.label, _label: `// ${p.label}`, _size: { w: p.w, h: p.h } },
     ]);
+  });
+
+  // ── Neon edges + ticks + labels (shared onDraw) ──────
+  // Runs in camera-world space, so visuals stay pinned to physics at
+  // any zoom / pan. Colors mirror the old DOM decor CSS.
+  const ACCENT  = k.rgb(236, 72, 153);   // pink
+  const ACCENT2 = k.rgb(234, 179, 8);    // yellow
+  const LABEL   = k.rgb(148, 130, 144);
+
+  k.onDraw(() => {
+    // Floor neon top edge — drawn directly at floor-top (y = LOGICAL_H - 12)
+    // minus 2px so the lit line mirrors the legacy DOM ::after.
+    k.drawRect({
+      pos: k.vec2(0, LOGICAL_H - 12 - 2),
+      width: LOGICAL_W,
+      height: 2,
+      color: ACCENT,
+    });
+    k.drawRect({
+      pos: k.vec2(0, LOGICAL_H - 12 - 6),
+      width: LOGICAL_W,
+      height: 4,
+      color: ACCENT,
+      opacity: 0.35,
+    });
+
+    // Platforms (including event-spawned) — tag 'platform'. The floor
+    // physics body shares the tag but carries 'floor'; skip it.
+    const platforms = k.get('platform');
+    for (const p of platforms) {
+      if (p.is('floor')) continue;
+      const size = (p as unknown as { _size?: { w: number; h: number } })._size;
+      const w = size?.w ?? 0;
+      const h = size?.h ?? 0;
+      if (!w || !h) continue;
+
+      const isEvent = p.is('event-platform');
+      const edgeColor = isEvent ? ACCENT : ACCENT2;
+      const tickColor = ACCENT2;
+
+      // Neon top edge — 2px tall, glow 4px tall at 35%.
+      k.drawRect({
+        pos: k.vec2(p.pos.x, p.pos.y - 2),
+        width: w, height: 2, color: edgeColor,
+      });
+      k.drawRect({
+        pos: k.vec2(p.pos.x, p.pos.y - 6),
+        width: w, height: 4, color: edgeColor, opacity: 0.35,
+      });
+
+      // Corner ticks.
+      k.drawRect({ pos: k.vec2(p.pos.x,           p.pos.y - 4), width: 4, height: 4, color: tickColor });
+      k.drawRect({ pos: k.vec2(p.pos.x + w - 4,   p.pos.y - 4), width: 4, height: 4, color: tickColor });
+
+      // Label (skip if none, e.g. event platforms omit labels).
+      const label = (p as unknown as { _label?: string })._label;
+      if (label) {
+        k.drawText({
+          text: label,
+          pos: k.vec2(p.pos.x + 6, p.pos.y - 18),
+          size: 10,
+          color: LABEL,
+          font: 'monospace',
+        });
+      }
+    }
   });
 
   // ── Bots ──────────────────────────────────────────────
@@ -321,17 +434,24 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
     dragged = null;
   });
 
-  // ── §9 Camera follow ──────────────────────────────────
+  // ── §9 Camera follow + distance zoom ──────────────────
+  // Now that platforms & floor render in-canvas (tiled sprites +
+  // shared onDraw overlay), the view can translate/scale freely —
+  // bots and their scenery transform together.
+  k.setCamPos(LOGICAL_W / 2, LOGICAL_H / 2);
+  k.setCamScale(1);
   k.onUpdate(() => {
+    if (reducedMotion) return;
     if (bots.length < 2) return;
     const cx = (craft.pos.x + code.pos.x) / 2;
     const cy = (craft.pos.y + code.pos.y) / 2;
-    // Smooth lerp.
     const cur = k.getCamPos();
     const nx = k.lerp(cur.x, cx, 0.06);
-    const ny = k.lerp(cur.y, cy * 0.6 + LOGICAL_H * 0.5 * 0.4, 0.06);
+    // Bias vertical to the lower-mid of the stage so floor + platforms
+    // remain visible when bots climb up.
+    const targetY = cy * 0.6 + LOGICAL_H * 0.5 * 0.4;
+    const ny = k.lerp(cur.y, targetY, 0.06);
     k.setCamPos(nx, ny);
-
     const dist = craft.pos.dist(code.pos);
     const targetScale = Math.max(0.85, Math.min(1.15, 220 / Math.max(120, dist)));
     const curScale = k.getCamScale().x;

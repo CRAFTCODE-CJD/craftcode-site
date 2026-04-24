@@ -123,32 +123,27 @@ import SystemLog from '~/components/SystemLog.astro';
     border-bottom: 2px solid; border-right: 2px solid;
   }
 
-  /* Gentle glitch on release-card hover — duplicates the card's accent
-     glow with a clipped offset flash, then snaps back. Light-touch so
-     the cards still feel approachable, not seizure-inducing. */
+  /* Release-card hover — lift + accent outline glow. Previous version
+     used a clip-path glitch keyframe which could freeze cards in a
+     clipped state when :hover ended mid-animation (black horizontal
+     bands). Reverted to a clean transition-only effect: the hover
+     still reads as reactive, but can't leave broken visuals behind. */
   :global(.release-card) {
-    transition: transform 180ms ease, box-shadow 180ms ease;
+    transition:
+      transform 180ms ease,
+      box-shadow 220ms ease,
+      border-color 180ms ease;
     will-change: transform;
   }
   :global(.release-card:hover) {
-    transform: translateY(-2px);
-    animation: home-glitch 420ms steps(2) 1;
-    /* fill-mode `none`: on animation-cancel (fast pointer leave) we drop
-       back to the regular hover/base styles cleanly. `forwards` was
-       causing the card to stick on the last keyframe transform when
-       :hover released mid-animation. */
-    animation-fill-mode: none;
-  }
-  /* Reset clip-path when not hovered so a cancelled animation can't
-     leave the card clipped. */
-  :global(.release-card) { clip-path: inset(0 0 0 0); }
-  @keyframes home-glitch {
-    0%   { clip-path: inset(0 0 0 0); }
-    25%  { clip-path: inset(10% 0 60% 0); transform: translate(2px, -2px); }
-    50%  { clip-path: inset(60% 0 10% 0); transform: translate(-2px, -2px); }
-    100% { clip-path: inset(0 0 0 0); transform: translateY(-2px); }
+    transform: translateY(-3px);
+    border-color: color-mix(in oklab, var(--accent) 70%, var(--border));
+    box-shadow:
+      0 0 0 1px color-mix(in oklab, var(--accent) 50%, transparent),
+      0 12px 28px -12px color-mix(in oklab, var(--accent) 55%, transparent),
+      inset 0 0 24px color-mix(in oklab, var(--accent) 10%, transparent);
   }
   @media (prefers-reduced-motion: reduce) {
-    :global(.release-card:hover) { animation: none; transform: none; }
+    :global(.release-card:hover) { transform: none; }
   }
 </style>

@@ -328,7 +328,11 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
     const bot = k.add([
       k.sprite(who, { anim: 'idle' }),
       k.pos(x, 200),
-      k.area({ shape: new k.Rect(k.vec2(0), 32, 40) }),
+      // collisionIgnore: ['bot'] — bots pass through each other horizontally
+      // (parity with legacy engine). Stack-snap onto the partner's head is
+      // still handled by the dedicated onUpdate below; bot↔platform/floor
+      // collisions are unaffected because those tags differ.
+      k.area({ shape: new k.Rect(k.vec2(0), 32, 40), collisionIgnore: ['bot'] }),
       // Industry-standard platformer body: terminal fall velocity, mild
       // air drag, mass=1, and stickToPlatform so bots ride moving
       // platforms (event obstacle_move) without slipping off.
@@ -353,6 +357,10 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
         _groundedUntil: 0,
         // Last time the bot was snapped onto another bot's head.
         _groundedOnBot: 0,
+        // Wall-clock ms when the bot last moved meaningfully — used by
+        // the idle-sleep watcher below.
+        _lastActiveAt: 0,
+        _isSleeping: false,
       },
     ]);
     return bot;
@@ -367,6 +375,8 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
     throwVel: ReturnType<typeof k.vec2>;
     _groundedUntil: number;
     _groundedOnBot: number;
+    _lastActiveAt: number;
+    _isSleeping: boolean;
   };
   const code = makeBot('code', 360) as typeof craft;
   const bots = [craft, code];
@@ -517,9 +527,70 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
         bot.move(bot.wanderDir * WANDER_SPEED, 0);
       }
 
-      // Screen wrap.
-      if (bot.pos.x < -20) bot.pos.x = LOGICAL_W + 10;
-      else if (bot.pos.x > LOGICAL_W + 20) bot.pos.x = -10;
+      // Wall bounce — parity with legacy engine. Bots reverse wanderDir at
+      // the edges instead of wrapping around. Velocity is dampened (×0.4)
+      // so the bounce reads as "bonk" rather than a hard ricochet, and
+      // flipX is updated to face the new direction.
+      const margin = 24;
+      if (bot.pos.x < margin) {
+        bot.pos.x = margin;
+        bot.vel.x = Math.abs(bot.vel.x) * 0.4;
+        if (bot.wanderDir < 0) {
+          bot.wanderDir = 1;
+          bot.flipX = false;
+        }
+      } else if (bot.pos.x > LOGICAL_W - margin) {
+        bot.pos.x = LOGICAL_W - margin;
+        bot.vel.x = -Math.abs(bot.vel.x) * 0.4;
+        if (bot.wanderDir > 0) {
+          bot.wanderDir = -1;
+          bot.flipX = true;
+        }
+      }
+    }
+  });
+
+  // ── Idle sleep watcher ───────────────────────────────
+  // After ~30 s with no meaningful movement and no active bubble for the
+  // bot, switch the clip to 'sleep'. Any nudge wakes them back to idle.
+  const SLEEP_AFTER_MS = 30_000;
+  k.onUpdate(() => {
+    if (reducedMotion) return;
+    const now = performance.now();
+    for (const bot of bots) {
+      const speed = Math.abs(bot.vel.x) + Math.abs(bot.vel.y);
+      const moving = speed > 6 || bot.wanderDir !== 0 || bot.isDragging || !bot.isGrounded();
+      if (moving) {
+        bot._lastActiveAt = now;
+        if (bot._isSleeping) {
+          bot._isSleeping = false;
+          try { bot.play('idle'); } catch (_) {}
+        }
+        continue;
+      }
+      if (bot._lastActiveAt === 0) bot._lastActiveAt = now;
+      if (!bot._isSleeping && now - bot._lastActiveAt > SLEEP_AFTER_MS) {
+        bot._isSleeping = true;
+        try { bot.play('sleep'); } catch (_) {}
+      }
+    }
+  });
+
+  // ── Wall bounce for thrown / dropped bots ─────────────
+  // Even when not actively wandering (e.g. mid-tumble after throw), a bot
+  // hitting a wall should reflect velocity instead of escaping past the
+  // edge. Runs after wander loop so it acts as the final clamp.
+  k.onUpdate(() => {
+    for (const bot of bots) {
+      if (bot.isDragging) continue;
+      const margin = 24;
+      if (bot.pos.x < margin && bot.vel.x < 0) {
+        bot.pos.x = margin;
+        bot.vel.x = -bot.vel.x * 0.5;
+      } else if (bot.pos.x > LOGICAL_W - margin && bot.vel.x > 0) {
+        bot.pos.x = LOGICAL_W - margin;
+        bot.vel.x = -bot.vel.x * 0.5;
+      }
     }
   });
 
@@ -588,6 +659,11 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
     dragHistory.push({ x, y, t: now });
     while (dragHistory.length > 0 && now - dragHistory[0].t > 120) {
       dragHistory.shift();
+    }
+    // Reactor: the non-dragged bot turns to watch its partner being moved.
+    const watcher = dragged === craft ? code : craft;
+    if (watcher && !watcher.isDragging) {
+      try { watcher.flipX = x < watcher.pos.x; } catch (_) {}
     }
   });
 
@@ -698,8 +774,24 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
     if (bubbles.code?.classList.contains('visible')) positionBubble('code');
   });
 
+  // Per-bubble typewriter handle — cancels in-flight reveal when a new
+  // bubble takes over the same speaker (e.g. langchange mid-line).
+  const typewriterTimers: Record<BotWho, number | null> = { craft: null, code: null };
+
   const showBubble = (who: BotWho, text: string, holdMs = 2400) => {
     const el = ensureBubble(who);
+    // Face the conversation partner — flipX so the speaker visually
+    // "looks at" the other bot. Mirrors legacy engine.legacy.js behaviour.
+    const speaker = who === 'craft' ? craft : code;
+    const partner = who === 'craft' ? code : craft;
+    if (speaker && partner) {
+      try { speaker.flipX = partner.pos.x < speaker.pos.x; } catch (_) {}
+      // Wake from sleep — talking implies activity.
+      if (speaker._isSleeping) {
+        speaker._isSleeping = false;
+        speaker._lastActiveAt = performance.now();
+      }
+    }
     // DOM-build the "WHO:" label + body so CSS can style them
     // separately. textContent-based, no innerHTML → no XSS surface.
     el.replaceChildren();
@@ -707,12 +799,37 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
     kicker.className = 'who';
     kicker.textContent = `${who}:`;
     el.appendChild(kicker);
-    el.appendChild(document.createTextNode(text));
+    const textNode = document.createTextNode('');
+    el.appendChild(textNode);
     el.classList.add('visible');
     positionBubble(who);
+    // Typewriter reveal — character-by-character, ~18ms/char (legacy parity).
+    // Reduced motion: dump the full text instantly to skip the staggered FX.
+    if (typewriterTimers[who]) {
+      clearTimeout(typewriterTimers[who]!);
+      typewriterTimers[who] = null;
+    }
+    if (reducedMotion) {
+      textNode.data = text;
+    } else {
+      let i = 0;
+      const step = () => {
+        if (i < text.length) {
+          textNode.data += text[i++];
+          typewriterTimers[who] = window.setTimeout(step, 18);
+        } else {
+          typewriterTimers[who] = null;
+        }
+      };
+      step();
+    }
     if (bubbleTimers[who]) clearTimeout(bubbleTimers[who]!);
     bubbleTimers[who] = window.setTimeout(() => {
       el.classList.remove('visible');
+      if (typewriterTimers[who]) {
+        clearTimeout(typewriterTimers[who]!);
+        typewriterTimers[who] = null;
+      }
     }, holdMs);
   };
 

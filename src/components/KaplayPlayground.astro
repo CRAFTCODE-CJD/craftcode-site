@@ -98,6 +98,9 @@ import TypingText from '~/components/TypingText.astro';
 <script>
   import { initKaplayPlayground } from '~/bots/kaplay.engine';
   import { installDialogueBridge } from '~/bots/kaplay.dialogue-bridge';
+  import { startSimTickers } from '~/bots/kaplay.sim';
+  import { installBehaviorActions } from '~/bots/kaplay.behavior-actions';
+  import { startAILoop } from '~/bots/kaplay.ai-loop';
 
   const boot = () => {
     const canvas = document.getElementById('cc-canvas') as HTMLCanvasElement | null;
@@ -110,7 +113,12 @@ import TypingText from '~/components/TypingText.astro';
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     const handle = initKaplayPlayground({ canvas, bubbleHost: host, reducedMotion: reduced });
+    // Bridge MUST come first — installs window.__dialogue / __companions
+    // that the AI loop / behavior executor / sim tickers all read from.
     installDialogueBridge(handle);
+    installBehaviorActions(handle);
+    startSimTickers(handle);
+    startAILoop(handle, { reducedMotion: reduced });
 
     // Pause / resume with tab visibility.
     document.addEventListener('visibilitychange', () => {

@@ -401,19 +401,13 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
     bot.onGround(() => {
       try { bot.play('land'); } catch (_) {}
       spawnDust(bot.pos.x, bot.pos.y);
-      // Squash & stretch on landing — quick visual punch that reads as
-      // weight without altering hit-area or physics. Skipped under
-      // reduced motion for accessibility.
-      if (!reducedMotion) {
-        try {
-          bot.use(k.scale(1.15, 0.85));
-          k.wait(0.12, () => {
-            if (bot.exists()) {
-              try { bot.scale = k.vec2(1, 1); } catch (_) {}
-            }
-          });
-        } catch (_) { /* graceful — scale comp may already be present */ }
-      }
+      // Squash & stretch was disabled — `bot.use(k.scale(...))` re-
+      // attached a scale component on every land, and KAPLAY's
+      // component update started reading pos on undefined slots after
+      // a few cycles ("Cannot read 'x' of undefined" floods the
+      // console). Land animation alone communicates impact well
+      // enough; if we want squash later, attach scale ONCE at init
+      // and mutate bot.scale in place instead of re-using.
       setTimeout(() => {
         if (!bot.isDragging && bot.isGrounded()) {
           try { bot.play(bot.wanderDir !== 0 ? 'walk' : 'idle'); } catch (_) {}

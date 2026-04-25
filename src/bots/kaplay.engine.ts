@@ -999,12 +999,14 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
     // single full-size sprites (no tile boundaries inside them), so any
     // fractional scale renders cleanly — we can lerp through without
     // the shimmer that plagued the tile-based version.
-    //   dist ≤ 120 → 2.0×
-    //   dist ≥ 520 → 1.5×
+    //   dist ≤ 120 → 2.0×    (close-up: bots chatting / interacting)
+    //   dist ≥ 700 → 1.0×    (whole stage visible at scale 1, since
+    //                         visible width = LOGICAL_W / 1.0 = 1200 =
+    //                         the world width)
     //   in between → linearly interpolated target, lerped over time.
     const dist = craft.pos.dist(code.pos);
-    const d01  = Math.min(1, Math.max(0, (dist - 120) / (520 - 120)));
-    const targetScale = 2.0 - d01 * 0.5; // 2.0 → 1.5
+    const d01  = Math.min(1, Math.max(0, (dist - 120) / (700 - 120)));
+    const targetScale = 2.0 - d01 * 1.0; // 2.0 → 1.0
     const curS = k.getCamScale().x;
     const nextScale = k.lerp(curS, targetScale, 0.06);
     k.setCamScale(nextScale);

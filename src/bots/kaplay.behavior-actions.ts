@@ -67,6 +67,19 @@ export function installBehaviorActions(handle: KaplayHandle): () => void {
   const steerTarget: Record<BotWho, number | null> = { craft: null, code: null };
   const arriveCb:    Record<BotWho, (() => void) | null> = { craft: null, code: null };
 
+  // Calling `bot.play(name)` resets the sprite to the anim's first
+  // frame in KAPLAY 3001. If we call it every tick with the same name
+  // the bot freezes on frame 0 of that clip and "skates" across the
+  // floor — the user-visible "rides on one leg" bug. Guard against
+  // re-issue by reading getCurAnim() first.
+  const playLooped = (bot: BotLike, clip: string) => {
+    try {
+      const cur = (bot as unknown as { getCurAnim?: () => { name?: string } | null }).getCurAnim?.();
+      if (cur?.name === clip) return;
+      bot.play(clip);
+    } catch (_) {}
+  };
+
   const onUpdate = k.onUpdate(() => {
     (['craft', 'code'] as BotWho[]).forEach((who) => {
       const target = steerTarget[who];
@@ -79,7 +92,8 @@ export function installBehaviorActions(handle: KaplayHandle): () => void {
       const ad = Math.abs(dx);
       if (ad < 6) {
         steerTarget[who] = null;
-        try { bot.wanderDir = 0; bot.play('idle'); } catch (_) {}
+        bot.wanderDir = 0;
+        playLooped(bot, 'idle');
         const cb = arriveCb[who];
         arriveCb[who] = null;
         if (cb) try { cb(); } catch (_) {}
@@ -88,7 +102,7 @@ export function installBehaviorActions(handle: KaplayHandle): () => void {
       const dir = dx > 0 ? 1 : -1;
       bot.flipX = dir < 0;
       bot.wanderDir = dir as 1 | -1;
-      try { bot.play('walk'); } catch (_) {}
+      playLooped(bot, 'walk');
       // 90 px/s — slightly faster than ambient wander (60) for purposeful
       // motion. KAPLAY moves are velocity-style; per-frame integration
       // happens in the engine's onUpdate via bot.move().
@@ -263,6 +277,18 @@ export function makeWalkApi(handle: KaplayHandle): WalkApi & { destroy(): void }
   const arrive: Record<BotWho, (() => void) | null> = { craft: null, code: null };
   const sprint: Record<BotWho, boolean> = { craft: false, code: false };
 
+  // Same skating-bug guard as installBehaviorActions — KAPLAY 3001
+  // restarts a sprite anim on every play() call, so per-tick
+  // `bot.play('walk')` freezes the bot on frame 0 and slides them
+  // across the stage. Only call play() when the clip actually changes.
+  const playLooped = (bot: BotLike, clip: string) => {
+    try {
+      const cur = (bot as unknown as { getCurAnim?: () => { name?: string } | null }).getCurAnim?.();
+      if (cur?.name === clip) return;
+      bot.play(clip);
+    } catch (_) {}
+  };
+
   const tick = k.onUpdate(() => {
     (['craft', 'code'] as BotWho[]).forEach((who) => {
       const t = target[who];
@@ -276,7 +302,8 @@ export function makeWalkApi(handle: KaplayHandle): WalkApi & { destroy(): void }
       if (ad < 6) {
         target[who] = null;
         sprint[who] = false;
-        try { bot.wanderDir = 0; bot.play('idle'); } catch (_) {}
+        bot.wanderDir = 0;
+        playLooped(bot, 'idle');
         const cb = arrive[who];
         arrive[who] = null;
         if (cb) try { cb(); } catch (_) {}
@@ -285,7 +312,7 @@ export function makeWalkApi(handle: KaplayHandle): WalkApi & { destroy(): void }
       const dir = dx > 0 ? 1 : -1;
       bot.flipX = dir < 0;
       bot.wanderDir = dir as 1 | -1;
-      try { bot.play('walk'); } catch (_) {}
+      playLooped(bot, 'walk');
       const speed = sprint[who] ? 160 : 90;
       bot.pos.x += dir * speed * k.dt();
     });

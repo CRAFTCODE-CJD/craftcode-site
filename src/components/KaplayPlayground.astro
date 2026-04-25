@@ -361,7 +361,10 @@ import TypingText from '~/components/TypingText.astro';
   :global(.kc-bubble::after) {
     content: '';
     position: absolute;
-    left: 50%;
+    /* Tail anchors at bubble center + per-frame --tail-offset so the
+       arrow still points at the bot when the bubble is clamped against
+       the stage edge. Defaults to 0 if the variable isn't set. */
+    left: calc(50% + var(--tail-offset, 0px));
     bottom: -5px;
     width: 8px;
     height: 8px;
@@ -369,6 +372,17 @@ import TypingText from '~/components/TypingText.astro';
     border-right: 1px solid var(--accent);
     border-bottom: 1px solid var(--accent);
     transform: translateX(-50%) rotate(45deg);
+  }
+  /* Bubble flipped below the bot when there isn't room above (e.g. top
+     of the stage near the wordmark). Tail moves to the top edge and
+     points UP (rotate(225deg)). */
+  :global(.kc-bubble--below::after) {
+    bottom: auto;
+    top: -5px;
+    border-right: none;
+    border-bottom: none;
+    border-left: 1px solid var(--accent);
+    border-top: 1px solid var(--accent);
   }
   :global(.kc-bubble--craft) { border-color: var(--accent); }
   :global(.kc-bubble--code) {
@@ -381,6 +395,10 @@ import TypingText from '~/components/TypingText.astro';
   :global(.kc-bubble--code::after) {
     border-right-color: var(--accent-2);
     border-bottom-color: var(--accent-2);
+  }
+  :global(.kc-bubble--code.kc-bubble--below::after) {
+    border-left-color: var(--accent-2);
+    border-top-color: var(--accent-2);
   }
   /* "WHO:" prefix inline marker — injected by bridge as <span class="who">CRAFT</span> */
   :global(.kc-bubble .who) {

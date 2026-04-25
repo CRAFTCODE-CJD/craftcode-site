@@ -1060,7 +1060,40 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
     const ky = rect.height / LOGICAL_H;
     const px = projX * kx;
     const py = (projY - 60) * ky; // 60px above bot's head
-    el.style.transform = `translate(${px}px, ${py}px) translate(-50%, -100%)`;
+
+    // Clamp horizontally so the bubble stays inside the stage even when
+    // the bot is hugging the left/right edge. `.kc-stage` has overflow:
+    // hidden so an unclamped bubble simply gets sliced and the dialogue
+    // becomes unreadable. Tail (`::after`) is offset locally via the
+    // --tail-offset CSS variable so it still points at the bot's head.
+    const halfW = (el.offsetWidth || 260) / 2;
+    const margin = 8;
+    const minPx = halfW + margin;
+    const maxPx = rect.width - halfW - margin;
+    let clampedPx = px;
+    if (maxPx > minPx) {
+      clampedPx = Math.max(minPx, Math.min(maxPx, px));
+    }
+    const tailOffset = px - clampedPx;
+    // Also clamp vertically — if the bot is near the top of the stage
+    // the bubble would otherwise stick into the wordmark or get clipped
+    // by the stage's top edge. Push it below the bot's head when there
+    // isn't enough room above.
+    const bubbleH = el.offsetHeight || 40;
+    const minPy = bubbleH + margin;       // top of stage
+    let clampedPy = py;
+    if (py < minPy) {
+      // Flip below bot's head: tail points up. We do this by switching
+      // translate-Y from -100% (bubble above anchor) to 0% (below) and
+      // marking with a class so CSS can flip the tail.
+      clampedPy = (projY + 30) * ky;       // 30 px below feet line
+      el.classList.add('kc-bubble--below');
+    } else {
+      el.classList.remove('kc-bubble--below');
+    }
+    const yAnchor = el.classList.contains('kc-bubble--below') ? '0%' : '-100%';
+    el.style.transform = `translate(${clampedPx}px, ${clampedPy}px) translate(-50%, ${yAnchor})`;
+    el.style.setProperty('--tail-offset', `${tailOffset}px`);
   };
 
   k.onUpdate(() => {

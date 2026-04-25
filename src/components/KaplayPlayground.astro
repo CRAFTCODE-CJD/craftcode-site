@@ -96,17 +96,28 @@ import TypingText from '~/components/TypingText.astro';
 </script>
 
 <script>
-  import { initKaplayPlayground } from '~/bots/kaplay.engine';
-  import { installDialogueBridge } from '~/bots/kaplay.dialogue-bridge';
-  import { startSimTickers } from '~/bots/kaplay.sim';
-  import { installBehaviorActions } from '~/bots/kaplay.behavior-actions';
-  import { startAILoop } from '~/bots/kaplay.ai-loop';
-  import { installWorld } from '~/bots/kaplay.world';
-  import { installPacing } from '~/bots/kaplay.pacing';
-  import { installTasks } from '~/bots/kaplay.tasks';
-  import { installArcs } from '~/bots/kaplay.arcs';
+  // Defer the heavy KAPLAY engine bundle (~276 KB) until the playground
+  // stage scrolls into the viewport. The IntersectionObserver fires the
+  // dynamic import only at that moment, keeping it out of the page's
+  // critical-path entry graph entirely.
+  //
+  // rootMargin: '200px' starts loading ~200 px before the stage reaches
+  // the viewport so there's no perceptible lag on typical scroll speeds.
+  const stage = document.getElementById('cc-stage');
 
-  const boot = () => {
+  if (stage) {
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (!entries[0].isIntersecting) return;
+        io.disconnect();
+        mountKaplay();
+      },
+      { rootMargin: '200px' }
+    );
+    io.observe(stage);
+  }
+
+  async function mountKaplay() {
     const canvas = document.getElementById('cc-canvas') as HTMLCanvasElement | null;
     const host = document.getElementById('kc-bubble-layer');
     if (!canvas || !host) return;
@@ -116,36 +127,66 @@ import TypingText from '~/components/TypingText.astro';
       typeof window.matchMedia === 'function' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    const handle = initKaplayPlayground({ canvas, bubbleHost: host, reducedMotion: reduced });
-    // Bridge MUST come first — installs window.__dialogue / __companions
-    // that the AI loop / behavior executor / sim tickers all read from.
-    installDialogueBridge(handle);
-    installBehaviorActions(handle);
-    startSimTickers(handle);
-    startAILoop(handle, { reducedMotion: reduced });
-    // Watching-mode layers — task system, mini-arcs, world counters, and
-    // global pacing rhythm. Order matters: world + pacing are read by
-    // tasks/arcs; tasks must install before arcs (arcs use tasks API).
-    if (!reduced) {
-      const world = installWorld(handle);
-      const pacing = installPacing(handle);
-      const tasks = installTasks(handle, world.state, pacing.state);
-      installArcs(handle, tasks, world.state, pacing.state);
-    }
+    // Dynamic imports — Vite splits these into a separate chunk that is
+    // NOT included in the page's entry graph. They are fetched lazily
+    // when mountKaplay() runs (i.e. when the stage enters the viewport).
+    const [
+      { initKaplayPlayground },
+      { installDialogueBridge },
+      { startSimTickers },
+      { installBehaviorActions },
+      { startAILoop },
+    ] = await Promise.all([
+      import('~/bots/kaplay.engine'),
+      import('~/bots/kaplay.dialogue-bridge'),
+      import('~/bots/kaplay.sim'),
+      import('~/bots/kaplay.behavior-actions'),
+      import('~/bots/kaplay.ai-loop'),
+    ]);
 
-    // Pause / resume with tab visibility.
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden) handle.pause();
-      else handle.resume();
-    });
-  };
+    const boot = () => {
+      const handle = initKaplayPlayground({ canvas, bubbleHost: host, reducedMotion: reduced });
+      // Bridge MUST come first — installs window.__dialogue / __companions
+      // that the AI loop / behavior executor / sim tickers all read from.
+      installDialogueBridge(handle);
+      installBehaviorActions(handle);
+      startSimTickers(handle);
+      startAILoop(handle, { reducedMotion: reduced });
+      // Watching-mode layers — task system, mini-arcs, world counters, and
+      // global pacing rhythm. Order matters: world + pacing are read by
+      // tasks/arcs; tasks must install before arcs (arcs use tasks API).
+      if (!reduced) {
+        Promise.all([
+          import('~/bots/kaplay.world'),
+          import('~/bots/kaplay.pacing'),
+          import('~/bots/kaplay.tasks'),
+          import('~/bots/kaplay.arcs'),
+        ]).then(([{ installWorld }, { installPacing }, { installTasks }, { installArcs }]) => {
+          const world = installWorld(handle);
+          const pacing = installPacing(handle);
+          const tasks = installTasks(handle, world.state, pacing.state);
+          installArcs(handle, tasks, world.state, pacing.state);
+        });
+      }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
+      // Pause / resume with tab visibility.
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) handle.pause();
+        else handle.resume();
+      });
+    };
+
+    // By the time mountKaplay() runs the cc:playground-ready event may
+    // have already fired (boot typewriter completes in ~3 s and the
+    // IntersectionObserver fires immediately for above-the-fold stage).
+    // Listen for the event; if the stage is already in playground phase
+    // (typewriter finished) call boot() directly.
+    const stageEl = document.getElementById('cc-stage');
+    if (stageEl?.dataset.phase === 'playground') {
+      boot();
+    } else {
       document.addEventListener('cc:playground-ready', boot, { once: true });
-    });
-  } else {
-    document.addEventListener('cc:playground-ready', boot, { once: true });
+    }
   }
 </script>
 

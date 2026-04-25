@@ -34,12 +34,15 @@ const manifests = sortByUpdated(await loadAllManifests());
           <a href={`/plugins/${m.slug}/`} class="plugin-card__link">
             {m.image && (
               <div class="plugin-card__thumb">
-                <img
-                  src={m.image}
-                  alt={pick(m.name, 'ru')}
-                  loading="lazy"
-                  decoding="async"
-                />
+                <picture>
+                  <source srcset={m.image.replace(/\.png$/i, '.webp')} type="image/webp" />
+                  <img
+                    src={m.image}
+                    alt={pick(m.name, 'ru')}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </picture>
               </div>
             )}
             <div class="plugin-card__body">

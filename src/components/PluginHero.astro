@@ -59,7 +59,10 @@ const {
   {image ? (
     <div class="plugin-hero-media">
       <div class="media-overlay"></div>
-      <img src={image} alt={title} loading="eager" />
+      <picture>
+        <source srcset={image.replace(/\.png$/i, '.webp')} type="image/webp" />
+        <img src={image} alt={title} loading="eager" />
+      </picture>
       <div class="media-badge">PREVIEW_01</div>
     </div>
   ) : null}

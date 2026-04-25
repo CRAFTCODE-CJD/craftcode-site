@@ -55,6 +55,16 @@ const ogImage = image ?? '/logo/craftcode_wide.png';
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+    <!-- Preload critical fonts to eliminate FOIT for the hero title and primary text. -->
+    <link rel="preload" as="font" type="font/woff2"
+      href="https://fonts.gstatic.com/s/inter/v20/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuLyfAZ9hiA.woff2"
+      crossorigin="anonymous" />
+    <link rel="preload" as="font" type="font/woff2"
+      href="https://fonts.gstatic.com/s/pressstart2p/v16/e3t4euO8T-267oIAQAu6jDQyK3nVivM.woff2"
+      crossorigin="anonymous" />
+    <link rel="preload" as="font" type="font/woff2"
+      href="https://fonts.gstatic.com/s/vt323/v18/pxiKyp0ihIEF2isfFJU.woff2"
+      crossorigin="anonymous" />
     <!-- Font stack:
          · Press Start 2P + VT323    — pixel/CRT display fonts, Latin-only.
          · Rubik Pixels              — pixel display with Cyrillic (H1).

@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Audit (high+critical fails)
+        run: npm audit --audit-level=high
+
+      - name: Typecheck
+        run: npx astro check
+
+      - name: Build
+        run: npm run build
+
+      - name: Bundle-size budget
+        run: node scripts/check-bundle-size.mjs
+
+      - name: Verify _headers exists with CSP
+        run: |
+          test -f dist/_headers || (echo "::error::dist/_headers missing" && exit 1)
+          grep -q "Content-Security-Policy" dist/_headers || (echo "::error::CSP missing in _headers" && exit 1)
+          grep -q "Strict-Transport-Security" dist/_headers || (echo "::error::HSTS missing in _headers" && exit 1)
+          echo "✅ _headers OK"
+
+      - name: Verify sitemap exists
+        run: |
+          test -f dist/sitemap-index.xml || (echo "::error::sitemap missing" && exit 1)
+          test -f dist/robots.txt || (echo "::error::robots.txt missing" && exit 1)
+          echo "✅ SEO files OK"

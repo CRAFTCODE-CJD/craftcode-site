@@ -6,9 +6,9 @@
 
    Public API:
      getLang()     → 'en' | 'ru'
-     setLang(l)    → persist + apply + emit 'langchange'
-     t(key, lang?) → string | null (null = no match)
-     initI18n()    → auto-init (run once from Base.astro)
+     setLang(l)    → Promise<void>; persist + apply + emit 'langchange'
+     t(key, lang?) → string | null (null = no match; sync after initI18n)
+     initI18n()    → Promise<void>; auto-init (run once from Base.astro)
      onLangChange(cb) → subscribe
 
    Translation hooks in DOM:
@@ -16,14 +16,20 @@
      <el data-i18n-attr="alt:img.alt, title:hero.name">…</el>
                                                               */
 
-import en from './translations/en.json';
-import ru from './translations/ru.json';
-
 export type Lang = 'en' | 'ru';
 type Dict = Record<string, string>;
 
-const TABLE: Record<Lang, Dict> = { en: en as Dict, ru: ru as Dict };
+const cache: Partial<Record<Lang, Dict>> = {};
 const LANG_KEY = 'lang';
+
+async function loadDict(lang: Lang): Promise<Dict> {
+  if (cache[lang]) return cache[lang]!;
+  const mod = lang === 'en'
+    ? await import('./translations/en.json')
+    : await import('./translations/ru.json');
+  cache[lang] = (mod as { default: Dict }).default;
+  return cache[lang]!;
+}
 
 
 /** Resolve current language from storage → navigator → default. */
@@ -38,11 +44,13 @@ export function getLang(): Lang {
   return 'ru';
 }
 
-/** Lookup key with EN fallback, or null if absent. §13.11 */
+/** Lookup key with EN fallback, or null if absent. §13.11
+ *  Sync — reads from in-memory cache populated by loadDict().
+ *  Always returns null before initI18n() resolves (boot window). */
 export function t(key: string, lang: Lang = getLang()): string | null {
-  const primary = TABLE[lang]?.[key];
+  const primary = cache[lang]?.[key];
   if (typeof primary === 'string') return primary;
-  const fallback = TABLE.en?.[key];
+  const fallback = cache.en?.[key];
   return typeof fallback === 'string' ? fallback : null;
 }
 
@@ -119,13 +127,14 @@ function apply(lang: Lang, root: ParentNode = document): void {
   });
 }
 
-/** Persist + apply + broadcast. */
-export function setLang(lang: Lang): void {
+/** Persist + apply + broadcast. Loads the target language dict if not cached. */
+export async function setLang(lang: Lang): Promise<void> {
   if (typeof localStorage !== 'undefined') localStorage.setItem(LANG_KEY, lang);
   if (typeof document !== 'undefined') {
     document.documentElement.lang = lang;
     document.documentElement.dataset.lang = lang;
   }
+  await loadDict(lang);
   apply(lang);
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent<Lang>('langchange', { detail: lang }));
@@ -139,9 +148,11 @@ export function onLangChange(cb: (lang: Lang) => void): () => void {
   return () => window.removeEventListener('langchange', handler);
 }
 
-/** Boot: set <html lang>, apply dictionary to existing DOM, wire up the
- *  `.cc-lang-btn` toggle. Safe to call multiple times. */
-export function initI18n(): void {
+/** Boot: set <html lang>, load active language dict, apply dictionary to
+ *  existing DOM, wire up the `.cc-lang-btn` toggle. Safe to call multiple times.
+ *  Returns a Promise that resolves once the active language dict is loaded
+ *  and the initial DOM pass is complete. */
+export async function initI18n(): Promise<void> {
   if (typeof document === 'undefined') return;
 
   // Expose a minimal runtime API for non-module consumers (KAPLAY bridge,
@@ -156,6 +167,9 @@ export function initI18n(): void {
   const lang = getLang();
   document.documentElement.lang = lang;
   document.documentElement.dataset.lang = lang;
+
+  // Load active language dict before first DOM pass so t() returns values.
+  await loadDict(lang);
   apply(lang);
 
   // Event delegation — Topbar.astro renders buttons with data-lang="en|ru".
@@ -163,7 +177,7 @@ export function initI18n(): void {
     const target = (e.target as HTMLElement)?.closest<HTMLButtonElement>('.cc-lang-btn[data-lang]');
     if (!target) return;
     const next = target.dataset.lang as Lang | undefined;
-    if (next === 'en' || next === 'ru') setLang(next);
+    if (next === 'en' || next === 'ru') void setLang(next);
   });
 
   // Catch nodes inserted after first paint (bot dialogue bubbles, etc.)

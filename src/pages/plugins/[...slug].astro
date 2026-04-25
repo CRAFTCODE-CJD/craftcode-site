@@ -221,7 +221,10 @@ const ctaKeys: (string | undefined)[] = (data.ctas ?? []).map(
             <div class="plugin-gallery__grid">
               {data.gallery.shots.map((shot, i) => (
                 <figure class="gallery-shot">
-                  <img src={shot.src} alt={shot.caption} loading="lazy" />
+                  <picture>
+                    <source srcset={shot.src.replace(/\.png$/i, '.webp')} type="image/webp" />
+                    <img src={shot.src} alt={shot.caption} loading="lazy" />
+                  </picture>
                   <figcaption>
                     {shot.n && <span class="gallery-shot__n">{shot.n}</span>}
                     <span class="gallery-shot__caption" data-i18n={`${i18nBase}.gallery.shots.${i}.caption`}>{shot.caption}</span>

@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /_astro/
+
+Sitemap: https://craftcode-site.pages.dev/sitemap-index.xml

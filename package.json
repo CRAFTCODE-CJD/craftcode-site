@@ -7,16 +7,19 @@
   "scripts": {
     "dev": "astro dev --host 0.0.0.0 --port 3000",
     "start": "astro dev",
+    "prebuild": "node scripts/optimize-images.mjs",
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
     "i18n:extract": "node scripts/extract-i18n.mjs",
-    "i18n:write": "node scripts/extract-i18n.mjs --write"
+    "i18n:write": "node scripts/extract-i18n.mjs --write",
+    "prepare": "husky"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.8",
     "@astrojs/mdx": "^4.0.0",
     "@astrojs/react": "^4.4.2",
+    "@astrojs/sitemap": "^3.7.2",
     "astro": "^5.0.0",
     "framer-motion": "^12.38.0",
     "kaplay": "^3001.0.19",
@@ -27,6 +30,16 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
     "typescript": "^5.7.0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,astro}": [
+      "node -e \"console.log('typecheck staged files')\""
+    ],
+    "*.{json,md,yml,yaml}": [
+      "node -e \"console.log('format placeholder')\""
+    ]
   }
 }

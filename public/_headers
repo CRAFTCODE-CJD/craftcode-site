@@ -1,0 +1,34 @@
+# Cloudflare Pages headers
+# https://developers.cloudflare.com/pages/configuration/headers/
+
+/*
+  Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=(), payment=(), usb=()
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Resource-Policy: same-origin
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self'; frame-src https://www.youtube-nocookie.com https://www.youtube.com https://youtube.com https://player.vimeo.com; media-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests
+
+# Content-hashed bundles → cache forever
+/_astro/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Static assets — filenames are stable (not content-hashed), so we
+# cap caching at 30 days. If a PNG is replaced in-place during a
+# content update, browsers refresh within a month.
+/sprites/*
+  Cache-Control: public, max-age=2592000
+/images/*
+  Cache-Control: public, max-age=2592000
+/logo/*
+  Cache-Control: public, max-age=2592000
+
+# Manifests change occasionally → 1 day
+/manifests/*
+  Cache-Control: public, max-age=86400
+
+# HTML — short cache, must-revalidate via ETag
+/*.html
+  Cache-Control: public, max-age=300, must-revalidate

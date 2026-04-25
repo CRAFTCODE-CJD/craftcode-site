@@ -113,7 +113,7 @@ export interface TasksHandle {
 // tasks navigate to the same locations the engine drew the platforms at.
 const FLOOR_TOP_Y = 408;
 const STEP_X = 0.08;       // step_01: x = LOGICAL_W * 0.08
-const STEP_Y = 360;
+const STEP_Y = 320;        // raised — keep in sync with kaplay.engine.ts step_01.y
 const STEP_W = 130;
 const FLOAT_X = 0.38;      // floating_02: x = LOGICAL_W * 0.38
 const FLOAT_Y = 290;

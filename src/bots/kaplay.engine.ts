@@ -227,7 +227,7 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
   // stage; translate those to absolute pixel coordinates here.
   const step_01 = {
     x: LOGICAL_W * 0.08,
-    y: 360,
+    y: 320,
     w: 130,
     h: 28,
     label: 'step_01',

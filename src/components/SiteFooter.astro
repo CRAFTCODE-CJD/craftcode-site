@@ -1,0 +1,151 @@
+---
+/**
+ * Site-wide footer — terminal/neon styling matching Topbar.
+ *
+ * Three columns on desktop, stacked on mobile:
+ *   · brand + copyright (year auto-generated at build time)
+ *   · primary channels (FAB / GitHub / Boosty / YouTube)
+ *   · build info (made-with line)
+ *
+ * Year is rendered server-side from `new Date().getFullYear()` — Cloudflare
+ * Pages rebuilds at least every push, and we also schedule no work for it,
+ * so on Jan 1 the year updates on next deploy. Acceptable lag for a footer.
+ */
+const year = new Date().getFullYear();
+---
+
+<footer class="cc-footer" aria-labelledby="footer-heading">
+  <h2 id="footer-heading" class="visually-hidden">Footer</h2>
+  <div class="cc-footer__inner">
+    <div class="cc-footer__col cc-footer__brand">
+      <span class="cc-footer__logo" aria-hidden="true">
+        <span class="pink">CRAFT</span><span class="yell">CODE</span>
+      </span>
+      <p class="cc-footer__copy">
+        © {year} <span data-i18n="footer.author">Jonathan Developer</span>
+      </p>
+      <p class="cc-footer__rights" data-i18n="footer.rights">
+        // unreal engine plugins · open source
+      </p>
+    </div>
+
+    <div class="cc-footer__col cc-footer__channels">
+      <span class="cc-footer__kicker" data-i18n="footer.channels.kicker">// channels</span>
+      <ul>
+        <li><a href="https://www.fab.com/sellers/CRAFTCODE" target="_blank" rel="noopener noreferrer">FAB Marketplace ↗</a></li>
+        <li><a href="https://github.com/CRAFTCODE-CJD" target="_blank" rel="noopener noreferrer">GitHub ↗</a></li>
+        <li><a href="https://boosty.to/channel-jonathan-developer" target="_blank" rel="noopener noreferrer">Boosty ↗</a></li>
+        <li><a href="https://www.youtube.com/@jonathandeveloper6723" target="_blank" rel="noopener noreferrer">YouTube ↗</a></li>
+      </ul>
+    </div>
+
+    <div class="cc-footer__col cc-footer__build">
+      <span class="cc-footer__kicker" data-i18n="footer.build.kicker">// build</span>
+      <p class="cc-footer__made" data-i18n="footer.made">
+        // crafted with Astro · KAPLAY · ❤
+      </p>
+      <p class="cc-footer__nav">
+        <a href="/about/" data-i18n="footer.nav.about">О проекте</a>
+        <span aria-hidden="true">·</span>
+        <a href="/plugins/" data-i18n="footer.nav.plugins">Плагины</a>
+      </p>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .cc-footer {
+    border-top: 1px dashed var(--border);
+    margin-top: 80px;
+    padding: 32px 16px 24px;
+    background: linear-gradient(to bottom,
+      transparent,
+      color-mix(in oklab, var(--accent) 4%, transparent));
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .cc-footer__inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 1fr;
+    gap: 32px;
+    align-items: start;
+  }
+  @media (max-width: 720px) {
+    .cc-footer__inner { grid-template-columns: 1fr; gap: 20px; }
+  }
+
+  .cc-footer__col p { margin: 6px 0; line-height: 1.5; }
+
+  .cc-footer__logo {
+    display: inline-block;
+    font-family: 'Press Start 2P', 'Rubik Pixels', monospace;
+    font-size: 16px;
+    letter-spacing: 0.04em;
+    text-shadow: 2px 2px 0 var(--bg);
+    margin-bottom: 12px;
+  }
+  .cc-footer__logo .pink { color: var(--accent); }
+  .cc-footer__logo .yell { color: var(--accent-2); margin-left: 2px; }
+
+  .cc-footer__copy {
+    color: var(--ink);
+    font-size: 12px;
+  }
+  .cc-footer__rights {
+    color: var(--faint);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+  }
+
+  .cc-footer__kicker {
+    display: block;
+    color: var(--accent-2);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: lowercase;
+    margin-bottom: 10px;
+    opacity: 0.85;
+  }
+
+  .cc-footer__channels ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .cc-footer__channels li { margin: 4px 0; }
+  .cc-footer__channels a,
+  .cc-footer__nav a {
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 120ms;
+  }
+  .cc-footer__channels a:hover,
+  .cc-footer__nav a:hover { color: var(--accent); }
+
+  .cc-footer__made {
+    color: var(--muted);
+    font-size: 11px;
+  }
+
+  .cc-footer__nav {
+    color: var(--faint);
+    font-size: 11px;
+    margin-top: 8px;
+  }
+  .cc-footer__nav span { margin: 0 6px; color: var(--faint); opacity: 0.5; }
+
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+</style>

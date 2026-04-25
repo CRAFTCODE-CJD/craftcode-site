@@ -19,6 +19,7 @@ import Topbar from '~/components/Topbar.astro';
 import Companions from '~/components/Companions.astro';
 import BootSplash from '~/components/BootSplash.astro';
 import Lightbox from '~/components/Lightbox.astro';
+import SiteFooter from '~/components/SiteFooter.astro';
 
 interface Props {
   title: string;
@@ -91,6 +92,8 @@ const ogImage = image ?? '/logo/craftcode_wide.png';
     <main class="cc-main">
       <slot />
     </main>
+
+    <SiteFooter />
 
     <Companions />
     <Lightbox />

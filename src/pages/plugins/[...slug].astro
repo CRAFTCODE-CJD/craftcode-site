@@ -357,6 +357,9 @@ const ctaKeys: (string | undefined)[] = (data.ctas ?? []).map(
     font-size: 28px;
     letter-spacing: 0.02em;
     margin: 32px 0 10px;
+    /* Russian compound headings + uppercase letterspacing can spill past
+       narrow viewports; allow break at any glyph as a last resort. */
+    overflow-wrap: anywhere;
   }
   .plugin-page__body :global(h3) {
     font-family: 'VT323', 'Russo One', monospace;
@@ -364,8 +367,19 @@ const ctaKeys: (string | undefined)[] = (data.ctas ?? []).map(
     font-size: 22px;
     text-transform: uppercase;
     margin: 24px 0 8px;
+    overflow-wrap: anywhere;
   }
-  .plugin-page__body :global(a) { color: var(--accent-3); }
+  /* Body prose — long Russian words and inlined URLs need to break at the
+     viewport edge instead of pushing the column wider on mobile. */
+  .plugin-page__body :global(p),
+  .plugin-page__body :global(li) {
+    overflow-wrap: break-word;
+    hyphens: auto;
+  }
+  .plugin-page__body :global(a) {
+    color: var(--accent-3);
+    overflow-wrap: anywhere;
+  }
   .plugin-page__body :global(code) {
     font-family: 'JetBrains Mono', ui-monospace, monospace;
     font-size: 0.92em;
@@ -374,6 +388,11 @@ const ctaKeys: (string | undefined)[] = (data.ctas ?? []).map(
     padding: 1px 6px;
     border-radius: 3px;
     color: var(--accent);
+    /* Long identifiers (e.g. UMouseInterceptorComponent) must wrap on
+       mobile — without this they push the entire viewport wider than
+       the screen, causing horizontal scroll on the whole page. */
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
   .plugin-page__body :global(pre) {
     background: var(--code-bg);
@@ -456,8 +475,25 @@ const ctaKeys: (string | undefined)[] = (data.ctas ?? []).map(
      column instead of pushing the whole page to 360px+. `display: block`
      on <table> lets overflow-x kick in without needing a wrapper <div>
      (which MDX-rendered markdown doesn't provide). -webkit-overflow-
-     scrolling keeps momentum scroll on iOS. */
+     scrolling keeps momentum scroll on iOS.
+
+     Also shrinks heading/code/padding so the page reads comfortably on
+     320-400px phones. The :global(...) selectors target MDX-rendered
+     elements which don't have Astro CSS scope hashes. */
   @media (max-width: 600px) {
+    .plugin-page { padding: 18px 12px 48px; }
+    .plugin-page__body :global(h2) { font-size: 22px; margin: 24px 0 8px; }
+    .plugin-page__body :global(h3) { font-size: 18px; margin: 18px 0 6px; }
+    .plugin-page__body :global(pre) {
+      padding: 10px 12px;
+      font-size: 12px;
+      /* Wrap long lines on mobile rather than only horizontal-scroll —
+         most users prefer reading wrapped code over swiping. Keep
+         overflow-x as fallback for ultra-long single tokens. */
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .plugin-page__body :global(code) { font-size: 12px; }
     .plugin-page__body :global(table) {
       display: block;
       overflow-x: auto;

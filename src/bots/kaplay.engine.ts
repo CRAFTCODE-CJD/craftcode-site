@@ -377,6 +377,12 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
         // until `_forcedClipUntil` expires.
         _forcedClip: null as string | null,
         _forcedClipUntil: 0,
+        // Wall-clock ms of the last successful 'land' clip stamp — used
+        // by the onGround debounce so a noisy onGround stream (jitter
+        // between tiles, post-wall-bounce micro-hops) can't keep
+        // re-stamping the non-looping 'land' anim and freeze the bot
+        // on its last frame.
+        _lastLandAt: 0,
       },
     ]);
     return bot;
@@ -396,6 +402,7 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
     _taskOwned: boolean;
     _forcedClip: string | null;
     _forcedClipUntil: number;
+    _lastLandAt: number;
   };
   const code = makeBot('code', 360) as typeof craft;
   const bots = [craft, code];
@@ -418,12 +425,21 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
 
   bots.forEach((bot) => {
     bot.onGround(() => {
-      // Force the land clip via the arbiter window so the per-frame
-      // arbiter doesn't immediately overwrite it with 'idle'/'walk'.
-      // 180ms matches the legacy land hold; arbiter takes back over
-      // automatically when the window expires.
+      // Debounce: KAPLAY emits onGround on every airborne→grounded
+      // transition, including micro-bounces over tile boundaries and
+      // post-wall-bounce vertical jitter. Without this guard the 'land'
+      // clip (loop: false, ends on frame 16) gets re-stamped every few
+      // frames and the bot freezes on the last land frame indefinitely.
+      // Skip if we're already inside an active land window.
+      const now = performance.now();
+      if (bot._forcedClip === 'land' && now < bot._forcedClipUntil) return;
+      // Also gate by recent landing time so two onGround events 50ms
+      // apart can't both stamp 'land' (the 2nd would extend the window
+      // and re-trigger the freeze).
+      if (now - bot._lastLandAt < 240) return;
+      bot._lastLandAt = now;
       bot._forcedClip = 'land';
-      bot._forcedClipUntil = performance.now() + 180;
+      bot._forcedClipUntil = now + 180;
       try { bot.play('land'); } catch (_) {}
       spawnDust(bot.pos.x, bot.pos.y);
       // Squash & stretch was disabled — `bot.use(k.scale(...))` re-
@@ -632,10 +648,12 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
         if (Math.random() < 0.3) {
           try { bot.jump(520); } catch (_) {}
         }
-        if (bot.wanderDir === 0) {
-          try { bot.play('idle'); } catch (_) {}
-        } else {
-          try { bot.play('walk'); } catch (_) {}
+        // Animation is owned by the arbiter (see §Animation arbiter).
+        // We only set facing here; the arbiter picks idle/walk on the
+        // next tick based on wanderDir / vel.x. Calling bot.play()
+        // directly would clobber an active _forcedClip ('land' after
+        // touchdown, 'wave' from a behavior, etc.).
+        if (bot.wanderDir !== 0) {
           bot.flipX = bot.wanderDir < 0;
         }
       }
@@ -648,20 +666,31 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
       // the edges instead of wrapping around. Velocity is dampened (×0.4)
       // so the bounce reads as "bonk" rather than a hard ricochet, and
       // flipX is updated to face the new direction.
+      //
+      // The original guard only flipped wanderDir when the bot was
+      // actively walking INTO the wall (wanderDir < 0 / > 0). That meant
+      // a bot whose wander roll happened to land on `0` while standing
+      // at the edge would get stuck against the wall for a full re-roll
+      // cycle (3-7 s, sometimes chained to 14+ s if subsequent rolls
+      // also picked 0 or "into the wall"). Now we also force-turn when
+      // wanderDir == 0 OR points further into the wall, AND short-circuit
+      // the wander timer so the next re-roll lands within ~0.8 s.
       const margin = 24;
       if (bot.pos.x < margin) {
         bot.pos.x = margin;
         bot.vel.x = Math.abs(bot.vel.x) * 0.4;
-        if (bot.wanderDir < 0) {
+        if (bot.wanderDir <= 0) {
           bot.wanderDir = 1;
           bot.flipX = false;
+          if (bot.nextWanderAt - now > 800) bot.nextWanderAt = now + 800;
         }
       } else if (bot.pos.x > LOGICAL_W - margin) {
         bot.pos.x = LOGICAL_W - margin;
         bot.vel.x = -Math.abs(bot.vel.x) * 0.4;
-        if (bot.wanderDir > 0) {
+        if (bot.wanderDir >= 0) {
           bot.wanderDir = -1;
           bot.flipX = true;
+          if (bot.nextWanderAt - now > 800) bot.nextWanderAt = now + 800;
         }
       }
     }
@@ -684,15 +713,18 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
       if (moving) {
         bot._lastActiveAt = now;
         if (bot._isSleeping) {
+          // Just flip the flag — arbiter picks idle/walk based on
+          // movement state on the next tick. Direct bot.play('idle')
+          // here would clobber an active _forcedClip from a behavior
+          // that just woke the bot (e.g. 'wave' on highfive).
           bot._isSleeping = false;
-          try { bot.play('idle'); } catch (_) {}
         }
         continue;
       }
       if (bot._lastActiveAt === 0) bot._lastActiveAt = now;
       if (!bot._isSleeping && now - bot._lastActiveAt > SLEEP_AFTER_MS) {
         bot._isSleeping = true;
-        try { bot.play('sleep'); } catch (_) {}
+        // Arbiter sees _isSleeping and returns 'sleep' next tick.
       }
     }
   });

@@ -383,6 +383,12 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
         // re-stamping the non-looping 'land' anim and freeze the bot
         // on its last frame.
         _lastLandAt: 0,
+        // Bot pos.y at the END of the previous frame — used by the
+        // bot-on-bot stack snap for swept-collision detection. Required
+        // because at terminal fall velocity the upper bot can travel
+        // 12-15 px between frames and overshoot a discrete head-window
+        // check entirely.
+        _prevPosY: 200,
       },
     ]);
     return bot;
@@ -403,6 +409,7 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
     _forcedClip: string | null;
     _forcedClipUntil: number;
     _lastLandAt: number;
+    _prevPosY: number;
   };
   const code = makeBot('code', 360) as typeof craft;
   const bots = [craft, code];
@@ -578,20 +585,50 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
   // Feet of the upper bot land exactly on the VISIBLE head pixel of
   // the lower bot — not the bounding-box top — so the stack reads as
   // a physical contact instead of hovering in the hit-area's padding.
+  //
+  // Two complementary triggers (run every frame, after gravity has
+  // already updated pos.y this tick):
+  //
+  //   1. STICK window: feet are already within ±N px of the head line
+  //      and descending — pin the upper to the head. This is the
+  //      "standing on partner" steady state. Window has to be a bit
+  //      generous on the underside (gap < 0) because gravity nudges
+  //      the upper down 0.5-2 px per frame between snaps.
+  //
+  //   2. SWEPT crossing: between previous frame and this one the upper
+  //      bot crossed the head line top→bottom. Required because at
+  //      terminal velocity (vel.y → 900 → 14.4 px per 16ms frame) a
+  //      fast-falling bot would skip past a small discrete window in
+  //      a single tick and never trigger the snap.
+  //
+  // The snap also clears the upper's downward velocity so the next
+  // frame doesn't immediately push it back below the head line.
   k.onUpdate(() => {
     const pairs = [[craft, code], [code, craft]] as const;
     for (const [upper, lower] of pairs) {
-      if (upper.isDragging || lower.isDragging) continue;
+      if (upper.isDragging || lower.isDragging) {
+        upper._prevPosY = upper.pos.y;
+        continue;
+      }
       const uA = upper.worldArea();
       const lA = lower.worldArea();
-      if (!uA || !lA || !uA.pts || !lA.pts) continue;
-      // Hit-area x-extents are still from worldArea; they're only used
-      // for the horizontal-overlap test.
-      const uLeft  = Math.min(uA.pts[0].x, uA.pts[3].x);
-      const uRight = Math.max(uA.pts[1].x, uA.pts[2].x);
+      if (!uA || !lA || !uA.pts || !lA.pts) {
+        upper._prevPosY = upper.pos.y;
+        continue;
+      }
+      // Hit-area x-extents — horizontal-overlap test. A small inset
+      // (4 px each side) avoids edge-cases where the upper is JUST
+      // barely overlapping and would snap awkwardly. Better to require
+      // a clear line-up before stacking.
+      const INSET = 4;
+      const uLeft  = Math.min(uA.pts[0].x, uA.pts[3].x) + INSET;
+      const uRight = Math.max(uA.pts[1].x, uA.pts[2].x) - INSET;
       const lLeft  = Math.min(lA.pts[0].x, lA.pts[3].x);
       const lRight = Math.max(lA.pts[1].x, lA.pts[2].x);
-      if (uRight < lLeft || uLeft > lRight) continue;
+      if (uRight < lLeft || uLeft > lRight) {
+        upper._prevPosY = upper.pos.y;
+        continue;
+      }
 
       // Pixel-accurate head Y of the lower bot in world space. anchor
       // 'bot' → pos.y is the feet line; the sprite box extends SPRITE_H
@@ -602,14 +639,30 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
       const lowerWho = lower === craft ? 'craft' : 'code';
       const lowerHeadY = lower.pos.y - SPRITE_H + headTopForCurrentFrame(lower, lowerWho);
 
-      // Upper feet Y == upper.pos.y (anchor='bot'). Snap when within
-      // a small window above/below the head pixel and descending.
-      const gap = lowerHeadY - upper.pos.y; // >0 = upper is above head
-      if (gap > -10 && gap < 6 && upper.vel.y >= -20) {
+      // Upper feet Y == upper.pos.y (anchor='bot').
+      const prevGap = lowerHeadY - upper._prevPosY;  // last frame
+      const gap     = lowerHeadY - upper.pos.y;       // this frame
+
+      // Trigger A: STICK — already at/just below the head line and
+      //             not violently jumping up.
+      const inStickWindow = gap > -14 && gap < 8 && upper.vel.y >= -50;
+
+      // Trigger B: SWEPT — crossed the head line on this frame
+      //             (was above last frame, is at-or-below this frame).
+      //             Catches fast falls regardless of vel.y magnitude.
+      const crossedDown = prevGap > 0 && gap <= 0 && upper.vel.y > 0;
+
+      if (inStickWindow || crossedDown) {
         upper.pos.y = lowerHeadY;
         upper.vel.y = 0;
         upper._groundedOnBot = performance.now();
+        // Refresh KAPLAY's body-grounded grace window so the upper bot
+        // is allowed to jump off the partner without first "leaving
+        // the platform" (matches normal floor behaviour).
+        upper._groundedUntil = performance.now() + 120;
       }
+
+      upper._prevPosY = upper.pos.y;
     }
   });
 
@@ -762,7 +815,14 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
     }
     if (bot.isDragging) return 'tumble';
     if (bot._isSleeping) return 'sleep';
-    if (!bot.isGrounded()) return 'jump';
+    // Bots ignore each other's collision (collisionIgnore: ['bot']), so
+    // standing on a partner's head doesn't register with KAPLAY's body
+    // component as grounded. The stack-snap above stamps _groundedOnBot
+    // every tick the upper bot rests on the lower; treat that as a
+    // valid "ground" source so the arbiter doesn't lock the upper into
+    // 'jump' forever while it's actually standing on the partner.
+    const stackedRecently = now - bot._groundedOnBot < 80;
+    if (!bot.isGrounded() && !stackedRecently) return 'jump';
     if (Math.abs(bot.vel.x) > 6 || bot.wanderDir !== 0) return 'walk';
     return 'idle';
   };

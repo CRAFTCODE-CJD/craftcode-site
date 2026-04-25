@@ -333,6 +333,13 @@ const activeKey =
     .cc-mobile-nav:not([hidden]) { display: flex; }
   }
 
+  @media (max-width: 400px) {
+    .cc-top-row { padding: 0 12px; gap: 10px; }
+    .cc-brand-word { font-size: 11px; }
+    .cc-brand-logo { width: 22px; height: 22px; }
+    .cc-brand { gap: 7px; }
+  }
+
   /* Prevent body scroll when drawer open on mobile */
   :global(body.cc-nav-open) { overflow: hidden; }
 </style>

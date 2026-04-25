@@ -61,4 +61,15 @@ import CompanionBot from '~/components/CompanionBot.astro';
     border-radius: 3px;
     color: var(--accent);
   }
+
+  @media (max-width: 600px) {
+    .err404 { margin: 32px auto; padding: 20px 14px; }
+    .err404__art {
+      font-size: 10px;
+      overflow-x: auto;
+      max-width: 100%;
+      white-space: pre;
+    }
+    .err404__copy a { overflow-wrap: break-word; }
+  }
 </style>

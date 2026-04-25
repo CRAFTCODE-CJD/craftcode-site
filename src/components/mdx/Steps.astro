@@ -38,4 +38,10 @@
     box-shadow: var(--glow-sm);
   }
   .mdx-steps :global(.mdx-step:last-child) { padding-bottom: 0; }
+
+  @media (max-width: 600px) {
+    .mdx-steps { margin-left: 8px; }
+    .mdx-steps :global(.mdx-step) { padding-left: 32px; }
+    .mdx-steps :global(.mdx-step::before) { left: -14px; width: 28px; height: 28px; font-size: 11px; }
+  }
 </style>

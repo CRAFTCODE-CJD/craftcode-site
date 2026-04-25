@@ -184,4 +184,9 @@ const b = BRANDS[brand];
   }
   .social-link__arrow { transition: transform 180ms; }
   .social-link:hover .social-link__arrow { transform: translateX(4px); }
+
+  @media (max-width: 600px) {
+    .social-link { padding: 14px 16px 12px; gap: 10px; }
+    .social-link__sub { overflow-wrap: break-word; }
+  }
 </style>

@@ -105,6 +105,11 @@ import SystemLog from '~/components/SystemLog.astro';
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     gap: 18px;
   }
+  @media (max-width: 600px) {
+    .home-social__grid { grid-template-columns: 1fr; gap: 12px; }
+    .home-social { padding: 14px 8px 8px; }
+    .home-wrap { padding: 0 12px 32px; }
+  }
 
   /* ASCII-corner decoration for the "где меня найти" block */
   .home-social {

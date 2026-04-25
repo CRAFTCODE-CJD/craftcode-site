@@ -200,4 +200,20 @@ const fmtDate = (iso: string) => {
     text-decoration: none;
   }
   .release-card__link:hover { text-decoration: underline; }
+
+  @media (max-width: 600px) {
+    .latest-releases { padding: 20px 0; }
+    .latest-releases__grid { grid-template-columns: 1fr; gap: 12px; }
+    .latest-releases__title { font-size: 22px; }
+    .latest-releases__sub { font-size: 11px; }
+    .release-card { padding: 12px; }
+    .release-card__name {
+      font-size: 12px;
+      overflow-wrap: break-word;
+      word-break: break-word;
+    }
+    .release-card__desc { font-size: 13px; }
+    .release-card__slug,
+    .release-card__version { overflow-wrap: anywhere; }
+  }
 </style>

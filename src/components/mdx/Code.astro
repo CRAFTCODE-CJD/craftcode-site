@@ -79,4 +79,14 @@ const { lang = 'txt', filename } = Astro.props as Props;
     line-height: 1.55;
     color: var(--ink);
   }
+
+  @media (max-width: 600px) {
+    .mdx-code__pre {
+      padding: 10px 12px;
+      font-size: 12px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .mdx-code__head { padding: 5px 10px; font-size: 10px; }
+  }
 </style>

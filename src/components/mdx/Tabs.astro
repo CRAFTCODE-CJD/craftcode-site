@@ -60,4 +60,10 @@
   }
   .mdx-tabs :global([data-tab]) { display: none; padding: 14px 16px; }
   .mdx-tabs :global([data-tab].active) { display: block; }
+
+  @media (max-width: 600px) {
+    .mdx-tabs :global(.mdx-tabs__header) { flex-wrap: wrap; }
+    .mdx-tabs :global(.mdx-tabs__btn) { padding: 8px 10px; font-size: 11px; }
+    .mdx-tabs :global([data-tab]) { padding: 12px; }
+  }
 </style>

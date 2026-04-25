@@ -121,6 +121,8 @@ const rows = [
   @media (max-width: 600px) {
     .sys-log__body { font-size: 10.5px; padding: 10px 12px; }
     .sys-log__label { display: none; }
+    .sys-log__msg { overflow-wrap: anywhere; word-break: break-word; }
+    .sys-log__row { gap: 6px; }
   }
   @media (prefers-reduced-motion: reduce) {
     .sys-log__row { animation: none; opacity: 1; transform: none; }

@@ -157,4 +157,13 @@ const manifests = sortByUpdated(await loadAllManifests());
     color: var(--accent-2);
   }
   .plugin-card__desc { color: var(--muted); line-height: 1.5; margin: 0; }
+
+  @media (max-width: 600px) {
+    .plugins-head { margin: 20px auto 14px; }
+    .plugins-head__bot { display: none; }
+    .plugins-grid { grid-template-columns: 1fr; gap: 12px; }
+    .plugin-card__name { font-size: 22px; overflow-wrap: break-word; }
+    .plugin-card__kicker { overflow-wrap: anywhere; }
+    .plugin-card__body { padding: 12px 14px 14px; }
+  }
 </style>

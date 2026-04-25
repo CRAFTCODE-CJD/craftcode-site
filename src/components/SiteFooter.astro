@@ -77,6 +77,13 @@ const year = new Date().getFullYear();
     .cc-footer__inner { grid-template-columns: 1fr; gap: 20px; }
   }
 
+  @media (max-width: 600px) {
+    .cc-footer { padding: 20px 12px 18px; margin-top: 48px; }
+    .cc-footer__logo { font-size: 13px; }
+    .cc-footer__rights { overflow-wrap: break-word; }
+    .cc-footer__made { overflow-wrap: break-word; }
+  }
+
   .cc-footer__col p { margin: 6px 0; line-height: 1.5; }
 
   .cc-footer__logo {

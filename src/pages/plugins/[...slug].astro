@@ -87,6 +87,15 @@ const k = {
   kicker: `${i18nBase}.kicker`,
   description: `${i18nBase}.description`,
 };
+
+// Generate i18n keys for the index-aligned `ctas[]` array. PluginHero
+// stamps these onto each <a> as data-i18n so the runtime swapper
+// (src/i18n/i18n.ts) can replace label text on lang change. Keys map to
+// translations in en/ru.json; if a key has no entry the original frontmatter
+// label is shown as-is.
+const ctaKeys: (string | undefined)[] = (data.ctas ?? []).map(
+  (_c: unknown, i: number) => `${i18nBase}.cta.${i}.label`,
+);
 ---
 
 <Base title={data.title} description={data.description} image={data.image}>
@@ -125,20 +134,21 @@ const k = {
           accent={data.accent}
           ctas={data.ctas}
           i18nKeys={{ title: k.title, tagline: k.tagline, kicker: k.kicker }}
+          ctaKeys={ctaKeys}
         />
 
         {data.stats && data.stats.stats.length > 0 && (
           <section class="plugin-stats" aria-label={data.stats.title}>
             <header class="plugin-section__head">
               <p class="plugin-section__kicker">// stats</p>
-              <h2 class="plugin-section__title">{data.stats.title}</h2>
+              <h2 class="plugin-section__title" data-i18n={`${i18nBase}.stats.title`}>{data.stats.title}</h2>
             </header>
             <div class="plugin-stats__grid">
-              {data.stats.stats.map((s) => (
+              {data.stats.stats.map((s, i) => (
                 <div class="stat-card">
-                  <p class="stat-card__label">{s.label}</p>
-                  <p class="stat-card__value">{s.value}</p>
-                  {s.delta && <p class="stat-card__delta">{s.delta}</p>}
+                  <p class="stat-card__label" data-i18n={`${i18nBase}.stats.stats.${i}.label`}>{s.label}</p>
+                  <p class="stat-card__value" data-i18n={`${i18nBase}.stats.stats.${i}.value`}>{s.value}</p>
+                  {s.delta && <p class="stat-card__delta" data-i18n={`${i18nBase}.stats.stats.${i}.delta`}>{s.delta}</p>}
                 </div>
               ))}
             </div>
@@ -149,14 +159,14 @@ const k = {
           <section class="plugin-pipeline" aria-label={data.pipeline.title}>
             <header class="plugin-section__head">
               <p class="plugin-section__kicker">// pipeline</p>
-              <h2 class="plugin-section__title">{data.pipeline.title}</h2>
+              <h2 class="plugin-section__title" data-i18n={`${i18nBase}.pipeline.title`}>{data.pipeline.title}</h2>
             </header>
             <ol class="plugin-pipeline__list">
-              {data.pipeline.steps.map((s) => (
+              {data.pipeline.steps.map((s, i) => (
                 <li class="pipeline-step">
-                  <span class="pipeline-step__n">{s.n}</span>
-                  <h3 class="pipeline-step__title">{s.title}</h3>
-                  <p class="pipeline-step__text">{s.text}</p>
+                  <span class="pipeline-step__n" data-i18n={`${i18nBase}.pipeline.steps.${i}.n`}>{s.n}</span>
+                  <h3 class="pipeline-step__title" data-i18n={`${i18nBase}.pipeline.steps.${i}.title`}>{s.title}</h3>
+                  <p class="pipeline-step__text" data-i18n={`${i18nBase}.pipeline.steps.${i}.text`}>{s.text}</p>
                 </li>
               ))}
             </ol>
@@ -206,15 +216,15 @@ const k = {
           <section class="plugin-gallery" aria-label={data.gallery.title}>
             <header class="plugin-section__head">
               <p class="plugin-section__kicker">// gallery</p>
-              <h2 class="plugin-section__title">{data.gallery.title}</h2>
+              <h2 class="plugin-section__title" data-i18n={`${i18nBase}.gallery.title`}>{data.gallery.title}</h2>
             </header>
             <div class="plugin-gallery__grid">
-              {data.gallery.shots.map((shot) => (
+              {data.gallery.shots.map((shot, i) => (
                 <figure class="gallery-shot">
                   <img src={shot.src} alt={shot.caption} loading="lazy" />
                   <figcaption>
                     {shot.n && <span class="gallery-shot__n">{shot.n}</span>}
-                    <span class="gallery-shot__caption">{shot.caption}</span>
+                    <span class="gallery-shot__caption" data-i18n={`${i18nBase}.gallery.shots.${i}.caption`}>{shot.caption}</span>
                   </figcaption>
                 </figure>
               ))}

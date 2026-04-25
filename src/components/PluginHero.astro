@@ -111,7 +111,10 @@ const {
   .plugin-hero-title {
     font-family: 'Press Start 2P', 'Rubik Pixels', monospace !important;
     font-size: clamp(36px, 6vw, 64px) !important;
-    line-height: 0.9 !important;
+    /* Press Start 2P glyphs already include vertical padding of ~0.1em.
+       line-height ≥ 1.0 keeps a 1-pixel gap between rows when the title
+       wraps (e.g. "MOUSE / INTERCEPTOR"). 0.9 made adjacent rows touch. */
+    line-height: 1.05 !important;
     margin: 0 !important;
     text-transform: uppercase;
     color: var(--ph-accent) !important;

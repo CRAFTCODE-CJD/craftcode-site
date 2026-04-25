@@ -101,8 +101,19 @@ export function installBehaviorActions(handle: KaplayHandle): () => void {
     arriveCb[who] = onArrive ?? null;
   };
 
-  const safePlay = (who: BotWho, clip: string) => {
-    try { bots[who].play(clip); } catch (_) {}
+  // Behavior-tier priority anims (wave/sleep/excited/tumble/think) must
+  // be held against the engine's animation arbiter — otherwise the next
+  // tick of the arbiter sees vel.x ≠ 0 / grounded and stamps walk/idle
+  // over the chosen clip. Route through handle.forceClip; fall back to
+  // direct play if the handle was constructed before this API existed.
+  const safePlay = (who: BotWho, clip: string, holdMs = 1200) => {
+    try {
+      if (typeof handle.forceClip === 'function') {
+        handle.forceClip(who, clip, holdMs);
+      } else {
+        bots[who].play(clip);
+      }
+    } catch (_) {}
   };
 
   // Decorative ball that arcs from `from` bot to `to` bot — visual
@@ -168,32 +179,31 @@ export function installBehaviorActions(handle: KaplayHandle): () => void {
         break;
       }
       case 'behavior.ball_toss': {
-        safePlay('code', 'wave');
+        safePlay('code', 'wave', 700);
         spawnBallArc('code', 'craft');
-        k.wait(0.6, () => safePlay('craft', 'wave'));
+        k.wait(0.6, () => safePlay('craft', 'wave', 700));
         break;
       }
       case 'behavior.hifive':
       case 'behavior.highfive': {
         const mid = (craft.pos.x + code.pos.x) / 2;
-        walkTo('craft', mid - 24, () => safePlay('craft', 'wave'));
-        walkTo('code',  mid + 24, () => safePlay('code',  'wave'));
+        walkTo('craft', mid - 24, () => safePlay('craft', 'wave', 900));
+        walkTo('code',  mid + 24, () => safePlay('code',  'wave', 900));
         break;
       }
       case 'behavior.sync_nap': {
-        safePlay('craft', 'sleep');
-        safePlay('code',  'sleep');
-        k.wait(3.5, () => {
-          safePlay('craft', 'idle');
-          safePlay('code',  'idle');
-        });
+        // Hold sleep for the full nap window; arbiter resumes idle/walk
+        // automatically when _forcedClipUntil expires (no idle restore
+        // needed here).
+        safePlay('craft', 'sleep', 3500);
+        safePlay('code',  'sleep', 3500);
         break;
       }
       case 'behavior.stuck_corner': {
-        // Teleport CRAFT to the right edge and play tumble.
+        // Teleport CRAFT to the right edge and tumble. Arbiter returns
+        // to idle after the forced window.
         try { craft.pos.x = LOGICAL_W - SIDE_M - S; } catch (_) {}
-        safePlay('craft', 'tumble');
-        k.wait(2.2, () => safePlay('craft', 'idle'));
+        safePlay('craft', 'tumble', 2200);
         break;
       }
       case 'behavior.race': {
@@ -202,9 +212,9 @@ export function installBehaviorActions(handle: KaplayHandle): () => void {
         break;
       }
       case 'behavior.dance_battle': {
-        safePlay('craft', 'wave');
-        k.wait(0.4, () => safePlay('code', 'wave'));
-        k.wait(1.2, () => safePlay('craft', 'wave'));
+        safePlay('craft', 'wave', 500);
+        k.wait(0.4, () => safePlay('code', 'wave', 500));
+        k.wait(1.2, () => safePlay('craft', 'wave', 500));
         break;
       }
       case 'behavior.poke_loop':

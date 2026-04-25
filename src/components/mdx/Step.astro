@@ -1,10 +1,10 @@
 ---
-interface Props { title?: string; }
-const { title } = Astro.props as Props;
+interface Props { title?: string; titleId?: string; }
+const { title, titleId } = Astro.props as Props;
 ---
 
 <li class="mdx-step">
-  {title && <h4 class="mdx-step__title">{title}</h4>}
+  {title && <h4 class="mdx-step__title" data-i18n={titleId ?? undefined}>{title}</h4>}
   <div class="mdx-step__body"><slot /></div>
 </li>
 

@@ -50,6 +50,35 @@ const getDialogue = (): DialogueLikeAI | null => {
   return w.__dialogue ?? null;
 };
 
+// Tasks/arcs may have control of a bot — when that's the case the AI
+// loop should NOT preempt with toss / random idle dialogue. The loop
+// queries these globals lazily so the order of installation doesn't
+// matter (tasks/arcs install AFTER ai-loop in the boot sequence).
+const isBotInTask = (who: BotWho): boolean => {
+  try {
+    const t = (window as unknown as { __kcTasks?: { current(w: BotWho): unknown } }).__kcTasks;
+    return !!t?.current(who);
+  } catch (_) { return false; }
+};
+const isArcActive = (): boolean => {
+  try {
+    const a = (window as unknown as { __kcArcs?: { current(): unknown } }).__kcArcs;
+    return !!a?.current();
+  } catch (_) { return false; }
+};
+const canBurstNow = (): boolean => {
+  try {
+    const p = (window as unknown as { __kcPacing?: { canBurst(): boolean } }).__kcPacing;
+    return p ? p.canBurst() : true; // if pacing not installed → allow
+  } catch (_) { return true; }
+};
+const consumeBurst = () => {
+  try {
+    const p = (window as unknown as { __kcPacing?: { consumeBurst(): void } }).__kcPacing;
+    p?.consumeBurst();
+  } catch (_) {}
+};
+
 const resolveI18n = (key: string, fallback: string): string => {
   try {
     const w = window as unknown as { __i18n?: { t?: (k: string) => string } };
@@ -88,7 +117,17 @@ export function startAILoop(handle: KaplayHandle, opts: { reducedMotion?: boolea
       && !!getDialogue() && getDialogue()!.state === 'idle';
   };
 
+  // True only if neither bot has an active task and no arc is running.
+  // Used by toss / scheduled-idle-dialogue to avoid preempting purposeful
+  // motion that the task/arc systems are driving.
+  const bothFreeOfTasksAndArcs = (): boolean => {
+    return !isBotInTask('craft') && !isBotInTask('code') && !isArcActive();
+  };
+
   // ── 1. Idle dialogue every 8-30 s ────────────────────
+  // Stays ambient — fires regardless of tasks (they're talking-WHILE-
+  // working). Behaviour tier (which scripts physical motion) is now
+  // gated on bots being free of tasks/arcs to avoid mid-task hijack.
   const idleTimers: ReturnType<typeof k.wait>[] = [];
   const scheduleIdle = () => {
     const delay = 8 + Math.random() * 22; // 8-30 s
@@ -97,11 +136,13 @@ export function startAILoop(handle: KaplayHandle, opts: { reducedMotion?: boolea
       if (!bothIdleGrounded()) { scheduleIdle(); return; }
       const dlg = getDialogue();
       if (!dlg) { scheduleIdle(); return; }
-      // 20% chance to reach for behavior tier first (parity with legacy
-      // f163e4d: ~20% chance picks 'behavior'). Dialogue.fire('behavior')
-      // will fall through to 'idle' if no behavior scene is eligible.
+      // Behaviour-tier scenes script physical motion — only allow when
+      // bots have no task/arc commitments (and we're inside a burst).
       let fired = false;
-      if (Math.random() < 0.20) fired = dlg.fire('behavior');
+      if (Math.random() < 0.20 && bothFreeOfTasksAndArcs() && canBurstNow()) {
+        fired = dlg.fire('behavior');
+        if (fired) consumeBurst();
+      }
       if (!fired) dlg.fire('idle');
       scheduleIdle();
     });
@@ -136,7 +177,11 @@ export function startAILoop(handle: KaplayHandle, opts: { reducedMotion?: boolea
     const t = k.wait(delay, () => {
       const dlg = getDialogue();
       if (!dlg || !bothIdleGrounded()) { scheduleThinking(); return; }
+      // Don't yank the chosen bot out of an active task / arc — the
+      // task system has its own think_at_floating beat for this.
+      if (isArcActive()) { scheduleThinking(); return; }
       const who: BotWho = Math.random() < 0.5 ? 'craft' : 'code';
+      if (isBotInTask(who)) { scheduleThinking(); return; }
       const bot = who === 'craft' ? craft : code;
       try { bot.play('think'); } catch (_) {}
       // After 1.5 s, fire a 'thinking' scene if one exists; otherwise
@@ -202,10 +247,13 @@ export function startAILoop(handle: KaplayHandle, opts: { reducedMotion?: boolea
     const delay = 80 + Math.random() * 90; // 80-170 s
     const t = k.wait(delay, () => {
       if (reduced) { scheduleToss(); return; }
-      if (bothIdleGrounded()) {
+      // Toss is a *burst* event — only fire during burst phase, when
+      // bots are free of tasks/arcs, and the inner cooldown has elapsed.
+      if (bothIdleGrounded() && bothFreeOfTasksAndArcs() && canBurstNow()) {
         const attacker: BotWho = Math.random() < 0.5 ? 'craft' : 'code';
         const victim:   BotWho = attacker === 'craft' ? 'code' : 'craft';
         startToss(attacker, victim);
+        consumeBurst();
       }
       scheduleToss();
     });

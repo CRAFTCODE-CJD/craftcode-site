@@ -1,10 +1,10 @@
 ---
-interface Props { title: string; icon?: string; }
-const { title } = Astro.props as Props;
+interface Props { title: string; icon?: string; titleId?: string; }
+const { title, titleId } = Astro.props as Props;
 ---
 
 <div class="mdx-card neon-frame">
-  <h3 class="mdx-card__title">{title}</h3>
+  <h3 class="mdx-card__title" data-i18n={titleId ?? undefined}>{title}</h3>
   <div class="mdx-card__body"><slot /></div>
 </div>
 

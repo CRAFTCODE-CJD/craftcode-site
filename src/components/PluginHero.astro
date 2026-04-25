@@ -17,11 +17,14 @@ interface Props {
   /** Optional i18n keys — when set, text nodes get data-i18n attrs so the
    *  runtime swapper (src/i18n/i18n.ts) can replace them on lang change. */
   i18nKeys?: { title?: string; tagline?: string; kicker?: string };
+  /** Optional i18n keys for cta labels — index-aligned with ctas[]. */
+  ctaKeys?: (string | undefined)[];
 }
 const {
   kicker, title, version, tagline,
   image, ctas = [], accent,
   i18nKeys = {},
+  ctaKeys = [],
 } = Astro.props;
 ---
 
@@ -39,14 +42,14 @@ const {
 
     {ctas.length > 0 && (
       <div class="plugin-hero-cta">
-        {ctas.map((c) => (
+        {ctas.map((c, i) => (
           <a
             href={c.href}
             class:list={['plugin-hero-btn', c.variant === 'primary' && 'primary']}
             target={c.external ? '_blank' : undefined}
             rel={c.external ? 'noopener' : undefined}
           >
-            {c.variant === 'primary' ? '▸ ' : ''}{c.label}{c.external ? ' ↗' : ''}
+            {c.variant === 'primary' ? '▸ ' : ''}<span data-i18n={ctaKeys[i] ?? undefined}>{c.label}</span>{c.external ? ' ↗' : ''}
           </a>
         ))}
       </div>

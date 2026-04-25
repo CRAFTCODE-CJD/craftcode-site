@@ -3,8 +3,9 @@ type BlockType = 'info' | 'warning' | 'error' | 'ok';
 interface Props {
   type?: BlockType;
   title?: string;
+  titleId?: string;
 }
-const { type = 'info', title } = Astro.props as Props;
+const { type = 'info', title, titleId } = Astro.props as Props;
 const icons: Record<BlockType, string> = {
   info: '>>',
   warning: '!!',
@@ -16,7 +17,7 @@ const icons: Record<BlockType, string> = {
 <aside class:list={['mdx-block', `mdx-block--${type}`]} role={type === 'error' ? 'alert' : 'note'}>
   <header class="mdx-block__head">
     <span class="mdx-block__icon" aria-hidden="true">{icons[type]}</span>
-    {title && <span class="mdx-block__title">{title}</span>}
+    {title && <span class="mdx-block__title" data-i18n={titleId ?? undefined}>{title}</span>}
   </header>
   <div class="mdx-block__body"><slot /></div>
 </aside>

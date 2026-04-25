@@ -7,14 +7,14 @@ order: 2
 ## <Trans id="plugin.manualsprite.getting-started.h.установка">Установка</Trans>
 
 <Steps>
-  <Step title="Купи и установи через FAB">
-    Открой плагин на [FAB Marketplace](https://www.fab.com/listings/) и нажми **Install to Engine** — плагин автоматически скачается в твою версию UE.
+  <Step title="Купи и установи через FAB" titleId="plugin.manualsprite.getting-started.step.1.title">
+    <Trans id="plugin.manualsprite.getting-started.step.1.body">Открой плагин на [FAB Marketplace](https://www.fab.com/listings/) и нажми **Install to Engine** — плагин автоматически скачается в твою версию UE.</Trans>
   </Step>
-  <Step title="Включи плагин в проекте">
-    **Edit → Plugins → Paper2D → Manual Sprite Editor Tools** → галочка.
+  <Step title="Включи плагин в проекте" titleId="plugin.manualsprite.getting-started.step.2.title">
+    <Trans id="plugin.manualsprite.getting-started.step.2.body">**Edit → Plugins → Paper2D → Manual Sprite Editor Tools** → галочка.</Trans>
   </Step>
-  <Step title="Перезапусти редактор">
-    Editor предложит скомпилировать плагин и перезапустится автоматически.
+  <Step title="Перезапусти редактор" titleId="plugin.manualsprite.getting-started.step.3.title">
+    <Trans id="plugin.manualsprite.getting-started.step.3.body">Editor предложит скомпилировать плагин и перезапустится автоматически.</Trans>
   </Step>
 </Steps>
 
@@ -29,11 +29,11 @@ order: 2
 <Trans id="plugin.manualsprite.getting-started.шаг-2-открой-редактор.p1">Дважды кликни по ассету `Manual Sprite`. В панели **Details** справа:</Trans>
 
 <Steps>
-  <Step title="Назначь Source Texture">
-    Это текстура, по которой ты будешь строить геометрию (обычно это PaperSprite-исходник).
+  <Step title="Назначь Source Texture" titleId="plugin.manualsprite.getting-started.step.4.title">
+    <Trans id="plugin.manualsprite.getting-started.step.4.body">Это текстура, по которой ты будешь строить геометрию (обычно это PaperSprite-исходник).</Trans>
   </Step>
-  <Step title="Включи Use Manual Geometry">
-    Галочка в Details — переключает sprite на ручной режим. Стандартная геометрия Paper2D отключается.
+  <Step title="Включи Use Manual Geometry" titleId="plugin.manualsprite.getting-started.step.5.title">
+    <Trans id="plugin.manualsprite.getting-started.step.5.body">Галочка в Details — переключает sprite на ручной режим. Стандартная геометрия Paper2D отключается.</Trans>
   </Step>
 </Steps>
 
@@ -59,7 +59,7 @@ order: 2
   </tbody>
 </table>
 
-<Image src="/images/plugins/manualsprite/Screen_02.png" alt="Тулбар редактора Manual Sprite" caption="Тулбар: История — Режимы — Зеркало — Сетка — Инструменты — Generate" />
+<Image src="/images/plugins/manualsprite/Screen_02.png" alt="Тулбар редактора Manual Sprite" caption="Тулбар: История — Режимы — Зеркало — Сетка — Инструменты — Generate" altId="plugin.manualsprite.getting-started.image.1.alt" captionId="plugin.manualsprite.getting-started.image.1.caption" />
 
 ### <Trans id="plugin.manualsprite.getting-started.h.зеркальное-редактирование">Зеркальное редактирование</Trans>
 
@@ -81,7 +81,7 @@ order: 2
 
 <Trans id="plugin.manualsprite.getting-started.шаг-4-генерация-меша.p1">Нажми `Ctrl+M` или кнопку **Generate** на тулбаре. Откроется диалог **Mesh Generation**:</Trans>
 
-<Image src="/images/plugins/manualsprite/Screen_03.png" alt="Диалог генерации StaticMesh / SkeletalMesh" caption="Окно настройки генерации меша" />
+<Image src="/images/plugins/manualsprite/Screen_03.png" alt="Диалог генерации StaticMesh / SkeletalMesh" caption="Окно настройки генерации меша" altId="plugin.manualsprite.getting-started.image.2.alt" captionId="plugin.manualsprite.getting-started.image.2.caption" />
 
 <table>
   <thead>
@@ -100,6 +100,6 @@ order: 2
 
 <Trans id="plugin.manualsprite.getting-started.шаг-4-генерация-меша.p3">Нажми **Generate** — новые ассеты появятся в Content Browser и подсветятся.</Trans>
 
-<Block type="ok" title="Результат">
+<Block type="ok" title="Результат" titleId="plugin.manualsprite.getting-started.block.1.title">
 <Trans id="plugin.manualsprite.getting-started.block.p1">После генерации ты получаешь полноценный `StaticMesh` или `SkeletalMesh` с материалом, который можно использовать в любом 3D-актёре. Геометрия остаётся в ассете `Manual Sprite` — можно перегенерировать после правок.</Trans>
 </Block>

@@ -39,6 +39,12 @@ export interface KaplayHandle {
   /** Lazily render (if needed) a full-size event-platform hatch
    *  sprite for the given dimensions and return its sprite name. */
   ensureEventHatchSprite(w: number, h: number): string;
+  /** Force a specific clip on a bot for `durationMs`. While the
+   *  forced window is active, the animation arbiter will not
+   *  override with motion-based clips. Used by dialogue-bridge
+   *  (line.clip), behavior-actions, and tasks for priority anims
+   *  like typing/think/hammer/wave/excited/sleep. */
+  forceClip(who: BotWho, clip: string, durationMs: number): void;
   /** KAPLAY context — exposed so companion modules (events, etc.) can add objects. */
   k: KAPLAYCtx;
   /** Live references to the two bot GameObjs. Consumers use `bot.play(clip)`
@@ -361,6 +367,16 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
         // the idle-sleep watcher below.
         _lastActiveAt: 0,
         _isSleeping: false,
+        // Set true while the task / arc system owns this bot's intent —
+        // wander loop must NOT re-roll direction or play 'walk' over a
+        // task's chosen clip (typing/think/sleep/wave).
+        _taskOwned: false,
+        // Animation arbiter override: scene/behavior/task can request a
+        // priority clip (typing/think/hammer/wave/excited/sleep) for a
+        // bounded window; arbiter keeps that clip even when vel.x ≠ 0
+        // until `_forcedClipUntil` expires.
+        _forcedClip: null as string | null,
+        _forcedClipUntil: 0,
       },
     ]);
     return bot;
@@ -377,6 +393,9 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
     _groundedOnBot: number;
     _lastActiveAt: number;
     _isSleeping: boolean;
+    _taskOwned: boolean;
+    _forcedClip: string | null;
+    _forcedClipUntil: number;
   };
   const code = makeBot('code', 360) as typeof craft;
   const bots = [craft, code];
@@ -399,6 +418,12 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
 
   bots.forEach((bot) => {
     bot.onGround(() => {
+      // Force the land clip via the arbiter window so the per-frame
+      // arbiter doesn't immediately overwrite it with 'idle'/'walk'.
+      // 180ms matches the legacy land hold; arbiter takes back over
+      // automatically when the window expires.
+      bot._forcedClip = 'land';
+      bot._forcedClipUntil = performance.now() + 180;
       try { bot.play('land'); } catch (_) {}
       spawnDust(bot.pos.x, bot.pos.y);
       // Squash & stretch was disabled — `bot.use(k.scale(...))` re-
@@ -408,11 +433,6 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
       // console). Land animation alone communicates impact well
       // enough; if we want squash later, attach scale ONCE at init
       // and mutate bot.scale in place instead of re-using.
-      setTimeout(() => {
-        if (!bot.isDragging && bot.isGrounded()) {
-          try { bot.play(bot.wanderDir !== 0 ? 'walk' : 'idle'); } catch (_) {}
-        }
-      }, 180);
     });
     bot.onHeadbutt(() => {
       // Cap upward velocity so they don't stick under platforms.
@@ -467,38 +487,76 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
   });
 
   // ── Pixel-accurate HEAD_TOP per bot ─────────────────
-  // Parity with the legacy engine: scan frame 0 of each sprite sheet
-  // for the first non-transparent row — that's the visual top of the
-  // bot's head (hair/antenna tip). Stored as a Y offset INSIDE the 48-
-  // pixel sprite box. Used by the bot-on-bot snap below so the upper
-  // bot's feet rest on the exact pixel tip of the lower bot's head,
-  // not somewhere inside the 40-px hit-area.
+  // Parity with the legacy engine: scan EVERY frame of each sprite sheet
+  // for the highest non-transparent row — the visual top of the bot's
+  // head (hair/antenna tip) across all clips. Stored as a Y offset
+  // INSIDE the 48-pixel sprite box. Used by the bot-on-bot snap so the
+  // upper bot's feet rest on the exact pixel tip of the lower bot's
+  // head, no matter which animation frame the lower bot is on.
+  //
+  // Why all frames? frame 0 = idle_a; walk/jump/wave/typing have
+  // different head positions. Stacking with idle-only data made the
+  // upper bot float ~8 px when the lower played walk/land/jump.
   const SPRITE_H = 48;
+  // Min head-top across all 92 frames per bot (pessimistic = safe stack).
   const headTopPx: Record<BotWho, number> = { craft: 8, code: 10 }; // sensible defaults until scan returns
-  const scanHeadTop = (src: string, who: BotWho) => {
+  // Per-frame head-top, for the bonus precise stack snap (optional).
+  const headTopByFrame: Record<BotWho, Int8Array> = {
+    craft: new Int8Array(SHEET_FRAMES).fill(8),
+    code:  new Int8Array(SHEET_FRAMES).fill(10),
+  };
+  const scanMinHeadTop = (src: string, who: BotWho) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.src = src;
     img.onload = () => {
       try {
         const c = document.createElement('canvas');
-        c.width = SPRITE_H; c.height = SPRITE_H;
+        c.width = SHEET_FRAMES * SPRITE_H;
+        c.height = SPRITE_H;
         const ctx = c.getContext('2d')!;
-        // Frame 0 is the first 48×48 tile at (0, 0) of the sheet.
-        ctx.drawImage(img, 0, 0, SPRITE_H, SPRITE_H, 0, 0, SPRITE_H, SPRITE_H);
-        const d = ctx.getImageData(0, 0, SPRITE_H, SPRITE_H).data;
-        for (let y = 0; y < SPRITE_H; y++) {
-          for (let x = 0; x < SPRITE_H; x++) {
-            if (d[(y * SPRITE_H + x) * 4 + 3] > 128) {
-              headTopPx[who] = y;
-              return;
+        ctx.drawImage(img, 0, 0);
+        const d = ctx.getImageData(0, 0, c.width, SPRITE_H).data;
+        const stride = c.width * 4;
+        let globalMin = SPRITE_H;
+        const perFrame = headTopByFrame[who];
+        for (let f = 0; f < SHEET_FRAMES; f++) {
+          const baseX = f * SPRITE_H;
+          let frameMin = SPRITE_H;
+          for (let y = 0; y < frameMin; y++) {
+            const rowBase = y * stride;
+            for (let x = baseX; x < baseX + SPRITE_H; x++) {
+              if (d[rowBase + x * 4 + 3] > 128) {
+                if (y < frameMin) frameMin = y;
+                break;
+              }
             }
           }
+          perFrame[f] = frameMin;
+          if (frameMin < globalMin) globalMin = frameMin;
         }
+        headTopPx[who] = globalMin;
       } catch (_) { /* CORS or no-DOM — keep default */ }
     };
   };
-  try { scanHeadTop('/sprites/craft.png', 'craft'); scanHeadTop('/sprites/code.png', 'code'); } catch (_) {}
+  try { scanMinHeadTop('/sprites/craft.png', 'craft'); scanMinHeadTop('/sprites/code.png', 'code'); } catch (_) {}
+
+  // Returns the per-frame headTop for the bot's CURRENT animation frame.
+  // Falls back to the pessimistic min when the frame index can't be
+  // resolved (e.g. anim still loading). Used by the optional precise
+  // stack snap so the upper bot lands exactly on whatever pose the
+  // lower is currently in.
+  const headTopForCurrentFrame = (bot: BotObj, who: BotWho): number => {
+    try {
+      // KAPLAY exposes the current frame index on the sprite component.
+      // It's the absolute frame within the sheet (0..SHEET_FRAMES-1).
+      const f = (bot as unknown as { frame?: number }).frame;
+      if (typeof f === 'number' && f >= 0 && f < SHEET_FRAMES) {
+        return headTopByFrame[who][f];
+      }
+    } catch (_) {}
+    return headTopPx[who];
+  };
 
   // ── Bot-on-bot stacking snap ─────────────────────────
   // Feet of the upper bot land exactly on the VISIBLE head pixel of
@@ -521,10 +579,12 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
 
       // Pixel-accurate head Y of the lower bot in world space. anchor
       // 'bot' → pos.y is the feet line; the sprite box extends SPRITE_H
-      // upward from there, and the head pixel sits headTopPx[who] rows
-      // down from the box top.
+      // upward from there, and the head pixel sits headTopForCurrentFrame
+      // rows down from the box top. Per-frame lookup means the upper bot
+      // tracks the lower bot's head as the lower's animation cycles
+      // (walk bobs head a few px, jump tucks, etc.).
       const lowerWho = lower === craft ? 'craft' : 'code';
-      const lowerHeadY = lower.pos.y - SPRITE_H + headTopPx[lowerWho];
+      const lowerHeadY = lower.pos.y - SPRITE_H + headTopForCurrentFrame(lower, lowerWho);
 
       // Upper feet Y == upper.pos.y (anchor='bot'). Snap when within
       // a small window above/below the head pixel and descending.
@@ -554,6 +614,14 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
     for (const bot of bots) {
       if (bot.isDragging) continue;
       if (!bot.isGrounded()) continue;
+
+      // Task / arc system has authority — skip random wander entirely.
+      // Tasks set bot.wanderDir directly when they want movement.
+      if (bot._taskOwned) {
+        // Still apply movement if the task has set a wanderDir.
+        if (bot.wanderDir !== 0) bot.move(bot.wanderDir * WANDER_SPEED, 0);
+        continue;
+      }
 
       if (now >= bot.nextWanderAt) {
         // Re-roll direction: -1, 0, +1.
@@ -608,7 +676,11 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
     const now = performance.now();
     for (const bot of bots) {
       const speed = Math.abs(bot.vel.x) + Math.abs(bot.vel.y);
-      const moving = speed > 6 || bot.wanderDir !== 0 || bot.isDragging || !bot.isGrounded();
+      // A task-owned bot is always considered "active" — even when idle
+      // typing/thinking/napping by design — so the sleep watcher doesn't
+      // override its scripted clip with the generic 'sleep' anim.
+      const moving = speed > 6 || bot.wanderDir !== 0 || bot.isDragging
+        || !bot.isGrounded() || bot._taskOwned;
       if (moving) {
         bot._lastActiveAt = now;
         if (bot._isSleeping) {
@@ -624,6 +696,68 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
       }
     }
   });
+
+  // ── Animation arbiter ─────────────────────────────────
+  // Single source of truth for every-frame clip selection. Solves the
+  // long-running glitch where a bot would `bot.play('walk')` from the
+  // wander loop, then a behavior/scene would `bot.play('typing')`, and
+  // the next wander tick would clobber it back to 'walk' — leaving the
+  // bot sliding with the wrong anim, or worse, stuck on idle while
+  // moving (vel.x ≠ 0 + idle clip = "skating" bug from screenshots).
+  //
+  // Priority order each frame:
+  //   1. _taskOwned    → don't touch (tasks own the clip explicitly)
+  //   2. _forcedClip valid window → forced clip (wins over physics state
+  //      so dialogue 'typing'/'think'/'hammer'/'wave' are honoured even
+  //      mid-air or mid-drag — caller is responsible for short windows)
+  //   3. isDragging    → 'tumble'
+  //   4. _isSleeping   → 'sleep' (sleep watcher's clip)
+  //   5. !isGrounded   → 'jump'
+  //   6. moving (|vel.x|>6 or wanderDir≠0 or steered) → 'walk'
+  //   7. otherwise     → 'idle'
+  //
+  // The arbiter only calls bot.play(...) when the desired clip differs
+  // from the currently playing one — re-issuing the same anim would
+  // restart it every frame and break loop timing.
+  const pickClip = (bot: typeof craft): string | null => {
+    if (bot._taskOwned) return null;            // tasks/arcs/ai-loop own the clip
+    const now = performance.now();
+    if (bot._forcedClip && now < bot._forcedClipUntil) return bot._forcedClip;
+    // Expired forced window — clear so the next force can stamp cleanly.
+    if (bot._forcedClip && now >= bot._forcedClipUntil) {
+      bot._forcedClip = null;
+      bot._forcedClipUntil = 0;
+    }
+    if (bot.isDragging) return 'tumble';
+    if (bot._isSleeping) return 'sleep';
+    if (!bot.isGrounded()) return 'jump';
+    if (Math.abs(bot.vel.x) > 6 || bot.wanderDir !== 0) return 'walk';
+    return 'idle';
+  };
+  k.onUpdate(() => {
+    for (const bot of bots) {
+      const want = pickClip(bot);
+      if (!want) continue;
+      try {
+        const cur = (bot as unknown as { getCurAnim?: () => { name?: string } | null }).getCurAnim?.();
+        if (cur && cur.name === want) continue;
+        bot.play(want);
+      } catch (_) { /* sprite component might be mid-swap */ }
+    }
+  });
+
+  const forceClip = (who: BotWho, clip: string, durationMs: number) => {
+    const bot = who === 'craft' ? craft : code;
+    if (!bot) return;
+    bot._forcedClip = clip;
+    bot._forcedClipUntil = performance.now() + Math.max(0, durationMs);
+    // Stamp immediately so consumers see the visual change on the next
+    // frame even before the arbiter ticks (it's order-dependent).
+    try {
+      const cur = (bot as unknown as { getCurAnim?: () => { name?: string } | null }).getCurAnim?.();
+      if (!cur || cur.name !== clip) bot.play(clip);
+    } catch (_) {}
+  };
 
   // ── Wall bounce for thrown / dropped bots ─────────────
   // Even when not actively wandering (e.g. mid-tumble after throw), a bot
@@ -696,6 +830,13 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
     bot.vel.y = 0;
     dragHistory.length = 0;
     dragHistory.push({ x, y, t: performance.now() });
+    // While dragging, the arbiter forces 'tumble' (isDragging branch).
+    // We override briefly with 'wave' for a friendly pickup feel — the
+    // arbiter respects this only during the forced window, so on the
+    // next tick it goes back to 'tumble' until release. Keep the wave
+    // window short (250ms) so most of the drag reads as 'tumble'.
+    bot._forcedClip = 'wave';
+    bot._forcedClipUntil = performance.now() + 250;
     try { bot.play('wave'); } catch (_) {}
   });
 
@@ -739,6 +880,11 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
       bot.vel.x = Math.max(-900, Math.min(900, vx));
       bot.vel.y = Math.max(-900, Math.min(900, vy));
     }
+    // Force tumble for ~1.5s so the arbiter doesn't immediately swap
+    // to 'jump' (airborne) the moment isDragging clears. onGround()
+    // installs its own 'land' force which supersedes this on touchdown.
+    bot._forcedClip = 'tumble';
+    bot._forcedClipUntil = performance.now() + 1500;
     try { bot.play('tumble'); } catch (_) {}
     dragged = null;
   };
@@ -909,6 +1055,7 @@ export function initKaplayPlayground(opts: InitOpts): KaplayHandle {
     showBubble,
     hideBubbles,
     ensureEventHatchSprite: ensureEventHatch,
+    forceClip,
     pause() {
       if (paused) return;
       paused = true;

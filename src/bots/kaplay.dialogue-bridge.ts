@@ -139,8 +139,11 @@ export function installDialogueBridge(handle: KaplayHandle): () => void {
     return (window as unknown as { __kaplayBots?: { bots?: KaplayBotsMap } }).__kaplayBots?.bots;
   };
 
-  // Given a line, do the clip/act work: play the animation on the relevant
-  // bot (if any), then schedule a return-to-idle after the hold window.
+  // Given a line, do the clip/act work: route the chosen clip through
+  // the engine's animation arbiter via `handle.forceClip` so motion-
+  // based logic (vel.x → walk) doesn't clobber the scene's clip while
+  // the hold window is active. When the window expires, the arbiter
+  // automatically returns to motion-based pick (idle/walk/jump).
   const applyLineAction = (line: BotLine & { _key?: string }, holdMs: number) => {
     const bots = getBots();
     if (!bots) return;
@@ -158,20 +161,13 @@ export function installDialogueBridge(handle: KaplayHandle): () => void {
     }
 
     if (!clipName) return;
+    // Hold the clip for the duration of the line — slightly longer than
+    // the bubble (legacy parity used setCharState + idle restore after
+    // 600ms minimum). When `_forcedClipUntil` expires the arbiter
+    // resumes idle/walk/jump per physics state, no manual restore call.
     try {
-      (bot as { play?: (c: string) => void }).play?.(clipName);
-    } catch (_) { return; }
-
-    // Return to idle after the hold window (matches legacy setCharState
-    // restore-to-idle after typewriter), but only if grounded.
-    setTimeout(() => {
-      try {
-        const grounded = (bot as { isGrounded?: () => boolean }).isGrounded?.();
-        if (grounded !== false) {
-          (bot as { play?: (c: string) => void }).play?.('idle');
-        }
-      } catch (_) { /* bot might be destroyed */ }
-    }, Math.max(holdMs, 600));
+      handle.forceClip(who, clipName, Math.max(holdMs, 600));
+    } catch (_) { /* engine handle may be torn down */ }
   };
 
   const renderLine = (line: BotLine & { _key?: string }, holdMs: number) => {

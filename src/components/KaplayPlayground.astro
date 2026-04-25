@@ -101,6 +101,10 @@ import TypingText from '~/components/TypingText.astro';
   import { startSimTickers } from '~/bots/kaplay.sim';
   import { installBehaviorActions } from '~/bots/kaplay.behavior-actions';
   import { startAILoop } from '~/bots/kaplay.ai-loop';
+  import { installWorld } from '~/bots/kaplay.world';
+  import { installPacing } from '~/bots/kaplay.pacing';
+  import { installTasks } from '~/bots/kaplay.tasks';
+  import { installArcs } from '~/bots/kaplay.arcs';
 
   const boot = () => {
     const canvas = document.getElementById('cc-canvas') as HTMLCanvasElement | null;
@@ -119,6 +123,15 @@ import TypingText from '~/components/TypingText.astro';
     installBehaviorActions(handle);
     startSimTickers(handle);
     startAILoop(handle, { reducedMotion: reduced });
+    // Watching-mode layers — task system, mini-arcs, world counters, and
+    // global pacing rhythm. Order matters: world + pacing are read by
+    // tasks/arcs; tasks must install before arcs (arcs use tasks API).
+    if (!reduced) {
+      const world = installWorld(handle);
+      const pacing = installPacing(handle);
+      const tasks = installTasks(handle, world.state, pacing.state);
+      installArcs(handle, tasks, world.state, pacing.state);
+    }
 
     // Pause / resume with tab visibility.
     document.addEventListener('visibilitychange', () => {

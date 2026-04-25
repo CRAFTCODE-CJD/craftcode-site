@@ -8,10 +8,15 @@ interface Props {
   autoCaption?: boolean;
   width?: number;
   height?: number;
+  /** Optional i18n keys for translating alt / caption at runtime. */
+  altId?: string;
+  captionId?: string;
 }
-const { src, alt = '', caption, autoCaption = false, width, height } = Astro.props as Props;
+const { src, alt = '', caption, autoCaption = false, width, height, altId, captionId } = Astro.props as Props;
 // Effective caption: explicit wins; else fall back to alt when autoCaption is on.
 const effectiveCaption = caption ?? (autoCaption && alt ? alt : undefined);
+// Build data-i18n-attr for alt translation on the <img>.
+const imgI18nAttr = altId ? `alt:${altId}` : undefined;
 ---
 
 <figure class="mdx-image">
@@ -31,6 +36,7 @@ const effectiveCaption = caption ?? (autoCaption && alt ? alt : undefined);
       loading="lazy"
       decoding="async"
       class="mdx-image__img"
+      data-i18n-attr={imgI18nAttr}
     />
     <span class="mdx-image__zoom" aria-hidden="true">
       <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
@@ -39,7 +45,7 @@ const effectiveCaption = caption ?? (autoCaption && alt ? alt : undefined);
       </svg>
     </span>
   </button>
-  {effectiveCaption && <figcaption class="mdx-image__caption">// {effectiveCaption}</figcaption>}
+  {effectiveCaption && <figcaption class="mdx-image__caption">// <span data-i18n={captionId ?? undefined}>{effectiveCaption}</span></figcaption>}
 </figure>
 
 <style>

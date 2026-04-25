@@ -12,7 +12,8 @@
     "preview": "astro preview",
     "astro": "astro",
     "i18n:extract": "node scripts/extract-i18n.mjs",
-    "i18n:write": "node scripts/extract-i18n.mjs --write"
+    "i18n:write": "node scripts/extract-i18n.mjs --write",
+    "prepare": "husky"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.8",
@@ -29,6 +30,16 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
     "typescript": "^5.7.0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,astro}": [
+      "node -e \"console.log('typecheck staged files')\""
+    ],
+    "*.{json,md,yml,yaml}": [
+      "node -e \"console.log('format placeholder')\""
+    ]
   }
 }

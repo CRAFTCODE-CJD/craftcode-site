@@ -19,7 +19,7 @@
     "@astrojs/check": "^0.9.8",
     "@astrojs/mdx": "^4.0.0",
     "@astrojs/sitemap": "^3.7.2",
-    "astro": "^5.0.0",
+    "astro": "^6.1.9",
     "kaplay": "^3001.0.19",
     "sharp": "^0.33.5",
     "zod": "^3.24.0"

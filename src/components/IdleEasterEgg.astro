@@ -17,6 +17,11 @@ import CompanionBot from './CompanionBot.astro';
 
 <script is:inline>
   (() => {
+    // Skip entirely on phones — the idle bot is purely decorative and an
+    // every-second setInterval + 5 event listeners is a meaningful battery
+    // tax on a device where the overlay never matters.
+    if (window.matchMedia && window.matchMedia('(max-width: 768px)').matches) return;
+
     const container = document.getElementById('idle-bot-container');
     if (!container) return;
     let idleTime = 0;

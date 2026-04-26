@@ -28,8 +28,15 @@ import { visit, SKIP } from 'unist-util-visit';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const CONTENT_ROOT = path.join(ROOT, 'src/content/docs');
-const EN_FILE = path.join(ROOT, 'src/i18n/translations/en.json');
-const RU_FILE = path.join(ROOT, 'src/i18n/translations/ru.json');
+// Phase 5b: translations are split per scope under translations/<lang>/.
+// This dev-only script merges them on read and re-emits per-scope on write.
+const TRANSLATIONS_DIR = path.join(ROOT, 'src/i18n/translations');
+const SCOPES = ['common', 'plugin', 'dialogue'];
+const scopeOf = (key) => {
+  if (key.startsWith('plugin.')) return 'plugin';
+  if (key.startsWith('dialogue.')) return 'dialogue';
+  return 'common';
+};
 
 const WRITE = process.argv.includes('--write');
 
@@ -345,6 +352,31 @@ async function readJson(file) {
   }
 }
 
+/** Merge every per-scope translation file for the given lang into one
+ *  flat dict (the format the rest of this script expects). */
+async function readMergedDict(lang) {
+  const out = {};
+  for (const scope of SCOPES) {
+    const file = path.join(TRANSLATIONS_DIR, lang, `${scope}.json`);
+    Object.assign(out, await readJson(file));
+  }
+  return out;
+}
+
+/** Re-emit a flat dict back into per-scope JSON files. */
+async function writeSplitDict(lang, dict) {
+  const buckets = Object.fromEntries(SCOPES.map((s) => [s, {}]));
+  for (const k of Object.keys(dict).sort()) {
+    buckets[scopeOf(k)][k] = dict[k];
+  }
+  const dir = path.join(TRANSLATIONS_DIR, lang);
+  await import('node:fs/promises').then((m) => m.mkdir(dir, { recursive: true }));
+  for (const scope of SCOPES) {
+    const out = JSON.stringify(buckets[scope]);
+    await writeFile(path.join(dir, `${scope}.json`), out, 'utf8');
+  }
+}
+
 function sortObj(obj) {
   const out = {};
   for (const k of Object.keys(obj).sort()) out[k] = obj[k];
@@ -433,8 +465,8 @@ async function processFile(file, en, ru) {
 
 async function main() {
   const files = await listMdx();
-  const en = await readJson(EN_FILE);
-  const ru = await readJson(RU_FILE);
+  const en = await readMergedDict('en');
+  const ru = await readMergedDict('ru');
   const enBefore = Object.keys(en).length;
   const ruBefore = Object.keys(ru).length;
 
@@ -466,9 +498,9 @@ async function main() {
     return;
   }
 
-  await writeFile(EN_FILE, JSON.stringify(sortObj(en), null, 2) + '\n', 'utf8');
-  await writeFile(RU_FILE, JSON.stringify(sortObj(ru), null, 2) + '\n', 'utf8');
-  console.log('[i18n] wrote en.json + ru.json');
+  await writeSplitDict('en', en);
+  await writeSplitDict('ru', ru);
+  console.log('[i18n] wrote translations/{en,ru}/{common,plugin,dialogue}.json');
 }
 
 main().catch((err) => {

@@ -5,32 +5,75 @@
    no route prefix, no reload.
 
    Public API:
-     getLang()     → 'en' | 'ru'
-     setLang(l)    → Promise<void>; persist + apply + emit 'langchange'
-     t(key, lang?) → string | null (null = no match; sync after initI18n)
-     initI18n()    → Promise<void>; auto-init (run once from Base.astro)
-     onLangChange(cb) → subscribe
+     getLang()                → 'en' | 'ru'
+     setLang(l)               → Promise<void>; persist + apply + emit 'langchange'
+     t(key, lang?)            → string | null (null = no match; sync after initI18n)
+     initI18n({scopes?})      → Promise<void>; auto-init (run once from Base.astro)
+     onLangChange(cb)         → subscribe
 
    Translation hooks in DOM:
      <el data-i18n="key">fallback text</el>
      <el data-i18n-attr="alt:img.alt, title:hero.name">…</el>
+
+   Scope-split (Phase 5b, mobile-perf pass 2):
+   ───────────────────────────────────────────
+   The dictionary is sliced into three scopes so we never ship the full
+   ~168 KB blob on every page:
+
+     common   — nav/footer/bot/site/* keys present on every route (~9 KB)
+     plugin   — every `plugin.*` key (~120 KB) — only loaded on plugin pages
+     dialogue — every `dialogue.*` key (~34 KB) — only loaded where KAPLAY runs
+
+   Pages declare which scopes they need via `data-i18n-scopes` on <html>:
+     <html data-i18n-scopes="common,plugin">…</html>
+   Defaults to "common" when the attribute is missing.
                                                               */
 
 export type Lang = 'en' | 'ru';
+export type Scope = 'common' | 'plugin' | 'dialogue';
 type Dict = Record<string, string>;
 
-const cache: Partial<Record<Lang, Dict>> = {};
+const ALL_SCOPES: Scope[] = ['common', 'plugin', 'dialogue'];
+
+// cache[lang][scope] = Dict — once a scope is loaded it stays in memory.
+const cache: Partial<Record<Lang, Partial<Record<Scope, Dict>>>> = {};
+const inflight: Partial<Record<Lang, Partial<Record<Scope, Promise<Dict>>>>> = {};
 const LANG_KEY = 'lang';
 
-async function loadDict(lang: Lang): Promise<Dict> {
-  if (cache[lang]) return cache[lang]!;
-  const mod = lang === 'en'
-    ? await import('./translations/en.json')
-    : await import('./translations/ru.json');
-  cache[lang] = (mod as { default: Dict }).default;
-  return cache[lang]!;
-}
+function loadScope(lang: Lang, scope: Scope): Promise<Dict> {
+  cache[lang] ??= {};
+  const cached = cache[lang]![scope];
+  if (cached) return Promise.resolve(cached);
 
+  inflight[lang] ??= {};
+  const pending = inflight[lang]![scope];
+  if (pending) return pending;
+
+  // Vite needs static import shapes per file — branch on lang+scope. The
+  // dynamic `import()` triggers a code-split chunk per JSON, which is exactly
+  // what we want: only the requested scope is fetched on a given route.
+  const promise: Promise<Dict> = (async () => {
+    let mod: { default: Dict };
+    if (lang === 'en') {
+      mod = scope === 'common'
+        ? await import('./translations/en/common.json')
+        : scope === 'plugin'
+          ? await import('./translations/en/plugin.json')
+          : await import('./translations/en/dialogue.json');
+    } else {
+      mod = scope === 'common'
+        ? await import('./translations/ru/common.json')
+        : scope === 'plugin'
+          ? await import('./translations/ru/plugin.json')
+          : await import('./translations/ru/dialogue.json');
+    }
+    cache[lang]![scope] = mod.default;
+    return mod.default;
+  })();
+
+  inflight[lang]![scope] = promise;
+  return promise;
+}
 
 /** Resolve current language from storage → navigator → default. */
 export function getLang(): Lang {
@@ -44,14 +87,37 @@ export function getLang(): Lang {
   return 'ru';
 }
 
+/** Read the requested scopes from <html data-i18n-scopes="...">. */
+function activeScopes(): Scope[] {
+  if (typeof document === 'undefined') return ['common'];
+  const raw = document.documentElement.dataset.i18nScopes;
+  if (!raw) return ['common'];
+  const parsed = raw
+    .split(',')
+    .map((s) => s.trim())
+    .filter((s): s is Scope => (ALL_SCOPES as string[]).includes(s));
+  return parsed.length > 0 ? parsed : ['common'];
+}
+
 /** Lookup key with EN fallback, or null if absent. §13.11
- *  Sync — reads from in-memory cache populated by loadDict().
- *  Always returns null before initI18n() resolves (boot window). */
+ *  Sync — reads from in-memory cache populated by loadScope().
+ *  Searches every loaded scope; first hit wins. */
 export function t(key: string, lang: Lang = getLang()): string | null {
-  const primary = cache[lang]?.[key];
-  if (typeof primary === 'string') return primary;
-  const fallback = cache.en?.[key];
-  return typeof fallback === 'string' ? fallback : null;
+  const langCache = cache[lang];
+  if (langCache) {
+    for (const scope of ALL_SCOPES) {
+      const v = langCache[scope]?.[key];
+      if (typeof v === 'string') return v;
+    }
+  }
+  const enCache = cache.en;
+  if (enCache) {
+    for (const scope of ALL_SCOPES) {
+      const v = enCache[scope]?.[key];
+      if (typeof v === 'string') return v;
+    }
+  }
+  return null;
 }
 
 /** Inline-markdown → HTML. Handles the subset our extractor produces:
@@ -127,18 +193,32 @@ function apply(lang: Lang, root: ParentNode = document): void {
   });
 }
 
-/** Persist + apply + broadcast. Loads the target language dict if not cached. */
+/** Persist + apply + broadcast. Loads the active scopes for the target
+ *  language if not cached. Note: scope-set is read from <html>, so a page
+ *  that doesn't ask for `plugin` scope will skip that download even after
+ *  a language switch. */
 export async function setLang(lang: Lang): Promise<void> {
   if (typeof localStorage !== 'undefined') localStorage.setItem(LANG_KEY, lang);
   if (typeof document !== 'undefined') {
     document.documentElement.lang = lang;
     document.documentElement.dataset.lang = lang;
   }
-  await loadDict(lang);
+  const scopes = activeScopes();
+  await Promise.all(scopes.map((s) => loadScope(lang, s)));
   apply(lang);
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent<Lang>('langchange', { detail: lang }));
   }
+}
+
+/** Imperatively load an extra scope at runtime — used by the KAPLAY bridge
+ *  when it boots after a poster tap and needs `dialogue.*` keys. Re-applies
+ *  translations once the scope is in memory so any nodes already in the DOM
+ *  pick up newly-resolvable keys. */
+export async function ensureScope(scope: Scope): Promise<void> {
+  const lang = getLang();
+  await loadScope(lang, scope);
+  if (typeof document !== 'undefined') apply(lang);
 }
 
 /** Subscribe to language changes. Returns an unsubscribe fn. */
@@ -148,10 +228,10 @@ export function onLangChange(cb: (lang: Lang) => void): () => void {
   return () => window.removeEventListener('langchange', handler);
 }
 
-/** Boot: set <html lang>, load active language dict, apply dictionary to
- *  existing DOM, wire up the `.cc-lang-btn` toggle. Safe to call multiple times.
- *  Returns a Promise that resolves once the active language dict is loaded
- *  and the initial DOM pass is complete. */
+/** Boot: set <html lang>, load active scopes for active language, apply
+ *  dictionary to existing DOM, wire up the `.cc-lang-btn` toggle. Safe to
+ *  call multiple times. Returns a Promise that resolves once the active
+ *  scopes are loaded and the initial DOM pass is complete. */
 export async function initI18n(): Promise<void> {
   if (typeof document === 'undefined') return;
 
@@ -159,7 +239,7 @@ export async function initI18n(): Promise<void> {
   // engine.legacy.js, etc). Must happen on EVERY call — the ready-guard
   // below can bail out a second time, and we can't leave the API missing
   // just because initI18n was re-imported in a view-transition scenario.
-  (window as unknown as { __i18n?: unknown }).__i18n = { t, getLang, onLangChange };
+  (window as unknown as { __i18n?: unknown }).__i18n = { t, getLang, onLangChange, ensureScope };
 
   if ((window as typeof window & { __i18nReady?: boolean }).__i18nReady) return;
   (window as typeof window & { __i18nReady?: boolean }).__i18nReady = true;
@@ -168,8 +248,9 @@ export async function initI18n(): Promise<void> {
   document.documentElement.lang = lang;
   document.documentElement.dataset.lang = lang;
 
-  // Load active language dict before first DOM pass so t() returns values.
-  await loadDict(lang);
+  // Load active language scopes before first DOM pass so t() returns values.
+  const scopes = activeScopes();
+  await Promise.all(scopes.map((s) => loadScope(lang, s)));
   apply(lang);
 
   // Event delegation — Topbar.astro renders buttons with data-lang="en|ru".
@@ -204,5 +285,5 @@ export async function initI18n(): Promise<void> {
 // for initI18n() to run. initI18n() re-publishes the same object —
 // this just plugs the window between module-load and init().
 if (typeof window !== 'undefined') {
-  (window as unknown as { __i18n?: unknown }).__i18n = { t, getLang, onLangChange };
+  (window as unknown as { __i18n?: unknown }).__i18n = { t, getLang, onLangChange, ensureScope };
 }

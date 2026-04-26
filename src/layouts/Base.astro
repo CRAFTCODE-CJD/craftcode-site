@@ -29,6 +29,9 @@ interface Props {
   image?: string;
   /** Route-scoped CSS class for layout tweaks (e.g. 'is-home', 'is-plugin'). */
   bodyClass?: string;
+  /** Which i18n scopes the page wants. Defaults to ['common']; pages with
+   *  rich plugin docs add 'plugin', the home page (KAPLAY) adds 'dialogue'. */
+  i18nScopes?: Array<'common' | 'plugin' | 'dialogue'>;
 }
 
 const {
@@ -37,14 +40,16 @@ const {
   lang = 'ru',
   image,
   bodyClass,
+  i18nScopes = ['common'],
 } = Astro.props as Props;
 
 const siteTitle = title === 'CRAFTCODE' ? title : `${title} // CRAFTCODE`;
 const ogImage = image ?? '/logo/craftcode_wide.png';
+const scopesAttr = i18nScopes.join(',');
 ---
 
 <!doctype html>
-<html lang={lang} data-theme="cyberpunk">
+<html lang={lang} data-theme="cyberpunk" data-i18n-scopes={scopesAttr}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -54,7 +59,7 @@ const ogImage = image ?? '/logo/craftcode_wide.png';
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin="" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
     <!-- Preload critical fonts to eliminate FOIT for hero/body text. -->
     <link rel="preload" as="font" type="font/woff2"
@@ -64,14 +69,25 @@ const ogImage = image ?? '/logo/craftcode_wide.png';
       href="https://fonts.gstatic.com/s/pressstart2p/v16/e3t4euO8T-267oIAQAu6jDQyK3nVivM.woff2"
       crossorigin="anonymous" />
     <!-- Font stack (3 families, mobile-friendly):
-         · Press Start 2P            — pixel/arcade display (logo + headings).
-         · Inter                     — body text (Latin + Cyrillic).
-         · JetBrains Mono            — terminal/code/UI (Latin + Cyrillic).
-         Removed VT323/Rubik Pixels/Russo One/Play to cut 4 font requests. -->
+         · Press Start 2P            — pixel/arcade display (logo + headings, latin only).
+         · Inter                     — body text (Latin + Cyrillic, weights trimmed to 400/600/800).
+         · JetBrains Mono            — terminal/code/UI (Latin only — Cyrillic glyphs unused
+                                       in mono code blocks; saves a unicode-range subset request).
+         Async-load via media=print swap to keep the CSS off the critical
+         render path; once it resolves we promote it back to media=all. The
+         <noscript> branch covers JS-disabled fallbacks. -->
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&family=Press+Start+2P&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;600&family=Press+Start+2P&display=swap"
+      media="print"
+      onload="this.media='all'"
     />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;600&family=Press+Start+2P&display=swap"
+      />
+    </noscript>
 
     <meta property="og:title" content={siteTitle} />
     <meta property="og:description" content={description} />

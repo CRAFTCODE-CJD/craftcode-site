@@ -6,7 +6,12 @@ import { loadAllManifests, sortByUpdated, pick } from '~/lib/github/manifest';
 const manifests = sortByUpdated(await loadAllManifests());
 ---
 
-<Base title="Плагины // CRAFTCODE" description="CRAFTCODE plugin catalog." bodyClass="is-plugins">
+<Base
+  title="Плагины // CRAFTCODE"
+  description="CRAFTCODE plugin catalog."
+  bodyClass="is-plugins"
+  i18nScopes={["common", "plugin"]}
+>
   <section class="plugins-head">
     <div class="plugins-head__row">
       <div>
@@ -35,7 +40,16 @@ const manifests = sortByUpdated(await loadAllManifests());
             {m.image && (
               <div class="plugin-card__thumb">
                 <picture>
-                  <source srcset={m.image.replace(/\.png$/i, '.webp')} type="image/webp" />
+                  <source
+                    type="image/avif"
+                    srcset={`${m.image.replace(/\.png$/i, '-360.avif')} 360w, ${m.image.replace(/\.png$/i, '-720.avif')} 720w, ${m.image.replace(/\.png$/i, '-1280.avif')} 1280w`}
+                    sizes="(max-width: 720px) 100vw, 33vw"
+                  />
+                  <source
+                    type="image/webp"
+                    srcset={`${m.image.replace(/\.png$/i, '-360.webp')} 360w, ${m.image.replace(/\.png$/i, '-720.webp')} 720w, ${m.image.replace(/\.png$/i, '-1280.webp')} 1280w`}
+                    sizes="(max-width: 720px) 100vw, 33vw"
+                  />
                   <img
                     src={m.image}
                     alt={pick(m.name, 'ru')}

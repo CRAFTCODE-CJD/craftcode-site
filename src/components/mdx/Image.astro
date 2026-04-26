@@ -29,7 +29,16 @@ const imgI18nAttr = altId ? `alt:${altId}` : undefined;
     data-i18n-attr="aria-label:site.image.zoomAria"
   >
     <picture>
-      <source srcset={src.replace(/\.png$/i, '.webp')} type="image/webp" />
+      <source
+        type="image/avif"
+        srcset={`${src.replace(/\.png$/i, '-360.avif')} 360w, ${src.replace(/\.png$/i, '-720.avif')} 720w, ${src.replace(/\.png$/i, '-1280.avif')} 1280w`}
+        sizes="(max-width: 720px) 100vw, 680px"
+      />
+      <source
+        type="image/webp"
+        srcset={`${src.replace(/\.png$/i, '-360.webp')} 360w, ${src.replace(/\.png$/i, '-720.webp')} 720w, ${src.replace(/\.png$/i, '-1280.webp')} 1280w`}
+        sizes="(max-width: 720px) 100vw, 680px"
+      />
       <img
         src={src}
         alt={alt}

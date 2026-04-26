@@ -9,7 +9,12 @@ import LatestReleases from '~/components/LatestReleases.astro';
 import SystemLog from '~/components/SystemLog.astro';
 ---
 
-<Base title="CRAFTCODE" description="A workshop of two robots — plugins and games for Unreal Engine." bodyClass="is-home">
+<Base
+  title="CRAFTCODE"
+  description="A workshop of two robots — plugins and games for Unreal Engine."
+  bodyClass="is-home"
+  i18nScopes={["common", "dialogue"]}
+>
   <KaplayPlayground />
 
   <section class="home-wrap">

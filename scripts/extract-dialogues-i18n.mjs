@@ -19,8 +19,15 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
-const RU_FILE = path.join(ROOT, 'src/i18n/translations/ru.json');
-const EN_FILE = path.join(ROOT, 'src/i18n/translations/en.json');
+// Phase 5b: per-scope JSON layout. Keys are routed by prefix (`plugin.*` →
+// plugin.json, `dialogue.*` → dialogue.json, everything else → common.json).
+const TRANSLATIONS_DIR = path.join(ROOT, 'src/i18n/translations');
+const SCOPES = ['common', 'plugin', 'dialogue'];
+const scopeOf = (key) => {
+  if (key.startsWith('plugin.')) return 'plugin';
+  if (key.startsWith('dialogue.')) return 'dialogue';
+  return 'common';
+};
 
 // Dynamic import — the data module is plain ESM, so node can load it directly.
 const dataUrl = new URL('../src/bots/dialogues.data.js', import.meta.url);
@@ -709,22 +716,29 @@ MONOLOGUE_POOL.forEach((text, i) => {
   monoCount++;
 });
 
-// ─── Merge into existing files ─────────────────────────────────────
-async function mergeInto(file, patch) {
-  const raw = await readFile(file, 'utf8');
-  const existing = JSON.parse(raw);
-  const merged = { ...existing, ...patch };
-  // Stable alphabetical order to keep diffs clean.
-  const sorted = Object.fromEntries(Object.keys(merged).sort().map(k => [k, merged[k]]));
-  await writeFile(file, JSON.stringify(sorted, null, 2) + '\n', 'utf8');
+// ─── Merge into existing per-scope files ─────────────────────────────
+async function readScope(lang, scope) {
+  try {
+    const raw = await readFile(path.join(TRANSLATIONS_DIR, lang, `${scope}.json`), 'utf8');
+    return JSON.parse(raw);
+  } catch { return {}; }
 }
 
-await mergeInto(RU_FILE, newRU);
-await mergeInto(EN_FILE, newEN);
+async function mergeInto(lang, patch) {
+  const buckets = {};
+  for (const s of SCOPES) buckets[s] = await readScope(lang, s);
+  for (const [k, v] of Object.entries(patch)) buckets[scopeOf(k)][k] = v;
+  for (const s of SCOPES) {
+    const sorted = Object.fromEntries(Object.keys(buckets[s]).sort().map((k) => [k, buckets[s][k]]));
+    await writeFile(path.join(TRANSLATIONS_DIR, lang, `${s}.json`), JSON.stringify(sorted), 'utf8');
+  }
+}
+
+await mergeInto('ru', newRU);
+await mergeInto('en', newEN);
 
 console.log(`[dialogues-i18n] scenes=${SCENES.length} lines=${lineCount} monologue=${monoCount}`);
-console.log(`[dialogues-i18n] wrote RU → ${path.relative(ROOT, RU_FILE)}`);
-console.log(`[dialogues-i18n] wrote EN → ${path.relative(ROOT, EN_FILE)}`);
+console.log(`[dialogues-i18n] wrote translations/{en,ru}/{common,plugin,dialogue}.json`);
 
 // Stats: how many EN keys got actual translations vs RU fallback.
 const translatedCount = Object.entries(newEN).filter(([k, v]) => v !== newRU[k]).length;

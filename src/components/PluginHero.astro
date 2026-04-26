@@ -60,7 +60,18 @@ const {
     <div class="plugin-hero-media">
       <div class="media-overlay"></div>
       <picture>
-        <source srcset={image.replace(/\.png$/i, '.webp')} type="image/webp" />
+        {/* AVIF — modern browsers, ~50% smaller than WebP at same visual quality. */}
+        <source
+          type="image/avif"
+          srcset={`${image.replace(/\.png$/i, '-360.avif')} 360w, ${image.replace(/\.png$/i, '-720.avif')} 720w, ${image.replace(/\.png$/i, '-1280.avif')} 1280w`}
+          sizes="(max-width: 720px) 100vw, 50vw"
+        />
+        {/* WebP fallback — universal phone support. */}
+        <source
+          type="image/webp"
+          srcset={`${image.replace(/\.png$/i, '-360.webp')} 360w, ${image.replace(/\.png$/i, '-720.webp')} 720w, ${image.replace(/\.png$/i, '-1280.webp')} 1280w`}
+          sizes="(max-width: 720px) 100vw, 50vw"
+        />
         <img src={image} alt={title} width="1280" height="800" loading="eager" decoding="async" />
       </picture>
       <div class="media-badge">PREVIEW_01</div>

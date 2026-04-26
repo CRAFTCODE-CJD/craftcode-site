@@ -98,7 +98,12 @@ const ctaKeys: (string | undefined)[] = (data.ctas ?? []).map(
 );
 ---
 
-<Base title={data.title} description={data.description} image={data.image}>
+<Base
+  title={data.title}
+  description={data.description}
+  image={data.image}
+  i18nScopes={["common", "plugin"]}
+>
   <article class="plugin-page" style={data.accent ? `--accent: ${data.accent}` : undefined}>
     <!-- Breadcrumbs — always visible, helps orientation. -->
     <nav class="plugin-crumbs" aria-label="Breadcrumbs">
@@ -222,7 +227,16 @@ const ctaKeys: (string | undefined)[] = (data.ctas ?? []).map(
               {data.gallery.shots.map((shot: { n?: string; src: string; caption: string }, i: number) => (
                 <figure class="gallery-shot">
                   <picture>
-                    <source srcset={shot.src.replace(/\.png$/i, '.webp')} type="image/webp" />
+                    <source
+                      type="image/avif"
+                      srcset={`${shot.src.replace(/\.png$/i, '-360.avif')} 360w, ${shot.src.replace(/\.png$/i, '-720.avif')} 720w, ${shot.src.replace(/\.png$/i, '-1280.avif')} 1280w`}
+                      sizes="(max-width: 720px) 100vw, 33vw"
+                    />
+                    <source
+                      type="image/webp"
+                      srcset={`${shot.src.replace(/\.png$/i, '-360.webp')} 360w, ${shot.src.replace(/\.png$/i, '-720.webp')} 720w, ${shot.src.replace(/\.png$/i, '-1280.webp')} 1280w`}
+                      sizes="(max-width: 720px) 100vw, 33vw"
+                    />
                     <img src={shot.src} alt={shot.caption} width="1280" height="800" loading="lazy" decoding="async" />
                   </picture>
                   <figcaption>

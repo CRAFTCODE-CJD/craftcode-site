@@ -21,11 +21,23 @@
 </div>
 
 <script>
-  import '../bots/bot.engine';
-  import { bindGlobalTerminal } from '../bots/bot.terminal';
-  import { bindEasterEggs } from '../bots/bot.easter';
-  bindGlobalTerminal();
-  bindEasterEggs();
+  // Mobile gate — the terminal overlay is hidden by CSS at <=768px, the bots
+  // never appear there, and bot.easter wires up keyboard combos that no phone
+  // user will hit. Skipping the imports avoids ~12 KB of script + sprite
+  // fetches on every mobile pageload.
+  const isMobile = typeof window !== 'undefined'
+    && window.matchMedia('(max-width: 768px)').matches;
+
+  if (!isMobile) {
+    Promise.all([
+      import('../bots/bot.engine'),
+      import('../bots/bot.terminal'),
+      import('../bots/bot.easter'),
+    ]).then(([_engine, terminal, easter]) => {
+      terminal.bindGlobalTerminal();
+      easter.bindEasterEggs();
+    });
+  }
 </script>
 
 <style>

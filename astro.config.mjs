@@ -1,7 +1,6 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import mdx from '@astrojs/mdx';
-import react from '@astrojs/react';
 import sitemap from '@astrojs/sitemap';
 import { fileURLToPath } from 'node:url';
 
@@ -12,5 +11,5 @@ export default defineConfig({
   vite: {
     resolve: { alias: { '~': src } },
   },
-  integrations: [react(), mdx(), sitemap()],
+  integrations: [mdx(), sitemap()],
 });

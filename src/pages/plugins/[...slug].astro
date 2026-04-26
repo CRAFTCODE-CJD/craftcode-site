@@ -79,7 +79,7 @@ const isPluginIndex = entry.id === `plugins/${pluginSlug}`;
 //   plugins/sprite-optimizer/reference   → plugin.spriteOptimizer.reference
 //   plugins/sprite-optimizer/features/atlas → plugin.spriteOptimizer.features.atlas
 const _slugCamel = pluginSlug.replace(/[-_](\w)/g, (_m, c: string) => c.toUpperCase());
-const _tail = entry.id.replace(/^plugins\//, '').split('/').slice(1).filter((p) => p !== 'index').join('.');
+const _tail = entry.id.replace(/^plugins\//, '').split('/').slice(1).filter((p: string) => p !== 'index').join('.');
 const i18nBase = _tail ? `plugin.${_slugCamel}.${_tail}` : `plugin.${_slugCamel}`;
 const k = {
   title: `${i18nBase}.title`,
@@ -144,7 +144,7 @@ const ctaKeys: (string | undefined)[] = (data.ctas ?? []).map(
               <h2 class="plugin-section__title" data-i18n={`${i18nBase}.stats.title`}>{data.stats.title}</h2>
             </header>
             <div class="plugin-stats__grid">
-              {data.stats.stats.map((s, i) => (
+              {data.stats.stats.map((s: { label: string; value: string; delta?: string }, i: number) => (
                 <div class="stat-card">
                   <p class="stat-card__label" data-i18n={`${i18nBase}.stats.stats.${i}.label`}>{s.label}</p>
                   <p class="stat-card__value" data-i18n={`${i18nBase}.stats.stats.${i}.value`}>{s.value}</p>
@@ -162,7 +162,7 @@ const ctaKeys: (string | undefined)[] = (data.ctas ?? []).map(
               <h2 class="plugin-section__title" data-i18n={`${i18nBase}.pipeline.title`}>{data.pipeline.title}</h2>
             </header>
             <ol class="plugin-pipeline__list">
-              {data.pipeline.steps.map((s, i) => (
+              {data.pipeline.steps.map((s: { n: string; title: string; text: string }, i: number) => (
                 <li class="pipeline-step">
                   <span class="pipeline-step__n" data-i18n={`${i18nBase}.pipeline.steps.${i}.n`}>{s.n}</span>
                   <h3 class="pipeline-step__title" data-i18n={`${i18nBase}.pipeline.steps.${i}.title`}>{s.title}</h3>
@@ -195,7 +195,7 @@ const ctaKeys: (string | undefined)[] = (data.ctas ?? []).map(
               let titleKey: string | undefined;
               if (mm) {
                 const sCamel = mm[1].replace(/[-_](\w)/g, (_m, c: string) => c.toUpperCase());
-                const tail = (mm[2] || '').split('/').filter((p) => p && p !== 'index').join('.');
+                const tail = (mm[2] || '').split('/').filter((p: string) => p && p !== 'index').join('.');
                 titleKey = tail ? `plugin.${sCamel}.${tail}.title` : `plugin.${sCamel}.title`;
               }
               return (
@@ -219,11 +219,11 @@ const ctaKeys: (string | undefined)[] = (data.ctas ?? []).map(
               <h2 class="plugin-section__title" data-i18n={`${i18nBase}.gallery.title`}>{data.gallery.title}</h2>
             </header>
             <div class="plugin-gallery__grid">
-              {data.gallery.shots.map((shot, i) => (
+              {data.gallery.shots.map((shot: { n?: string; src: string; caption: string }, i: number) => (
                 <figure class="gallery-shot">
                   <picture>
                     <source srcset={shot.src.replace(/\.png$/i, '.webp')} type="image/webp" />
-                    <img src={shot.src} alt={shot.caption} loading="lazy" />
+                    <img src={shot.src} alt={shot.caption} width="1280" height="800" loading="lazy" decoding="async" />
                   </picture>
                   <figcaption>
                     {shot.n && <span class="gallery-shot__n">{shot.n}</span>}

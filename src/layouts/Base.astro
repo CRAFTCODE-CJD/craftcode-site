@@ -56,26 +56,21 @@ const ogImage = image ?? '/logo/craftcode_wide.png';
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
-    <!-- Preload critical fonts to eliminate FOIT for the hero title and primary text. -->
+    <!-- Preload critical fonts to eliminate FOIT for hero/body text. -->
     <link rel="preload" as="font" type="font/woff2"
       href="https://fonts.gstatic.com/s/inter/v20/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuLyfAZ9hiA.woff2"
       crossorigin="anonymous" />
     <link rel="preload" as="font" type="font/woff2"
       href="https://fonts.gstatic.com/s/pressstart2p/v16/e3t4euO8T-267oIAQAu6jDQyK3nVivM.woff2"
       crossorigin="anonymous" />
-    <link rel="preload" as="font" type="font/woff2"
-      href="https://fonts.gstatic.com/s/vt323/v18/pxiKyp0ihIEF2isfFJU.woff2"
-      crossorigin="anonymous" />
-    <!-- Font stack:
-         · Press Start 2P + VT323    — pixel/CRT display fonts, Latin-only.
-         · Rubik Pixels              — pixel display with Cyrillic (H1).
-         · Russo One                 — blocky futuristic Cyrillic (H2/H3).
-         · Play                      — techno-mono backup with Cyrillic.
-         · Inter + JetBrains Mono    — body + inline code (both scripts).
-         CSS stacks: Latin pixel first, Cyrillic-capable display second. -->
+    <!-- Font stack (3 families, mobile-friendly):
+         · Press Start 2P            — pixel/arcade display (logo + headings).
+         · Inter                     — body text (Latin + Cyrillic).
+         · JetBrains Mono            — terminal/code/UI (Latin + Cyrillic).
+         Removed VT323/Rubik Pixels/Russo One/Play to cut 4 font requests. -->
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Rubik+Pixels&family=Russo+One&family=Play:wght@400;700&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&family=Press+Start+2P&family=VT323&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&family=Press+Start+2P&display=swap"
     />
 
     <meta property="og:title" content={siteTitle} />

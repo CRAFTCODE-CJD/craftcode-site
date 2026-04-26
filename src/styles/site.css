@@ -9,6 +9,17 @@ html, body { margin: 0; padding: 0; }
    pushing the stage out of bounds and toggling the horizontal scrollbar. */
 html, body { overflow-x: hidden; }
 
+/* Defensive guard for narrow viewports — ensures any leaf element that
+   forgets max-width still respects the page width. Pre/code already have
+   their own scrolling. Canvas is excluded because KAPLAY drives its size
+   via the wrapping aspect-ratio container. */
+img, picture, video, iframe {
+  max-width: 100%;
+}
+img, video {
+  height: auto;
+}
+
 body {
   position: relative;
   /* Only the topbar is globally persistent now — the robot playground

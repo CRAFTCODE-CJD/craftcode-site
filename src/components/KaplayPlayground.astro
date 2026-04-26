@@ -54,16 +54,27 @@ import TypingText from '~/components/TypingText.astro';
       <div class="kc-bubble-layer" id="kc-bubble-layer" aria-live="polite"></div>
     </div>
   </div>
+
+  <button type="button" class="kc-stage-poster" id="cc-stage-poster" aria-label="Запустить интерактивную песочницу">
+    <span class="kc-stage-poster__title"><span class="pink">CRAFT</span><span class="yell">CODE</span></span>
+    <span class="kc-stage-poster__cta">▸ play</span>
+    <span class="kc-stage-poster__hint">tap to load workshop · ~250 KB</span>
+  </button>
 </section>
 
 <script>
   // Boot typewriter — identical to BootToPlayground.astro so the brand
   // read is preserved. Morph fires `cc:playground-ready` which the
-  // KAPLAY init listens for.
+  // KAPLAY init listens for. Skipped on mobile (poster mode).
   (() => {
     const stage = document.getElementById('cc-stage');
     const log = document.getElementById('boot-log');
     if (!stage || !log) return;
+    if (typeof window.matchMedia === 'function'
+        && window.matchMedia('(max-width: 768px)').matches) {
+      stage.setAttribute('data-mobile-poster', '');
+      return;
+    }
     const lines = [
       '> BOOT SEQUENCE ................... [OK]',
       '> LOADING /craft/...............  [OK]',
@@ -104,17 +115,32 @@ import TypingText from '~/components/TypingText.astro';
   // rootMargin: '200px' starts loading ~200 px before the stage reaches
   // the viewport so there's no perceptible lag on typical scroll speeds.
   const stage = document.getElementById('cc-stage');
+  const poster = document.getElementById('cc-stage-poster');
+
+  const isPhone = typeof window.matchMedia === 'function'
+    && window.matchMedia('(max-width: 768px)').matches;
 
   if (stage) {
-    const io = new IntersectionObserver(
-      (entries) => {
-        if (!entries[0].isIntersecting) return;
-        io.disconnect();
+    if (isPhone) {
+      // Mobile: never auto-load the 250+ KB engine. Wait for explicit tap.
+      stage.setAttribute('data-mobile-poster', '');
+      poster?.addEventListener('click', () => {
+        stage.removeAttribute('data-mobile-poster');
+        stage.dataset.phase = 'playground';
+        document.dispatchEvent(new CustomEvent('cc:playground-ready'));
         mountKaplay();
-      },
-      { rootMargin: '200px' }
-    );
-    io.observe(stage);
+      }, { once: true });
+    } else {
+      const io = new IntersectionObserver(
+        (entries) => {
+          if (!entries[0].isIntersecting) return;
+          io.disconnect();
+          mountKaplay();
+        },
+        { rootMargin: '200px' }
+      );
+      io.observe(stage);
+    }
   }
 
   async function mountKaplay() {
@@ -502,7 +528,53 @@ import TypingText from '~/components/TypingText.astro';
     .companions-hud { font-size: 9px; gap: 8px; bottom: 6px; right: 8px; }
     .companions-caption { font-size: 10px; top: 6px; left: 8px; right: 8px; }
   }
-  @media (max-width: 320px) {
-    .kc-stage { min-width: 320px; }
+  /* Mobile poster: replaces the heavy KAPLAY canvas with a static
+     "tap to play" tile on phones. Saves ~250 KB of JS on first load. */
+  .kc-stage-poster {
+    display: none;
+  }
+  @media (max-width: 768px) {
+    .kc-stage[data-mobile-poster] .kc-stage-log,
+    .kc-stage[data-mobile-poster] .kc-stage-play { display: none; }
+    .kc-stage[data-mobile-poster] .kc-stage-poster {
+      display: flex;
+      position: absolute;
+      inset: 0;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      text-align: center;
+      padding: 18px;
+      cursor: pointer;
+      background: linear-gradient(to bottom, var(--surface), var(--code-bg));
+    }
+    .kc-stage-poster__title {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(18px, 6vw, 26px);
+      line-height: 1.1;
+    }
+    .kc-stage-poster__title .pink { color: var(--accent); }
+    .kc-stage-poster__title .yell { color: var(--accent-2); }
+    .kc-stage-poster__cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 18px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      border-radius: 4px;
+      background: transparent;
+    }
+    .kc-stage-poster__hint {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+    }
   }
 </style>

@@ -337,7 +337,15 @@ const activeKey =
     .cc-top-row { padding: 0 12px; gap: 10px; }
     .cc-brand-word { font-size: 11px; }
     .cc-brand-logo { width: 22px; height: 22px; }
-    .cc-brand { gap: 7px; }
+    .cc-brand { gap: 7px; min-width: 0; }
+    .cc-top-right { gap: 6px; }
+    .cc-lang-btn { padding: 4px 7px; }
+  }
+  @media (max-width: 340px) {
+    .cc-top-row { padding: 0 8px; gap: 6px; }
+    .cc-brand-word { font-size: 10px; }
+    .cc-lang { font-size: 10px; }
+    .cc-lang-btn { padding: 3px 5px; }
   }
 
   /* Prevent body scroll when drawer open on mobile */

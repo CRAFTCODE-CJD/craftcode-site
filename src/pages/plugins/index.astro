@@ -39,6 +39,8 @@ const manifests = sortByUpdated(await loadAllManifests());
                   <img
                     src={m.image}
                     alt={pick(m.name, 'ru')}
+                    width="1280"
+                    height="720"
                     loading="lazy"
                     decoding="async"
                   />

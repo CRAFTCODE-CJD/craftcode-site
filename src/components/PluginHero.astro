@@ -61,7 +61,7 @@ const {
       <div class="media-overlay"></div>
       <picture>
         <source srcset={image.replace(/\.png$/i, '.webp')} type="image/webp" />
-        <img src={image} alt={title} loading="eager" />
+        <img src={image} alt={title} width="1280" height="800" loading="eager" decoding="async" />
       </picture>
       <div class="media-badge">PREVIEW_01</div>
     </div>

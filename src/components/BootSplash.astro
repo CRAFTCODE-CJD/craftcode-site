@@ -34,7 +34,12 @@ import CompanionBot from './CompanionBot.astro';
   const log = document.querySelector<HTMLElement>('[data-boot-log]');
   if (!host || !log) throw new Error('boot splash nodes missing');
 
-  if (sessionStorage.getItem(KEY) === '1') {
+  // Skip splash on phones — it's pure decoration and adds ~1.5 s of perceived
+  // load time on slow networks. Desktop/tablet still get the full sequence.
+  const isPhone = typeof window.matchMedia === 'function'
+    && window.matchMedia('(max-width: 768px)').matches;
+
+  if (sessionStorage.getItem(KEY) === '1' || isPhone) {
     host.remove();
   } else {
     sessionStorage.setItem(KEY, '1');

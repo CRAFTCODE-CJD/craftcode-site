@@ -56,11 +56,14 @@ async function isFresh(srcPath, outPath) {
 /**
  * Emit a single variant. `width` is undefined for full-resolution copies.
  * Returns a label for logging. Skips silently when output is fresh.
+ *
+ * IMPORTANT: when the source is narrower than the target width, we still
+ * emit the variant — without resize (Sharp's `withoutEnlargement` enforces
+ * this). The file lands at the source's native resolution. This keeps every
+ * URL in templated `srcset` strings valid; otherwise browsers on hi-DPI
+ * displays would 404 on `Atlas-1280.avif` for 800px sources.
  */
 async function emitVariant(srcPath, format, width, srcWidth) {
-  // No upscale — phone variant of a 200px sprite would just inflate the file.
-  if (width !== undefined && srcWidth !== undefined && srcWidth <= width) return null;
-
   const ext = format === 'webp' ? '.webp' : '.avif';
   const suffix = width !== undefined ? `-${width}` : '';
   const outPath = srcPath.replace(/\.png$/i, `${suffix}${ext}`);
